@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Bell, Search, User, Menu, Bookmark, Share2, Clock, Eye } from "lucide-react"
 import Link from "next/link"
 import { Label } from "@/components/ui/label"
+import Header from "@/components/header"
 
 export default function MainPage() {
   const [selectedCategory, setSelectedCategory] = useState("전체")
@@ -52,44 +53,8 @@ export default function MainPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold text-blue-600">NewsHub</h1>
-              <nav className="hidden md:flex space-x-6">
-                <Link href="/" className="text-gray-700 hover:text-blue-600">
-                  홈
-                </Link>
-                <Link href="/community" className="text-gray-700 hover:text-blue-600">
-                  커뮤니티
-                </Link>
-                <Link href="/newsletter" className="text-gray-700 hover:text-blue-600">
-                  뉴스레터
-                </Link>
-              </nav>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <div className="relative hidden md:block">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input placeholder="뉴스 검색..." className="pl-10 w-64" />
-              </div>
-              <Button variant="ghost" size="icon">
-                <Bell className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="icon">
-                <User className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="icon" className="md:hidden">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
+      <Header />
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Main Content */}
@@ -127,7 +92,7 @@ export default function MainPage() {
                     <h2 className="text-2xl font-bold mb-3">주요 경제 정책 발표, 시장에 미치는 파급효과 분석</h2>
                     <p className="text-gray-600 mb-4">
                       정부가 발표한 새로운 경제 정책이 금융시장과 실물경제에 미칠 영향에 대해 전문가들이 다양한 분석을
-                      내놓고 있습니다...
+                      내놓고 있습니다. 이번 정책은 기업 투자 활성화와 소비 진작을 목표로 하고 있어...
                     </p>
                     <div className="flex items-center justify-between text-sm text-gray-500">
                       <span>경제신문 • 1시간 전</span>
@@ -194,56 +159,58 @@ export default function MainPage() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Newsletter Subscription */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">뉴스레터 구독</CardTitle>
-                <CardDescription>매일 아침 엄선된 뉴스를 받아보세요</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <Input placeholder="이메일 주소" type="email" />
-                  <Button className="w-full">구독하기</Button>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="lg:col-span-1">
+            <div className="space-y-6">
+              {/* Newsletter Subscription */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">뉴스레터 구독</CardTitle>
+                  <CardDescription>매일 아침 엄선된 뉴스를 받아보세요</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <Input placeholder="이메일 주소" type="email" />
+                    <Button className="w-full">구독하기</Button>
+                  </div>
+                </CardContent>
+              </Card>
 
-            {/* Trending Topics */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">실시간 인기 키워드</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {["인공지능", "경제정책", "환경보호", "디지털전환", "스타트업"].map((keyword, index) => (
-                    <div key={keyword} className="flex items-center justify-between">
-                      <span className="flex items-center">
-                        <span className="text-sm font-medium text-blue-600 mr-2">{index + 1}</span>
-                        {keyword}
-                      </span>
-                      <Badge variant="outline" className="text-xs">
-                        HOT
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+              {/* Trending Topics */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">실시간 인기 키워드</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {["인공지능", "경제정책", "환경보호", "디지털전환", "스타트업"].map((keyword, index) => (
+                      <div key={keyword} className="flex items-center justify-between">
+                        <span className="flex items-center">
+                          <span className="text-sm font-medium text-blue-600 mr-2">{index + 1}</span>
+                          {keyword}
+                        </span>
+                        <Badge variant="outline" className="text-xs">
+                          HOT
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
 
-            {/* Weather Widget */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">오늘의 날씨</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center">
-                  <div className="text-3xl font-bold">22°C</div>
-                  <div className="text-gray-600">맑음</div>
-                  <div className="text-sm text-gray-500 mt-2">서울특별시</div>
-                </div>
-              </CardContent>
-            </Card>
+              {/* Weather Widget */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">오늘의 날씨</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold">22°C</div>
+                    <div className="text-gray-600">맑음</div>
+                    <div className="text-sm text-gray-500 mt-2">서울특별시</div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>

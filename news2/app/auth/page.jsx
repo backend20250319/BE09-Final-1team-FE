@@ -9,9 +9,10 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowLeft, Mail, Lock, User, Heart } from "lucide-react"
 import Link from "next/link"
+import Header from "@/components/header"
 
 export default function AuthPage() {
-  const [selectedInterests, setSelectedInterests] = useState<string[]>([])
+  const [selectedInterests, setSelectedInterests] = useState([])
 
   const interests = [
     { id: "politics", label: "정치", icon: "🏛️" },
@@ -24,7 +25,7 @@ export default function AuthPage() {
     { id: "entertainment", label: "연예", icon: "🎬" },
   ]
 
-  const toggleInterest = (interestId: string) => {
+  const toggleInterest = (interestId) => {
     setSelectedInterests((prev) =>
       prev.includes(interestId) ? prev.filter((id) => id !== interestId) : [...prev, interestId],
     )
