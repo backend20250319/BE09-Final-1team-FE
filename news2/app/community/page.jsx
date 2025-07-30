@@ -1,17 +1,22 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { MessageCircle, ThumbsUp, Share2, MoreHorizontal, TrendingUp } from "lucide-react"
+import { MessageCircle, ThumbsUp, Share2, MoreHorizontal, TrendingUp, Users, Sparkles } from "lucide-react"
 import Header from "@/components/header"
 
 export default function CommunityPage() {
   const [selectedCategory, setSelectedCategory] = useState("전체")
+  const [isLoaded, setIsLoaded] = useState(false)
+
+  useEffect(() => {
+    setIsLoaded(true)
+  }, [])
 
   const categories = ["전체", "정치", "경제", "사회", "IT/과학", "스포츠", "문화"]
 
@@ -67,7 +72,7 @@ export default function CommunityPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
       <Header />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -75,21 +80,27 @@ export default function CommunityPage() {
           {/* Main Content */}
           <div className="lg:col-span-3">
             {/* Header */}
-            <div className="mb-6">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">커뮤니티</h1>
+            <div className="mb-6 animate-slide-in">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center">
+                <Sparkles className="h-8 w-8 mr-3 text-purple-500 animate-pulse-slow" />
+                커뮤니티
+              </h1>
               <p className="text-gray-600">뉴스에 대한 다양한 의견을 나누고 토론해보세요</p>
             </div>
 
             {/* Category Tabs */}
             <div className="mb-6">
               <div className="flex space-x-2 overflow-x-auto pb-2">
-                {categories.map((category) => (
+                {categories.map((category, index) => (
                   <Button
                     key={category}
                     variant={selectedCategory === category ? "default" : "outline"}
                     size="sm"
                     onClick={() => setSelectedCategory(category)}
-                    className="whitespace-nowrap"
+                    className={`whitespace-nowrap hover-lift ${
+                      isLoaded ? 'animate-slide-in' : 'opacity-0'
+                    }`}
+                    style={{ animationDelay: `${index * 0.1}s` }}
                   >
                     {category}
                   </Button>
@@ -98,29 +109,37 @@ export default function CommunityPage() {
             </div>
 
             {/* Create Discussion */}
-            <Card className="mb-6">
+            <Card className="mb-6 glass hover-lift animate-slide-in" style={{ animationDelay: '0.2s' }}>
               <CardHeader>
-                <CardTitle>새로운 토론 시작하기</CardTitle>
+                <CardTitle className="flex items-center">
+                  <MessageCircle className="h-5 w-5 mr-2 text-blue-500" />
+                  새로운 토론 시작하기
+                </CardTitle>
                 <CardDescription>
                   관심 있는 주제에 대해 토론을 시작해보세요
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <Input placeholder="토론 제목을 입력하세요" />
+                  <Input placeholder="토론 제목을 입력하세요" className="bg-white/50 border-gray-200" />
                   <Textarea 
                     placeholder="토론 내용을 작성하세요..." 
-                    className="min-h-[100px]"
+                    className="min-h-[100px] bg-white/50 border-gray-200"
                   />
                   <div className="flex items-center justify-between">
                     <div className="flex space-x-2">
                       {["정치", "경제", "사회", "IT/과학"].map((tag) => (
-                        <Badge key={tag} variant="outline" className="cursor-pointer hover:bg-gray-100">
-                          {tag}
-                        </Badge>
+                       <Badge
+                       key={tag}
+                       className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full shadow cursor-pointer hover:bg-blue-700 transition"
+                     >
+                       {tag}
+                     </Badge>
                       ))}
                     </div>
-                    <Button>토론 시작</Button>
+                    <Button className="gradient-bg hover:shadow-lg transition-all duration-300">
+                      토론 시작
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -128,8 +147,14 @@ export default function CommunityPage() {
 
             {/* Discussions List */}
             <div className="space-y-4">
-              {discussions.map((discussion) => (
-                <Card key={discussion.id} className="hover:shadow-lg transition-shadow">
+              {discussions.map((discussion, index) => (
+                <Card 
+                  key={discussion.id} 
+                  className={`glass hover-lift animate-slide-in ${
+                    isLoaded ? 'opacity-100' : 'opacity-0'
+                  }`}
+                  style={{ animationDelay: `${(index + 1) * 0.2}s` }}
+                >
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex items-center space-x-3">
@@ -140,11 +165,11 @@ export default function CommunityPage() {
                         <div>
                           <div className="flex items-center space-x-2">
                             <span className="font-medium">{discussion.author.name}</span>
-                            <Badge variant="secondary" className="text-xs">
+                            <Badge className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full shadow">
                               {discussion.author.level}
                             </Badge>
                           </div>
-                          <div className="flex items-center space-x-2 text-sm text-gray-500">
+                          <div className="flex items-center space-x-2 text-sm text-gray-500 mt-2">
                             <span>{discussion.createdAt}</span>
                             <span>•</span>
                             <Badge variant="outline" className="text-xs">
@@ -153,13 +178,13 @@ export default function CommunityPage() {
                           </div>
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" className="hover-glow">
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <h3 className="text-lg font-semibold mb-3 hover:text-blue-600 cursor-pointer">
+                    <h3 className="text-lg font-semibold mb-3 hover:text-blue-600 cursor-pointer transition-colors">
                       {discussion.title}
                     </h3>
                     <p className="text-gray-600 mb-4 line-clamp-3">
@@ -169,24 +194,27 @@ export default function CommunityPage() {
                     {/* Tags */}
                     <div className="flex flex-wrap gap-2 mb-4">
                       {discussion.tags.map((tag) => (
-                        <Badge key={tag} variant="secondary" className="text-xs">
-                          #{tag}
-                        </Badge>
+                        <Badge
+                        key={tag}
+                        className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full shadow"
+                      >
+                        #{tag}
+                      </Badge>                      
                       ))}
                     </div>
 
                     {/* Actions */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
-                        <Button variant="ghost" size="sm" className="flex items-center space-x-1">
+                        <Button variant="ghost" size="sm" className="flex items-center space-x-1 hover-glow">
                           <MessageCircle className="h-4 w-4" />
                           <span className="text-sm">{discussion.replies}</span>
                         </Button>
-                        <Button variant="ghost" size="sm" className="flex items-center space-x-1">
+                        <Button variant="ghost" size="sm" className="flex items-center space-x-1 hover-glow">
                           <ThumbsUp className="h-4 w-4" />
                           <span className="text-sm">{discussion.likes}</span>
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" className="hover-glow">
                           <Share2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -205,9 +233,12 @@ export default function CommunityPage() {
           <div className="lg:col-span-1">
             <div className="space-y-6">
               {/* Community Stats */}
-              <Card>
+              <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.3s' }}>
                 <CardHeader>
-                  <CardTitle className="text-lg">커뮤니티 현황</CardTitle>
+                  <CardTitle className="text-lg flex items-center">
+                    <Users className="h-5 w-5 mr-2 text-green-500" />
+                    커뮤니티 현황
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
@@ -228,23 +259,26 @@ export default function CommunityPage() {
               </Card>
 
               {/* Popular Tags */}
-              <Card>
+              <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.4s' }}>
                 <CardHeader>
                   <CardTitle className="text-lg">인기 태그</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
                     {["AI", "경제", "정치", "환경", "기술", "투자", "정책", "사회"].map((tag) => (
-                      <Badge key={tag} variant="outline" className="cursor-pointer hover:bg-gray-100">
-                        #{tag}
-                      </Badge>
+                      <Badge
+                      key={tag}
+                      className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full shadow cursor-pointer hover:bg-blue-700 transition"
+                    >
+                      #{tag}
+                    </Badge>
                     ))}
                   </div>
                 </CardContent>
               </Card>
 
               {/* Community Guidelines */}
-              <Card>
+              <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.5s' }}>
                 <CardHeader>
                   <CardTitle className="text-lg">커뮤니티 가이드라인</CardTitle>
                 </CardHeader>
