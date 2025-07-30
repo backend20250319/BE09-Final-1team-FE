@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Mail, Clock, Users, Star, TrendingUp, Bell, Zap, Filter } from "lucide-react"
 import Header from "@/components/header"
-import { processTextWithTooltips, createTooltipElements } from "@/lib/textProcessor"
+import { TextWithTooltips } from "@/components/tooltip"
 
 export default function NewsletterPage() {
   const [selectedCategory, setSelectedCategory] = useState("전체")
@@ -17,10 +17,6 @@ export default function NewsletterPage() {
 
   useEffect(() => {
     setIsLoaded(true)
-    // 컴포넌트 마운트 후 툴팁 요소들 생성
-    setTimeout(() => {
-      createTooltipElements()
-    }, 100)
   }, [])
 
   const categories = ["전체", "정치", "경제", "사회", "IT/과학", "스포츠", "문화"]
@@ -183,9 +179,11 @@ export default function NewsletterPage() {
                             {newsletter.frequency}
                           </Badge>
                         </div>
-                        <CardTitle className="text-lg mb-2">{newsletter.title}</CardTitle>
+                        <CardTitle className="text-lg mb-2">
+                          <TextWithTooltips text={newsletter.title} />
+                        </CardTitle>
                         <CardDescription className="line-clamp-2">
-                          {newsletter.description}
+                          <TextWithTooltips text={newsletter.description} />
                         </CardDescription>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -269,7 +267,9 @@ export default function NewsletterPage() {
                     {subscribedNewsletters.map((newsletter) => (
                       <div key={newsletter.id} className="flex items-center justify-between p-3 bg-white/50 rounded-lg hover:bg-white/70 transition-all duration-300">
                         <div className="flex-1">
-                          <h4 className="font-medium text-sm">{newsletter.title}</h4>
+                          <h4 className="font-medium text-sm">
+                            <TextWithTooltips text={newsletter.title} />
+                          </h4>
                           <p className="text-xs text-gray-500">{newsletter.frequency}</p>
                         </div>
                         <Button
@@ -338,7 +338,9 @@ export default function NewsletterPage() {
                           <div className="flex items-center space-x-2">
                             <span className="text-sm font-medium text-blue-600">{index + 1}</span>
                             <div>
-                              <p className="text-sm font-medium">{newsletter.title}</p>
+                              <p className="text-sm font-medium">
+                                <TextWithTooltips text={newsletter.title} />
+                              </p>
                               <p className="text-xs text-gray-500">{newsletter.subscribers.toLocaleString()} 구독자</p>
                             </div>
                           </div>

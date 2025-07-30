@@ -9,7 +9,7 @@ import { Bell, Search, User, Menu, Bookmark, Share2, Clock, Eye, TrendingUp, Zap
 import Link from "next/link"
 import { Label } from "@/components/ui/label"
 import Header from "@/components/header"
-import { processTextWithTooltips, createTooltipElements } from "@/lib/textProcessor"
+import { TextWithTooltips } from "@/components/tooltip"
 
 export default function MainPage() {
   const [selectedCategory, setSelectedCategory] = useState("전체")
@@ -17,10 +17,6 @@ export default function MainPage() {
 
   useEffect(() => {
     setIsLoaded(true)
-    // 컴포넌트 마운트 후 툴팁 요소들 생성
-    setTimeout(() => {
-      createTooltipElements()
-    }, 100)
   }, [])
 
   const categories = ["전체", "정치", "경제", "사회", "IT/과학", "스포츠", "문화"]
@@ -106,14 +102,9 @@ export default function MainPage() {
                   <div className="md:w-1/2 p-6">
                     <h2 className="text-2xl font-bold mb-3 text-gray-800">주요 경제 정책 발표, 시장에 미치는 파급효과 분석</h2>
                     
-                    <p 
-                      className="text-gray-600 mb-4"
-                      dangerouslySetInnerHTML={{ 
-                        __html: processTextWithTooltips(
-                          "정부가 발표한 새로운 경제 정책이 금융시장과 실물경제에 미칠 영향에 대해 전문가들이 다양한 분석을 내놓고 있습니다. 이번 정책은 기업 투자 활성화와 소비 진작을 목표로 하고 있어..."
-                        )
-                      }}
-                    />
+                    <p className="text-gray-600 mb-4">
+                      <TextWithTooltips text="정부가 발표한 새로운 경제 정책이 금융시장과 실물경제에 미칠 영향에 대해 전문가들이 다양한 분석을 내놓고 있습니다. 이번 정책은 기업 투자 활성화와 소비 진작을 목표로 하고 있어..." />
+                    </p>
                     <div className="flex items-center justify-between text-sm text-gray-500">
                       <span>경제신문 • 1시간 전</span>
                       <div className="flex items-center space-x-4">
@@ -165,18 +156,12 @@ export default function MainPage() {
                           {news.publishedAt}
                         </span>
                       </div>
-                      <h3 
-                        className="text-xl font-semibold mb-3 hover:text-blue-600 cursor-pointer transition-colors"
-                        dangerouslySetInnerHTML={{ 
-                          __html: processTextWithTooltips(news.title)
-                        }}
-                      />
-                      <p 
-                        className="text-gray-600 mb-4 line-clamp-3"
-                        dangerouslySetInnerHTML={{ 
-                          __html: processTextWithTooltips(news.summary)
-                        }}
-                      />
+                      <h3 className="text-xl font-semibold mb-3 hover:text-blue-600 cursor-pointer transition-colors">
+                        <TextWithTooltips text={news.title} />
+                      </h3>
+                      <p className="text-gray-600 mb-4 line-clamp-3">
+                        <TextWithTooltips text={news.summary} />
+                      </p>
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-500">{news.source}</span>
                         <div className="flex items-center space-x-4">

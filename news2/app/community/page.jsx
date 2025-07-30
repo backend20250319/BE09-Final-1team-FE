@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { MessageCircle, ThumbsUp, Share2, MoreHorizontal, TrendingUp, Users, Sparkles } from "lucide-react"
 import Header from "@/components/header"
-import { processTextWithTooltips, createTooltipElements } from "@/lib/textProcessor"
+import { TextWithTooltips } from "@/components/tooltip"
 
 export default function CommunityPage() {
   const [selectedCategory, setSelectedCategory] = useState("전체")
@@ -17,10 +17,6 @@ export default function CommunityPage() {
 
   useEffect(() => {
     setIsLoaded(true)
-    // 컴포넌트 마운트 후 툴팁 요소들 생성
-    setTimeout(() => {
-      createTooltipElements()
-    }, 100)
   }, [])
 
   const categories = ["전체", "정치", "경제", "사회", "IT/과학", "스포츠", "문화"]
@@ -189,18 +185,12 @@ export default function CommunityPage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <h3 
-                      className="text-lg font-semibold mb-3 hover:text-blue-600 cursor-pointer transition-colors"
-                      dangerouslySetInnerHTML={{ 
-                        __html: processTextWithTooltips(discussion.title)
-                      }}
-                    />
-                    <p 
-                      className="text-gray-600 mb-4 line-clamp-3"
-                      dangerouslySetInnerHTML={{ 
-                        __html: processTextWithTooltips(discussion.content)
-                      }}
-                    />
+                    <h3 className="text-lg font-semibold mb-3 hover:text-blue-600 cursor-pointer transition-colors">
+                      <TextWithTooltips text={discussion.title} />
+                    </h3>
+                    <p className="text-gray-600 mb-4 line-clamp-3">
+                      <TextWithTooltips text={discussion.content} />
+                    </p>
                     
                     {/* Tags */}
                     <div className="flex flex-wrap gap-2 mb-4">
