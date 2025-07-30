@@ -76,11 +76,12 @@ export default function Header() {
                   3
                 </Badge>
               </Button>
-              
-              <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 hover-glow">
-                <User className="h-5 w-5" />
-              </Button>
-              
+              <Link href="/auth" className="relative">
+                <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 hover-glow">
+                  <User className="h-5 w-5" />
+                </Button>
+              </Link>
+
               {/* Mobile Menu Button */}
               <Button 
                 variant="ghost" 

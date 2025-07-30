@@ -39,14 +39,14 @@ export default function AuthPage() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             홈으로 돌아가기
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">NewsHub</h1>
+          <h1 className="text-3xl font-bold text-gray-900">NewNormalList</h1>
           <p className="text-gray-600 mt-2">개인 맞춤 뉴스 서비스</p>
         </div>
 
         <Tabs defaultValue="login" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">로그인</TabsTrigger>
             <TabsTrigger value="signup">회원가입</TabsTrigger>
+            <TabsTrigger value="login">로그인</TabsTrigger>
           </TabsList>
 
           <TabsContent value="login">
@@ -71,23 +71,11 @@ export default function AuthPage() {
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox id="remember" />
-                    <Label htmlFor="remember" className="text-sm">
-                      로그인 상태 유지
-                    </Label>
-                  </div>
                   <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
                     비밀번호 찾기
                   </Link>
                 </div>
                 <Button className="w-full">로그인</Button>
-                <div className="text-center">
-                  <p className="text-sm text-gray-600">또는</p>
-                </div>
-                <Button variant="outline" className="w-full bg-transparent">
-                  Google로 로그인
-                </Button>
               </CardContent>
             </Card>
           </TabsContent>
