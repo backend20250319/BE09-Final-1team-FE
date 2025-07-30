@@ -68,6 +68,23 @@
   }
 }
 
+/* 툴팁 관련 스타일 - Portal 기반 */
+.tooltip-portal {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.tooltip-portal .tooltip-content {
+  pointer-events: auto;
+}
+
+/* 카드 컨테이너에서 툴팁이 잘리지 않도록 설정 */
+.card-container {
+  overflow: visible !important;
+  position: relative;
+}
+
 /* 글래스모피즘 효과 */
 .glass {
   background: rgba(255, 255, 255, 0.1);
