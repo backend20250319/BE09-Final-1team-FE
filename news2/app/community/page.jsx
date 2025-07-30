@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { MessageCircle, ThumbsUp, Share2, MoreHorizontal, TrendingUp, Users, Sparkles } from "lucide-react"
 import Header from "@/components/header"
+import { processTextWithTooltips, createTooltipElements } from "@/lib/textProcessor"
 
 export default function CommunityPage() {
   const [selectedCategory, setSelectedCategory] = useState("전체")
@@ -16,6 +17,10 @@ export default function CommunityPage() {
 
   useEffect(() => {
     setIsLoaded(true)
+    // 컴포넌트 마운트 후 툴팁 요소들 생성
+    setTimeout(() => {
+      createTooltipElements()
+    }, 100)
   }, [])
 
   const categories = ["전체", "정치", "경제", "사회", "IT/과학", "스포츠", "문화"]
@@ -129,12 +134,12 @@ export default function CommunityPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex space-x-2">
                       {["정치", "경제", "사회", "IT/과학"].map((tag) => (
-                       <Badge
-                       key={tag}
-                       className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full shadow cursor-pointer hover:bg-blue-700 transition"
-                     >
-                       {tag}
-                     </Badge>
+                        <Badge
+                          key={tag}
+                          className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full shadow cursor-pointer hover:bg-blue-700 transition"
+                        >
+                          {tag}
+                        </Badge>
                       ))}
                     </div>
                     <Button className="gradient-bg hover:shadow-lg transition-all duration-300">
@@ -184,22 +189,28 @@ export default function CommunityPage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <h3 className="text-lg font-semibold mb-3 hover:text-blue-600 cursor-pointer transition-colors">
-                      {discussion.title}
-                    </h3>
-                    <p className="text-gray-600 mb-4 line-clamp-3">
-                      {discussion.content}
-                    </p>
+                    <h3 
+                      className="text-lg font-semibold mb-3 hover:text-blue-600 cursor-pointer transition-colors"
+                      dangerouslySetInnerHTML={{ 
+                        __html: processTextWithTooltips(discussion.title)
+                      }}
+                    />
+                    <p 
+                      className="text-gray-600 mb-4 line-clamp-3"
+                      dangerouslySetInnerHTML={{ 
+                        __html: processTextWithTooltips(discussion.content)
+                      }}
+                    />
                     
                     {/* Tags */}
                     <div className="flex flex-wrap gap-2 mb-4">
                       {discussion.tags.map((tag) => (
                         <Badge
-                        key={tag}
-                        className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full shadow"
-                      >
-                        #{tag}
-                      </Badge>                      
+                          key={tag}
+                          className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full shadow"
+                        >
+                          #{tag}
+                        </Badge>                      
                       ))}
                     </div>
 
@@ -267,11 +278,11 @@ export default function CommunityPage() {
                   <div className="flex flex-wrap gap-2">
                     {["AI", "경제", "정치", "환경", "기술", "투자", "정책", "사회"].map((tag) => (
                       <Badge
-                      key={tag}
-                      className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full shadow cursor-pointer hover:bg-blue-700 transition"
-                    >
-                      #{tag}
-                    </Badge>
+                        key={tag}
+                        className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full shadow cursor-pointer hover:bg-blue-700 transition"
+                      >
+                        #{tag}
+                      </Badge>
                     ))}
                   </div>
                 </CardContent>
