@@ -2,11 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: "TheNeueBlack";
+  src: url("/fonts/TheNeueBlack.otf") format("opentype"),
+    url("/fonts/TheNeueBlack.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
 }
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
 
 @layer base {
   :root {
@@ -86,5 +96,25 @@
   }
   body {
     @apply bg-background text-foreground;
+    @apply font-sans;
+    font-family: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui,
+      sans-serif;
+  }
+}
+
+@layer components {
+  /* TheNeue-Black 폰트 유틸리티 클래스 */
+  .font-neue-black {
+    font-family: "TheNeueBlack", sans-serif !important;
+    font-weight: 900 !important;
+    letter-spacing: -0.02em;
+  }
+
+  /* 헤더 로고 전용 스타일 */
+  .logo-font {
+    font-family: "TheNeueBlack", sans-serif !important;
+    font-weight: 900 !important;
+    font-style: normal !important;
+    letter-spacing: -0.02em !important;
   }
 }
