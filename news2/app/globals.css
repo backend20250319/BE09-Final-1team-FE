@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Protest+Riot&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -65,15 +67,35 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: "NoonnuBasicGothic", -apple-system, BlinkMacSystemFont,
+      "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", sans-serif;
   }
 }
 
 @font-face {
-  font-family: 'The Neue Black';
-  src: url('/fonts/TheNeueBlack-Black.otf') format('opentype');
-  font-weight: normal;
+  font-family: "NoonnuBasicGothic";
+  src: url("https://fastly.jsdelivr.net/gh/projectnoonnu/noon-2410@1.0/NoonnuBasicGothicRegular.woff2")
+    format("woff2");
+  font-weight: 400;
   font-style: normal;
   font-display: swap;
+}
+
+/* 눈누 베이직 고딕 폰트 적용 클래스 */
+.font-noonnu {
+  font-family: "NoonnuBasicGothic", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+}
+
+/* 로고용 Protest Riot 폰트 사용 */
+.font-logo {
+  font-family: "Protest Riot", "NoonnuBasicGothic", cursive, sans-serif;
+  font-weight: 400;
+}
+
+/* Protest Riot 폰트 전용 클래스 */
+.font-protest {
+  font-family: "Protest Riot", cursive;
 }
 
 
