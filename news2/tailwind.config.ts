@@ -12,6 +12,9 @@ const config: Config = {
   ],
   theme: {
   	extend: {
+		fontFamily: {
+			'neue-black': ['"The Neue Black"', 'sans-serif'],
+		  },
   		colors: {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
