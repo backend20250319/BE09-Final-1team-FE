@@ -1,30 +1,39 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Bell, Search, User, Menu, Bookmark, Share2, Clock, Eye } from "lucide-react"
-import { usePathname } from "next/navigation"
+import { useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Bell,
+  Search,
+  User,
+  Menu,
+  Bookmark,
+  Share2,
+  Clock,
+  Eye,
+} from "lucide-react";
+import { usePathname } from "next/navigation";
 
 export default function Header() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const pathname = usePathname()
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
 
   const navigation = [
     { name: "홈", href: "/" },
     { name: "커뮤니티", href: "/community" },
     { name: "뉴스레터", href: "/newsletter" },
     { name: "마이페이지", href: "/mypage" },
-  ]
+  ];
 
   const isActive = (href) => {
     if (href === "/") {
-      return pathname === "/"
+      return pathname === "/";
     }
-    return pathname.startsWith(href)
-  }
+    return pathname.startsWith(href);
+  };
 
   return (
     <header className="sticky top-0 z-50 responsive-gradient glass">
@@ -32,12 +41,15 @@ export default function Header() {
         <div className="flex justify-between items-center h-16">
           {/* Logo and Navigation */}
           <div className="flex items-center space-x-4">
-            <Link href="/" className="flex items-center space-x-2 animate-slide-in">
-            <h1 className="text-2xl font-neue-black font-bold text-white drop-shadow-lg animate-pulse-slow">
-              NewNews
-            </h1>
+            <Link
+              href="/"
+              className="flex items-center space-x-2 animate-slide-in"
+            >
+              <h1 className="text-2xl font-logo font-bold text-white drop-shadow-lg animate-pulse-slow">
+                NewSphere
+              </h1>
             </Link>
-            
+
             {/* Desktop Navigation */}
             <nav className="hidden md:flex space-x-6">
               {navigation.map((item, index) => (
@@ -62,29 +74,38 @@ export default function Header() {
             {/* Search */}
             <div className="relative hidden md:block">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70 h-4 w-4" />
-              <Input 
-                placeholder="뉴스 검색..." 
-                className="pl-10 w-64 bg-white/10 border-white/20 text-white placeholder-white/50 focus:bg-white/20 focus:border-white/40 transition-all duration-300" 
+              <Input
+                placeholder="뉴스 검색..."
+                className="pl-10 w-64 bg-white/10 border-white/20 text-white placeholder-white/50 focus:bg-white/20 focus:border-white/40 transition-all duration-300"
               />
             </div>
 
             {/* Action Buttons */}
             <div className="flex items-center space-x-2">
-              <Button variant="ghost" size="icon" className="relative hover-glow text-white hover:bg-white/20">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative hover-glow text-white hover:bg-white/20"
+              >
                 <Bell className="h-5 w-5" />
                 <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs floating-badge">
                   3
                 </Badge>
               </Button>
-              
-              <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 hover-glow">
-                <User className="h-5 w-5" />
-              </Button>
-              
+              <Link href="/auth" className="relative">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-white hover:bg-white/20 hover-glow"
+                >
+                  <User className="h-5 w-5" />
+                </Button>
+              </Link>
+
               {/* Mobile Menu Button */}
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="md:hidden text-white hover:bg-white/20"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               >
@@ -101,12 +122,12 @@ export default function Header() {
               {/* Mobile Search */}
               <div className="relative mb-4">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70 h-4 w-4" />
-                <Input 
-                  placeholder="뉴스 검색..." 
-                  className="pl-10 w-full bg-white/10 border-white/20 text-white placeholder-white/50" 
+                <Input
+                  placeholder="뉴스 검색..."
+                  className="pl-10 w-full bg-white/10 border-white/20 text-white placeholder-white/50"
                 />
               </div>
-              
+
               {/* Mobile Navigation Links */}
               {navigation.map((item, index) => (
                 <Link
@@ -128,5 +149,5 @@ export default function Header() {
         )}
       </div>
     </header>
-  )
-} 
+  );
+}

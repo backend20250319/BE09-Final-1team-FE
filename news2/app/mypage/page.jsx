@@ -10,12 +10,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Header from "@/components/header";
 
 // 분리된 컴포넌트들 import
-import ProfileSidebar from "./components/ProfileSidebar";
-import ProfileTab from "./components/ProfileTab";
-import InterestsTab from "./components/InterestsTab";
-import ScrapsTab from "./components/ScrapsTab";
-import HistoryTab from "./components/HistoryTab";
-import SettingsTab from "./components/SettingsTab";
+import ProfileSidebar from "./_components/ProfileSidebar";
+import ProfileTab from "./_components/ProfileTab";
+import InterestsTab from "./_components/InterestsTab";
+import ScrapsTab from "./_components/ScrapsTab";
+import HistoryTab from "./_components/HistoryTab";
+import SettingsTab from "./_components/SettingsTab";
 
 export default function MyPage() {
   return (
