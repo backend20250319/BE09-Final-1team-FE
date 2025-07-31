@@ -78,7 +78,7 @@ export default function AuthPage() {
                     </Label>
                   </div>
                   <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
-                    비밀번호를 잊으셨나요?
+                    비밀번호 찾기
                   </Link>
                 </div>
                 <Button className="w-full">로그인</Button>
