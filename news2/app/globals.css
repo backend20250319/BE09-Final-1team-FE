@@ -68,6 +68,15 @@
   }
 }
 
+@font-face {
+  font-family: 'The Neue Black';
+  src: url('/fonts/TheNeueBlack-Black.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+
 /* 툴팁 관련 스타일 - Portal 기반 */
 .tooltip-portal {
   position: fixed;
