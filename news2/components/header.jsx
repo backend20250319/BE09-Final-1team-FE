@@ -33,7 +33,7 @@ export default function Header() {
           {/* Logo and Navigation */}
           <div className="flex items-center space-x-4">
             <Link href="/" className="flex items-center space-x-2 animate-slide-in">
-            <h1 className="text-2xl font-neue-black font-bold text-white drop-shadow-lg animate-pulse-slow">
+            <h1 className="text-2xl font-bold text-white drop-shadow-lg animate-pulse-slow">
               NewNews
             </h1>
             </Link>

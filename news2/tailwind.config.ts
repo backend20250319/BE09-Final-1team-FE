@@ -14,6 +14,8 @@ const config: Config = {
   	extend: {
 		fontFamily: {
 			'neue-black': ['"The Neue Black"', 'sans-serif'],
+			'tektur': ['Tektur', 'sans-serif'],
+			sans: ['Tektur', 'sans-serif'], // 기본 sans를 Tektur로 재정의
 		  },
   		colors: {
   			background: 'hsl(var(--background))',

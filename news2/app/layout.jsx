@@ -9,7 +9,7 @@ export const metadata = {
   keywords: '뉴스, 커뮤니티, 뉴스레터, 실시간뉴스',
   authors: [{ name: 'NewsHub Team' }],
   viewport: 'width=device-width, initial-scale=1',
-}
+} 
 
 export default function RootLayout({ children }) {
   return (
