@@ -11,52 +11,31 @@ import { Label } from "@/components/ui/label"
 import Header from "@/components/header"
 import { TextWithTooltips } from "@/components/tooltip"
 import WeatherWidget from "@/components/WeatherWidget"
+import { newsService } from "@/lib/newsService"
 
 export default function MainPage() {
   const [selectedCategory, setSelectedCategory] = useState("전체")
   const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
-    setIsLoaded(true)
+    const fetchNews = async () => {
+      try {
+        const data = await newsService.getAllNews()
+        setNewsItems(data)
+      } catch (error) {
+        console.error('뉴스 데이터 로딩 실패:', error)
+      } finally {
+        setLoading(false)
+        setIsLoaded(true)
+      }
+    }
+
+    fetchNews()
   }, [])
 
   const categories = ["전체", "정치", "경제", "사회", "IT/과학", "스포츠", "문화"]
-
-  const newsItems = [
-    {
-      id: 1,
-      title: "AI 기술의 급속한 발전, 일자리 시장에 미치는 영향은?",
-      summary:
-        "인공지능 기술이 빠르게 발전하면서 다양한 산업 분야에서 변화가 일어나고 있습니다. 전문가들은 새로운 일자리 창출과 기존 업무의 자동화가 동시에 진행될 것으로 전망한다고 밝혔습니다.",
-      category: "IT/과학",
-      source: "테크뉴스",
-      publishedAt: "2시간 전",
-      views: 1234,
-      image: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      id: 2,
-      title: "2024년 경제 전망, 전문가들이 예측하는 주요 변화",
-      summary:
-        "올해 경제 성장률과 물가 상승률에 대한 전문가들의 분석이 발표되었습니다. 글로벌 경제 불확실성 속에서도 국내 경제는 안정적인 성장세를 유지할 것으로 예상됩니다.",
-      category: "경제",
-      source: "경제일보",
-      publishedAt: "4시간 전",
-      views: 892,
-      image: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      id: 3,
-      title: "환경보호를 위한 새로운 정책, 시민들의 반응은?",
-      summary:
-        "정부가 발표한 새로운 환경보호 정책에 대해 시민들과 환경단체들의 다양한 의견이 제시되고 있습니다. 실효성과 실현 가능성에 대한 논의가 활발히 진행되고 있습니다.",
-      category: "사회",
-      source: "환경뉴스",
-      publishedAt: "6시간 전",
-      views: 567,
-      image: "/placeholder.svg?height=200&width=300",
-    },
-  ]
+  const [newsItems, setNewsItems] = useState([])
+  const [loading, setLoading] = useState(true)
 
   // 카테고리별 필터링된 뉴스 아이템을 useMemo로 캐싱
   const filteredNewsItems = useMemo(() => {
@@ -65,6 +44,23 @@ export default function MainPage() {
     }
     return newsItems.filter(item => item.category === selectedCategory)
   }, [selectedCategory, newsItems])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+        <Header />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+            <div className="h-64 bg-gray-200 rounded mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded mb-2"></div>
+            <div className="h-4 bg-gray-200 rounded mb-2"></div>
+            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -137,60 +133,79 @@ export default function MainPage() {
             {/* News List */}
             <div className="space-y-6">
               {filteredNewsItems.map((news, index) => (
-                <Card 
+                <Link 
                   key={news.id} 
-                  className={`glass hover-lift animate-slide-in ${
-                    isLoaded ? 'opacity-100' : 'opacity-0'
-                  }`}
-                  style={{ animationDelay: `${(index + 1) * 0.2}s` }}
+                  href={`/news/${news.id}`} 
+                  prefetch={false}
+                  className="block"
                 >
-                  <div className="md:flex">
-                    <div className="md:w-1/3 relative">
-                      <img
-                        src={news.image || "/placeholder.svg"}
-                        alt={news.title}
-                        className="w-full h-48 md:h-full object-cover rounded-l-lg"
-                      />
-                      <div className="absolute top-2 left-2">
-                        <Badge className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full shadow">
-                          {news.category}
-                        </Badge>
+                  <Card 
+                    className={`glass hover-lift animate-slide-in cursor-pointer transition-all duration-300 hover:shadow-lg ${
+                      isLoaded ? 'opacity-100' : 'opacity-0'
+                    }`}
+                    style={{ animationDelay: `${(index + 1) * 0.2}s` }}
+                  >
+                    <div className="md:flex">
+                      <div className="md:w-1/3 relative">
+                        <img
+                          src={news.image || "/placeholder.svg"}
+                          alt={news.title}
+                          className="w-full h-48 md:h-full object-cover rounded-l-lg"
+                        />
+                        <div className="absolute top-2 left-2">
+                          <Badge className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full shadow">
+                            {news.category}
+                          </Badge>
+                        </div>
                       </div>
-                    </div>
-                    <div className="md:w-2/3 p-6">
-                      <div className="flex items-center justify-between mb-2">
-                        <Label theme="category" className="text-sm font-medium text-blue-600">{news.category}</Label>
-                        <span className="text-sm text-gray-500 flex items-center">
+                      <div className="md:w-2/3 p-6">
+                        <div className="flex items-center justify-between mb-2">
+                          <Label theme="category" className="text-sm font-medium text-blue-600">{news.category}</Label>
+                                                  <span className="text-sm text-gray-500 flex items-center">
                           <Clock className="h-4 w-4 mr-1" />
-                          {news.publishedAt}
+                          {new Date(news.publishedAt).toLocaleDateString("ko-KR", {
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit"
+                          })}
                         </span>
-                      </div>
-                      <h3 className="text-xl font-semibold mb-3 hover:text-blue-600 cursor-pointer transition-colors">
-                        <Link href={`/news/${news.id}`} prefetch={false}>
+                        </div>
+                        <h3 className="text-xl font-semibold mb-3 hover:text-blue-600 transition-colors">
                           <TextWithTooltips text={news.title} />
-                        </Link>
-                      </h3>
-                      <p className="text-gray-600 mb-4 line-clamp-3">
-                        <TextWithTooltips text={news.summary} />
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500">{news.source}</span>
-                        <div className="flex items-center space-x-4">
-                          <span className="text-sm text-gray-500 flex items-center">
-                            <Eye className="h-4 w-4 mr-1" />
-                            {news.views.toLocaleString()}
-                          </span>
-                          <Button variant="ghost" size="sm" className="hover-glow">
-                            <Share2 className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="hover-glow">
-                            <Bookmark className="h-4 w-4" />
-                          </Button>
+                        </h3>
+                        <p className="text-gray-600 mb-4 line-clamp-3">
+                          <TextWithTooltips text={news.summary} />
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-500">{news.source}</span>
+                          <div className="flex items-center space-x-4">
+                            <span className="text-sm text-gray-500 flex items-center">
+                              <Eye className="h-4 w-4 mr-1" />
+                              {news.views.toLocaleString()}
+                            </span>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="hover-glow"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Share2 className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="hover-glow"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Bookmark className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </Card>
+                  </Card>
+                </Link>
               ))}
             </div>
           </div>
