@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input" 
@@ -10,6 +10,7 @@ import Link from "next/link"
 import { Label } from "@/components/ui/label"
 import Header from "@/components/header"
 import { TextWithTooltips } from "@/components/tooltip"
+import WeatherWidget from "@/components/WeatherWidget"
 
 export default function MainPage() {
   const [selectedCategory, setSelectedCategory] = useState("전체")
@@ -56,6 +57,14 @@ export default function MainPage() {
       image: "/placeholder.svg?height=200&width=300",
     },
   ]
+
+  // 카테고리별 필터링된 뉴스 아이템을 useMemo로 캐싱
+  const filteredNewsItems = useMemo(() => {
+    if (selectedCategory === "전체") {
+      return newsItems
+    }
+    return newsItems.filter(item => item.category === selectedCategory)
+  }, [selectedCategory, newsItems])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -127,7 +136,7 @@ export default function MainPage() {
 
             {/* News List */}
             <div className="space-y-6">
-              {newsItems.map((news, index) => (
+              {filteredNewsItems.map((news, index) => (
                 <Card 
                   key={news.id} 
                   className={`glass hover-lift animate-slide-in ${
@@ -157,7 +166,9 @@ export default function MainPage() {
                         </span>
                       </div>
                       <h3 className="text-xl font-semibold mb-3 hover:text-blue-600 cursor-pointer transition-colors">
-                        <TextWithTooltips text={news.title} />
+                        <Link href={`/news/${news.id}`} prefetch={false}>
+                          <TextWithTooltips text={news.title} />
+                        </Link>
                       </h3>
                       <p className="text-gray-600 mb-4 line-clamp-3">
                         <TextWithTooltips text={news.summary} />
@@ -232,18 +243,7 @@ export default function MainPage() {
               </Card>
 
               {/* Weather Widget */}
-              <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.5s' }}>
-                <CardHeader>
-                  <CardTitle className="text-lg">오늘의 날씨</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-blue-600 animate-pulse-slow">22°C</div>
-                    <div className="text-gray-600">맑음</div>
-                    <div className="text-sm text-gray-500 mt-2">서울특별시</div>
-                  </div>
-                </CardContent>
-              </Card>
+              <WeatherWidget />
             </div>
           </div>
         </div>
