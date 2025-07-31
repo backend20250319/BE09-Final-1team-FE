@@ -88,7 +88,7 @@ export default function ForgotPasswordPage() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             로그인으로 돌아가기
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">NewNormalList</h1>
+          <h1 className="text-3xl font-bold font-logo text-gray-900">NewSphere</h1>
           <p className="text-gray-600 mt-2">개인 맞춤 뉴스 서비스</p>
         </div>
 
