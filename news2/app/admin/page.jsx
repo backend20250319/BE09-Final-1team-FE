@@ -65,10 +65,10 @@ export default function AdminDashboard() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="dashboard">대시보드</TabsTrigger>
-            <TabsTrigger value="articles">뉴스 관리</TabsTrigger>
+            {/* <TabsTrigger value="articles">뉴스 관리</TabsTrigger> */}
             <TabsTrigger value="users">회원 관리</TabsTrigger>
             <TabsTrigger value="newsletter">뉴스레터</TabsTrigger>
-            <TabsTrigger value="settings">설정</TabsTrigger>
+            {/* <TabsTrigger value="settings">설정</TabsTrigger> */}
           </TabsList>
 
           {/* Dashboard Tab */}
@@ -224,8 +224,8 @@ export default function AdminDashboard() {
             </Card>
           </TabsContent>
 
-          {/* Articles Management Tab */}
-          <TabsContent value="articles" className="space-y-6">
+          {/* 뉴스 관리 탭 */}
+          {/* <TabsContent value="articles" className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">뉴스 관리</h2>
               <Button>
@@ -298,7 +298,7 @@ export default function AdminDashboard() {
                 </Table>
               </CardContent>
             </Card>
-          </TabsContent>
+          </TabsContent> */}
 
           {/* Users Management Tab */}
           <TabsContent value="users" className="space-y-6">
@@ -441,8 +441,8 @@ export default function AdminDashboard() {
             </Card>
           </TabsContent>
 
-          {/* Settings Tab */}
-          <TabsContent value="settings" className="space-y-6">
+          {/* 설정 탭 */}
+          {/* <TabsContent value="settings" className="space-y-6">
             <h2 className="text-2xl font-bold">시스템 설정</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -480,7 +480,7 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
+          </TabsContent> */}
         </Tabs>
       </div>
     </div>
