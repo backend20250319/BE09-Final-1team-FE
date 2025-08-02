@@ -153,5 +153,3 @@ export default function Header() {
 
 }
 
-}
-
