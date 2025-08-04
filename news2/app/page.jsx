@@ -12,10 +12,13 @@ import Header from "@/components/header"
 import { TextWithTooltips } from "@/components/tooltip"
 import WeatherWidget from "@/components/WeatherWidget"
 import { newsService } from "@/lib/newsService"
+import SubscribeForm from "@/components/SubscribeForm"
+import SubscriberCount from "@/components/SubscriberCount"
 
 export default function MainPage() {
   const [selectedCategory, setSelectedCategory] = useState("전체")
   const [isLoaded, setIsLoaded] = useState(false)
+  const [updateCountFunction, setUpdateCountFunction] = useState(null)
 
   useEffect(() => {
     const fetchNews = async () => {
@@ -214,23 +217,25 @@ export default function MainPage() {
           <div className="lg:col-span-1">
             <div className="space-y-6">
               {/* Newsletter Subscription */}
-              <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.3s' }}>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center">
-                    <Zap className="h-5 w-5 mr-2 text-yellow-500" />
-                    뉴스레터 구독
-                  </CardTitle>
-                  <CardDescription>매일 아침 엄선된 뉴스를 받아보세요</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <Input placeholder="이메일 주소" type="email" className="bg-white/50 border-gray-200" />
-                    <Button className="w-full gradient-bg hover:shadow-lg transition-all duration-300">
-                      구독하기
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="animate-slide-in" style={{ animationDelay: '0.3s' }}>
+                <SubscribeForm 
+                  onSubscribeSuccess={(email) => {
+                    // 구독 성공 시 구독자 수 업데이트
+                    if (updateCountFunction) {
+                      updateCountFunction(1)
+                    }
+                    console.log('🎉 새로운 구독자:', email)
+                  }}
+                />
+              </div>
+
+              {/* 구독자 수 표시 */}
+              <div className="animate-slide-in" style={{ animationDelay: '0.4s' }}>
+                <SubscriberCount 
+                  initialCount={15420}
+                  onCountUpdate={setUpdateCountFunction}
+                />
+              </div>
 
               {/* Trending Topics */}
               <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.4s' }}>
