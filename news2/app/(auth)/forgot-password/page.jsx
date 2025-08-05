@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ArrowLeft, Mail, CheckCircle, AlertCircle, User } from "lucide-react";
 import Link from "next/link";
- 
+
 export default function ForgotPasswordPage() {
   // --- 상태값 관리 영역 ---
   const [email, setEmail] = useState("");        // 사용자가 입력한 이메일
@@ -23,7 +23,7 @@ export default function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);     // 로딩(전송 중) 여부
   const [error, setError] = useState("");        // 에러 메시지
 
-  // --- 폼 제출(임시 비밀번호 발급 요청) 핸들러 ---
+  // --- 폼 제출 핸들러 ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -52,7 +52,7 @@ export default function ForgotPasswordPage() {
       await new Promise((resolve) => setTimeout(resolve, 2000));
       setIsSubmitted(true); // 발급 성공 처리
     } catch (error) {
-      setError("임시 비밀번호 발급 중 오류가 발생했습니다. 다시 시도해주세요.");
+      setError("재설정 링크 발송 중 오류가 발생했습니다. 다시 시도해주세요.");
     } finally {
       setIsLoading(false); // 로딩 상태 해제
     }
@@ -69,7 +69,7 @@ export default function ForgotPasswordPage() {
       // 테스트용 시뮬레이션 (1초 대기)
       await new Promise((resolve) => setTimeout(resolve, 1000));
     } catch (error) {
-      setError("임시 비밀번호 재발급 중 오류가 발생했습니다.");
+      setError("재설정 링크 재발송 중 오류가 발생했습니다.");
     } finally {
       setIsLoading(false);
     }
@@ -97,12 +97,12 @@ export default function ForgotPasswordPage() {
           <CardHeader>
             {/* 상태에 따라 타이틀/설명 변경 */}
             <CardTitle>
-              {isSubmitted ? "임시 비밀번호 발급 완료" : "비밀번호 찾기"}
+              {isSubmitted ? "비밀번호 재설정 링크 발송 완료" : "비밀번호 찾기"}
             </CardTitle>
             <CardDescription>
               {isSubmitted
                 ? "이메일을 확인해 주세요."
-                : "이름과 이메일을 입력하면 임시 비밀번호를 받을 수 있습니다."}
+                : "이름과 이메일을 입력하면 비밀번호 재설정 링크를 받을 수 있습니다."}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -152,7 +152,7 @@ export default function ForgotPasswordPage() {
                 )}
                 {/* 제출 버튼 */}
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "발급 중..." : "임시 비밀번호 발급"}
+                  {isLoading ? "발급 중..." : "비밀번호 재설정 링크 받기"}
                 </Button>
               </form>
             ) : (
@@ -162,7 +162,7 @@ export default function ForgotPasswordPage() {
                 <Alert>
                   <CheckCircle className="h-4 w-4" />
                   <AlertDescription>
-                    <strong>{email}</strong>로 임시 비밀번호를 발송했습니다.
+                    <strong>{email}</strong>로 비밀번호 재설정 링크를 발송했습니다.
                   </AlertDescription>
                 </Alert>
 
@@ -174,9 +174,7 @@ export default function ForgotPasswordPage() {
                     <li>이메일 주소 재확인</li>
                     <li>잠시 후 재시도</li>
                   </ul>
-                  <p className="text-orange-600 font-medium">
-                    💡 임시 비밀번호로 로그인 후 새 비밀번호로 변경하세요!
-                  </p>
+                  <p>링크는 24시간 동안 유효합니다.</p>
                 </div>
                 {/* 에러 메시지 (재발급 중 오류 등) */}
                 {error && (
