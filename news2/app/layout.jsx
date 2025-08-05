@@ -7,8 +7,14 @@ export const metadata = {
   description: '실시간 뉴스, 커뮤니티, 뉴스레터를 제공하는 종합 뉴스 플랫폼',
   keywords: '뉴스, 커뮤니티, 뉴스레터, 실시간뉴스',
   authors: [{ name: 'NewsHub Team' }],
-  viewport: 'width=device-width, initial-scale=1',
 }
+
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+}
+
 
 export default function RootLayout({ children }) {
   return (
