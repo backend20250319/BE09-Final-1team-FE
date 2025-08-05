@@ -4,13 +4,14 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Mail, CheckCircle, AlertCircle } from 'lucide-react'
+import { Mail, CheckCircle, AlertCircle, PartyPopper } from 'lucide-react'
 
 export default function SubscribeForm({ onSubscribeSuccess }) {
   const [email, setEmail] = useState('')
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [showCelebration, setShowCelebration] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -31,6 +32,12 @@ export default function SubscribeForm({ onSubscribeSuccess }) {
       if (res.ok) {
         setSuccess(true)
         setEmail('')
+        setShowCelebration(true)
+        
+        // 축하 애니메이션 3초 후 제거
+        setTimeout(() => {
+          setShowCelebration(false)
+        }, 3000)
         
         // 부모 컴포넌트에 구독 성공 알림
         if (onSubscribeSuccess) {
@@ -49,11 +56,19 @@ export default function SubscribeForm({ onSubscribeSuccess }) {
   const resetForm = () => {
     setSuccess(false)
     setError('')
+    setShowCelebration(false)
   }
 
   if (success) {
     return (
-      <Card className="border-green-200 bg-green-50">
+      <Card className="border-green-200 bg-green-50 relative overflow-hidden">
+        {showCelebration && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="animate-bounce">
+              <PartyPopper className="h-8 w-8 text-yellow-500" />
+            </div>
+          </div>
+        )}
         <CardContent className="p-4">
           <div className="flex items-center gap-2 text-green-700">
             <CheckCircle className="h-5 w-5" />
