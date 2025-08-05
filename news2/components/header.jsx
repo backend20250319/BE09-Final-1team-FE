@@ -126,7 +126,7 @@ export default function Header() {
                   </Button>
                 </div>
               ) : (
-                <Link href="/login" className="relative">
+                <Link href="/auth" className="relative">
                   <Button
                     variant="ghost"
                     size="icon"
@@ -185,8 +185,6 @@ export default function Header() {
       </div>
     </header>
   );
-
-}
 
 }
 

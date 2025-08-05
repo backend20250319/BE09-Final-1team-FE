@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Protest+Riot&display=swap');
 
 @tailwind base;
@@ -92,11 +91,6 @@
 .font-logo {
   font-family: "Protest Riot", "NoonnuBasicGothic", cursive, sans-serif;
   font-weight: 400;
-}
-
-/* Protest Riot 폰트 전용 클래스 */
-.font-protest {
-  font-family: "Protest Riot", cursive;
 }
 
 
