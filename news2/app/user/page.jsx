@@ -255,9 +255,9 @@ export default function UserDashboard() {
           <TabsContent value="newsletters" className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">뉴스레터 관리</h2>
-              <Button>
+              <Button onClick={() => window.location.href = '/user/newsletter'}>
                 <Mail className="h-4 w-4 mr-2" />
-                새 뉴스레터 구독
+                뉴스레터 관리
               </Button>
             </div>
 
