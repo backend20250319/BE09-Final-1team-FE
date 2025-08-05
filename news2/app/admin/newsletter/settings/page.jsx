@@ -126,7 +126,7 @@ export default function NewsletterSettings() {
                       onChange={(e) => handleSettingChange("defaultSubject", e.target.value)}
                       placeholder="기본 제목을 입력하세요"
                     />
-                    <p className="text-xs text-gray-500">사용 가능한 변수: {category}, {date}, {title}</p>
+                    <p className="text-xs text-gray-500">사용 가능한 변수: {'{category}'}, {'{date}'}, {'{title}'}</p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="footerText">푸터 텍스트</Label>
