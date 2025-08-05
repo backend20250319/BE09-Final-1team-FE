@@ -12,7 +12,7 @@ import {
   Users, 
   TrendingUp, 
   Eye, 
-  Click, 
+  MousePointer, 
   Plus, 
   Edit, 
   Trash2, 
@@ -134,7 +134,7 @@ export default function NewsletterDashboard() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">평균 클릭율</CardTitle>
-                  <Click className="h-4 w-4 text-muted-foreground" />
+                  <MousePointer className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">12.8%</div>
