@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -32,7 +32,21 @@ export default function ResetPasswordPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [token, setToken] = useState(null);
+
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // --- 컴포넌트 마운트 시 URL에서 토큰 가져오기 ---
+  useEffect(() => {
+    const tokenFromUrl = searchParams.get("token");
+    if (!tokenFromUrl) {
+      setError(
+        "유효하지 않은 접근입니다. 비밀번호 재설정 이메일을 다시 확인해주세요."
+      );
+    }
+    setToken(tokenFromUrl);
+  }, [searchParams]);
 
   // --- 비밀번호 유효성 검사 ---
   const validatePassword = (password) => {
@@ -45,11 +59,18 @@ export default function ResetPasswordPage() {
     return null;
   };
 
-  // --- 폼 제출 핸들러 ---
+  // --- 폼 제출 핸들러 (백엔드 API 연동) ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
+
+    // 토큰 존재 여부 확인
+    if (!token) {
+      setError("유효하지 않은 재설정 토큰입니다.");
+      setIsLoading(false);
+      return;
+    }
 
     // 비밀번호 유효성 검사
     const passwordError = validatePassword(newPassword);
@@ -67,19 +88,36 @@ export default function ResetPasswordPage() {
     }
 
     try {
-      // (실제 구현시) 백엔드 API 호출 자리
-      // const token = searchParams.get('token');
-      // await fetch('/api/reset-password', {
-      //   method: 'POST',
-      //   body: JSON.stringify({ token, newPassword }),
-      //   headers: { 'Content-Type': 'application/json' }
-      // });
+      // 백엔드 API 호출
+      const response = await fetch(
+        "http://localhost:8000/api/auth/password/reset",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          // 백엔드에서 요구하는 필드명(token, newPassword, confirmPassword)에 맞춰 전송
+          body: JSON.stringify({
+            token: token,
+            newPassword: newPassword,
+            confirmPassword: confirmPassword,
+          }),
+        }
+      );
 
-      // 현재는 테스트용 시뮬레이션 (2초 대기)
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      setIsSubmitted(true); // 재설정 성공 처리
+      const result = await response.json();
+
+      if (!response.ok) {
+        // 서버에서 보낸 에러 메시지가 있다면 사용, 없다면 기본 메시지
+        throw new Error(
+          result.message || "비밀번호 재설정 중 오류가 발생했습니다."
+        );
+      }
+
+      // 재설정 성공 처리
+      setIsSubmitted(true);
     } catch (error) {
-      setError("비밀번호 재설정 중 오류가 발생했습니다. 다시 시도해주세요.");
+      setError(
+        error.message || "네트워크 오류가 발생했습니다. 다시 시도해주세요."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -208,7 +246,11 @@ export default function ResetPasswordPage() {
                 )}
 
                 {/* 제출 버튼 */}
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isLoading || !token}
+                >
                   {isLoading ? "재설정 중..." : "비밀번호 재설정"}
                 </Button>
               </form>
