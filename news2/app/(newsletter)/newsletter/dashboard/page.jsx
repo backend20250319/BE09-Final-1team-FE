@@ -22,14 +22,33 @@ import Header from "@/components/header"
 
 export default function NewsletterDashboard() {
   const [isLoaded, setIsLoaded] = useState(false)
+  const [subscribers, setSubscribers] = useState([])
+  const [isLoadingSubscribers, setIsLoadingSubscribers] = useState(false)
+
+  // 구독자 수 가져오기
+  const fetchSubscribers = async () => {
+    setIsLoadingSubscribers(true)
+    try {
+      const response = await fetch('/api/subscribe')
+      if (response.ok) {
+        const data = await response.json()
+        setSubscribers(data.subscribers || [])
+      }
+    } catch (error) {
+      console.error('구독자 수 가져오기 오류:', error)
+    } finally {
+      setIsLoadingSubscribers(false)
+    }
+  }
 
   useEffect(() => {
     setIsLoaded(true)
+    fetchSubscribers()
   }, [])
 
   // 대시보드 데이터
   const dashboardData = {
-    totalSubscriptions: 8,
+    totalSubscriptions: isLoadingSubscribers ? '...' : subscribers.length,
     totalReads: 156,
     averageReadTime: 3.2,
     favoriteCategory: "경제",

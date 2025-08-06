@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -22,6 +23,7 @@ import Link from "next/link";
  * - 약관 동의 및 뉴스레터 구독 옵션 제공
  */
 export default function SignupForm() {
+  const router = useRouter();
   // 사용자가 선택한 관심사 목록 상태 관리
   const [selectedInterests, setSelectedInterests] = useState([]);
 
@@ -37,6 +39,18 @@ export default function SignupForm() {
     { id: "entertainment", label: "연예", icon: "🎬" },
   ];
 
+  // 폼 상태 관리
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    newsletter: false,
+    terms: false
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [showRedirectMessage, setShowRedirectMessage] = useState(false);
+
   /**
    * 관심사 선택/해제 토글 함수
    * @param {string} interestId - 선택/해제할 관심사 ID
@@ -51,13 +65,64 @@ export default function SignupForm() {
         // 이미 선택된 항목이면 제거
         return prev.filter((id) => id !== interestId);
       } else {
-        // 새로 선택하는 경우 3개 제한 확인
+        // 새로 선택하는 경우 3개 제한 확인 후 추가
         if (prev.length >= 3) {
           return prev; // 3개 이상이면 추가하지 않음
         }
         return [...prev, interestId];
       }
     });
+  };
+
+  /**
+   * 회원가입 및 뉴스레터 구독 처리
+   */
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    try {
+      // 회원가입 처리 (실제 구현에서는 API 호출)
+      console.log('회원가입 처리:', formData);
+      
+      // 뉴스레터 구독이 체크된 경우 구독 처리
+      if (formData.newsletter && formData.email) {
+        const subscribeRes = await fetch('/api/subscribe', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email: formData.email }),
+        });
+
+        if (subscribeRes.ok) {
+          console.log('뉴스레터 구독 완료:', formData.email);
+          setShowRedirectMessage(true);
+          
+          // 안내 메시지 2초 후 제거
+          setTimeout(() => {
+            setShowRedirectMessage(false);
+          }, 2000);
+          
+          // 3초 후 뉴스레터 대시보드로 이동
+          setTimeout(() => {
+            router.push('/newsletter/dashboard');
+          }, 3000);
+        }
+      }
+
+      // 회원가입 성공 후 로그인 페이지로 이동 (뉴스레터 구독이 아닌 경우)
+      if (!formData.newsletter) {
+        router.push('/auth');
+      }
+      
+    } catch (err) {
+      setError('회원가입 중 오류가 발생했습니다.');
+      console.error('회원가입 오류:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -69,49 +134,59 @@ export default function SignupForm() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* 이름 입력 필드 */}
-        <div className="space-y-2">
-          <Label htmlFor="signup-name">이름</Label>
-          <div className="relative">
-            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              id="signup-name"
-              placeholder="이름을 입력하세요"
-              className="pl-10"
-            />
+        <form onSubmit={handleSubmit}>
+          {/* 이름 입력 필드 */}
+          <div className="space-y-2">
+            <Label htmlFor="signup-name">이름</Label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                id="signup-name"
+                placeholder="이름을 입력하세요"
+                className="pl-10"
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                required
+              />
+            </div>
           </div>
-        </div>
 
-        {/* 이메일 입력 필드 */}
-        <div className="space-y-2">
-          <Label htmlFor="signup-email">이메일</Label>
-          <div className="relative">
-            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              id="signup-email"
-              type="email"
-              placeholder="이메일을 입력하세요"
-              className="pl-10"
-            />
+          {/* 이메일 입력 필드 */}
+          <div className="space-y-2">
+            <Label htmlFor="signup-email">이메일</Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                id="signup-email"
+                type="email"
+                placeholder="이메일을 입력하세요"
+                className="pl-10"
+                value={formData.email}
+                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                required
+              />
+            </div>
           </div>
-        </div>
 
-        {/* 비밀번호 입력 필드 */}
-        <div className="space-y-2">
-          <Label htmlFor="signup-password">비밀번호</Label>
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              id="signup-password"
-              type="password"
-              placeholder="비밀번호를 입력하세요"
-              className="pl-10"
-            />
+          {/* 비밀번호 입력 필드 */}
+          <div className="space-y-2">
+            <Label htmlFor="signup-password">비밀번호</Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                id="signup-password"
+                type="password"
+                placeholder="비밀번호를 입력하세요"
+                className="pl-10"
+                value={formData.password}
+                onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                required
+              />
+            </div>
           </div>
-        </div>
 
         {/* 관심사 선택 섹션 */}
-        <div className="space-y-3">
+        <div className="space-y-3 mt-2">
           <Label className="flex items-center justify-between">
             <span className="flex items-center">
               <Heart className="h-4 w-4 mr-2 text-red-500" />
@@ -151,34 +226,69 @@ export default function SignupForm() {
           </div>
         </div>
 
-        {/* 약관 동의 섹션 */}
-        <div className="space-y-3">
-          {/* 뉴스레터 구독 동의 */}
-          <div className="flex items-center space-x-2">
-            <Checkbox id="newsletter" />
-            <Label htmlFor="newsletter" className="text-sm">
-              뉴스레터 구독 (매일 아침 맞춤 뉴스 받기)
-            </Label>
+          {/* 약관 동의 섹션 */}
+          <div className="space-y-3 mb-2 mt-2">
+            {/* 뉴스레터 구독 동의 */}
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="newsletter" 
+                checked={formData.newsletter}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, newsletter: checked }))}
+              />
+              <Label htmlFor="newsletter" className="text-sm">
+                뉴스레터 구독 (매일 아침 맞춤 뉴스 받기)
+              </Label>
+            </div>
+
+            {/* 이용약관 및 개인정보처리방침 동의 */}
+            <div className="flex items-center space-x-2 ">
+              <Checkbox 
+                id="terms" 
+                checked={formData.terms}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, terms: checked }))}
+                required
+              />
+              <Label htmlFor="terms" className="text-sm">
+                <Link href="/terms" className="text-blue-600 hover:underline">
+                  이용약관
+                </Link>{" "}
+                및{" "}
+                <Link href="/privacy" className="text-blue-600 hover:underline">
+                  개인정보처리방침
+                </Link>
+                에 동의합니다
+              </Label>
+            </div>
           </div>
 
-          {/* 이용약관 및 개인정보처리방침 동의 */}
-          <div className="flex items-center space-x-2">
-            <Checkbox id="terms" />
-            <Label htmlFor="terms" className="text-sm">
-              <Link href="/terms" className="text-blue-600 hover:underline">
-                이용약관
-              </Link>{" "}
-              및{" "}
-              <Link href="/privacy" className="text-blue-600 hover:underline">
-                개인정보처리방침
-              </Link>
-              에 동의합니다
-            </Label>
-          </div>
-        </div>
+          {/* 오류 메시지 */}
+          {error && (
+            <div className="text-red-600 text-sm">
+              {error}
+            </div>
+          )}
 
-        {/* 회원가입 버튼 */}
-        <Button className="w-full">회원가입</Button>
+          {/* 회원가입 버튼 */}
+          <Button 
+            type="submit" 
+            className="w-full"
+            disabled={isLoading}
+          >
+            {isLoading ? '처리 중...' : '회원가입'}
+          </Button>
+          
+          {/* 뉴스레터 구독 안내 메시지 */}
+          {showRedirectMessage && (
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-700">
+                ✅ 뉴스레터 구독이 완료되었습니다!
+              </p>
+              <p className="text-xs text-blue-600 mt-1 animate-fade-in">
+                잠시 후 뉴스레터 대시보드로 이동합니다...
+              </p>
+            </div>
+          )}
+        </form>
       </CardContent>
     </Card>
   );
