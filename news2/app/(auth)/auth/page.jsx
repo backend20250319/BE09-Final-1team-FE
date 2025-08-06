@@ -3,7 +3,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import LoginForm from "./_components/LoginForm";
+import LoginFormWithLogic from "./_components/LoginFormWithLogic";
 import SignupForm from "./_components/SignupForm";
 
 /**
@@ -39,7 +39,7 @@ export default function AuthPage() {
 
           {/* 로그인 탭 컨텐츠 */}
           <TabsContent value="login">
-            <LoginForm />
+            <LoginFormWithLogic />
           </TabsContent>
 
           {/* 회원가입 탭 컨텐츠 */}

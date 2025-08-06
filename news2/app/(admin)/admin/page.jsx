@@ -11,7 +11,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
-import { Users, FileText, Mail, Eye, LogOut, Bell, Plus, Edit, Trash2, CheckCircle, XCircle } from "lucide-react"
+import { Users, FileText, Mail, Eye, LogOut, Bell, Plus, Edit, Trash2, CheckCircle, XCircle, Save } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Header from "@/components/header"
 
 export default function AdminDashboard() {
@@ -63,12 +65,11 @@ export default function AdminDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="dashboard">대시보드</TabsTrigger>
-            {/* <TabsTrigger value="articles">뉴스 관리</TabsTrigger> */}
             <TabsTrigger value="users">회원 관리</TabsTrigger>
             <TabsTrigger value="newsletter">뉴스레터</TabsTrigger>
-            {/* <TabsTrigger value="settings">설정</TabsTrigger> */}
+            <TabsTrigger value="settings">설정</TabsTrigger>
           </TabsList>
 
           {/* Dashboard Tab */}
@@ -367,9 +368,18 @@ export default function AdminDashboard() {
           <TabsContent value="newsletter" className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">뉴스레터 관리</h2>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />새 뉴스레터 작성
-              </Button>
+              <div className="flex space-x-2">
+                <Button onClick={() => window.location.href = '/admin/newsletter/dashboard'}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  뉴스레터 대시보드
+                </Button>
+                <Button variant="outline" onClick={() => window.location.href = '/admin/newsletter/template'}>
+                  템플릿 관리
+                </Button>
+                <Button variant="outline" onClick={() => window.location.href = '/admin/newsletter/settings'}>
+                  설정
+                </Button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -441,9 +451,15 @@ export default function AdminDashboard() {
             </Card>
           </TabsContent>
 
-          {/* 설정 탭 */}
-          {/* <TabsContent value="settings" className="space-y-6">
-            <h2 className="text-2xl font-bold">시스템 설정</h2>
+          {/* Settings Tab */}
+          <TabsContent value="settings" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">시스템 설정</h2>
+              <Button>
+                <Save className="h-4 w-4 mr-2" />
+                설정 저장
+              </Button>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card>
@@ -453,11 +469,15 @@ export default function AdminDashboard() {
                 <CardContent className="space-y-4">
                   <div>
                     <Label htmlFor="site-name">사이트 이름</Label>
-                    <Input id="site-name" defaultValue="NewsHub" />
+                    <Input id="site-name" defaultValue="NewSphere" />
                   </div>
                   <div>
                     <Label htmlFor="admin-email">관리자 이메일</Label>
-                    <Input id="admin-email" defaultValue="admin@newshub.com" />
+                    <Input id="admin-email" defaultValue="admin@newsphere.com" />
+                  </div>
+                  <div>
+                    <Label htmlFor="site-url">사이트 URL</Label>
+                    <Input id="site-url" defaultValue="https://newsphere.com" />
                   </div>
                   <Button>저장</Button>
                 </CardContent>
@@ -465,22 +485,37 @@ export default function AdminDashboard() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>뉴스레터 설정</CardTitle>
+                  <CardTitle>보안 설정</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="sender-name">발신자 이름</Label>
-                    <Input id="sender-name" defaultValue="NewsHub" />
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>2단계 인증</Label>
+                      <p className="text-sm text-gray-500">관리자 계정에 2단계 인증 적용</p>
+                    </div>
+                    <Switch />
                   </div>
-                  <div>
-                    <Label htmlFor="sender-email">발신자 이메일</Label>
-                    <Input id="sender-email" defaultValue="newsletter@newshub.com" />
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>세션 타임아웃</Label>
+                      <p className="text-sm text-gray-500">자동 로그아웃 시간 설정</p>
+                    </div>
+                    <Select defaultValue="8">
+                      <SelectTrigger className="w-24">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="4">4시간</SelectItem>
+                        <SelectItem value="8">8시간</SelectItem>
+                        <SelectItem value="24">24시간</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <Button>저장</Button>
+                  <Button variant="outline">보안 로그 보기</Button>
                 </CardContent>
               </Card>
             </div>
-          </TabsContent> */}
+          </TabsContent>
         </Tabs>
       </div>
     </div>
