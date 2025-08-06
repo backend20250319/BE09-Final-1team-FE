@@ -9,6 +9,7 @@ import { ArrowLeft, Share2, Bookmark, Eye, Clock, User } from "lucide-react"
 import Link from "next/link"
 import Header from "@/components/header"
 import { newsService } from "@/lib/newsService"
+import AiSummaryButton from "../../../../components/aisummarybot/AiSummaryButton"
 
 export default function NewsDetailPage() {
   const { id } = useParams()
@@ -117,6 +118,7 @@ export default function NewsDetailPage() {
                   </span>
                 </div>
                 <div className="flex items-center space-x-4">
+                  <AiSummaryButton newsId={article.id} />
                   <span className="flex items-center">
                     <Eye className="h-4 w-4 mr-1" />
                     {article.views?.toLocaleString() || 0}

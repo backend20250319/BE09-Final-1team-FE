@@ -93,6 +93,11 @@
   font-weight: 400;
 }
 
+/* Protest Riot 폰트 전용 클래스 */
+.font-protest {
+  font-family: "Protest Riot", cursive;
+}
+
 
 /* 툴팁 관련 스타일 - Portal 기반 */
 .tooltip-portal {

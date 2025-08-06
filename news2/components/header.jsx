@@ -100,7 +100,7 @@ export default function Header() {
                   3
                 </Badge>
               </Button>
-              
+
               {userRole ? (
                 <div className="flex items-center space-x-2">
                   {userRole === "admin" && (
