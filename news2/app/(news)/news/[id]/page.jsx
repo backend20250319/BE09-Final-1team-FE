@@ -9,7 +9,7 @@ import { ArrowLeft, Share2, Bookmark, Eye, Clock, User } from "lucide-react"
 import Link from "next/link"
 import Header from "@/components/header"
 import { newsService } from "@/lib/newsService"
-import AiSummaryButton from "../../../components/aisummarybot/AiSummaryButton";
+import AiSummaryButton from "../../../../components/aisummarybot/AiSummaryButton"
 
 export default function NewsDetailPage() {
   const { id } = useParams()
