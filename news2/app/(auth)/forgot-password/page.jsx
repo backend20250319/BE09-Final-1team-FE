@@ -50,8 +50,10 @@ export default function ForgotPasswordPage() {
     }
 
     try {
-      // --- 백엔드 API 호출 ---
-      const response = await fetch('http://localhost:8000/api/auth/password/find', {
+      // 환경변수에서 API 기본 URL 가져오기
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      // API 호출
+      const response = await fetch(`${apiUrl}/api/auth/password/find`, {
           method: 'POST',
           headers: {
               'Content-Type': 'application/json',
