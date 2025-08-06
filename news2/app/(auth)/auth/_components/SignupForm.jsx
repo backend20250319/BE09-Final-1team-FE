@@ -83,38 +83,50 @@ export default function SignupForm() {
     setIsLoading(true);
 
     try {
-      // 회원가입 처리 (실제 구현에서는 API 호출)
-      console.log('회원가입 처리:', formData);
-      
-      // 뉴스레터 구독이 체크된 경우 구독 처리
-      if (formData.newsletter && formData.email) {
-        const subscribeRes = await fetch('/api/subscribe', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ email: formData.email }),
-        });
+      // 회원가입 API 호출
+      const registerRes = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          newsletter: formData.newsletter
+        }),
+      });
 
-        if (subscribeRes.ok) {
-          console.log('뉴스레터 구독 완료:', formData.email);
-          setShowRedirectMessage(true);
-          
-          // 안내 메시지 2초 후 제거
-          setTimeout(() => {
-            setShowRedirectMessage(false);
-          }, 2000);
-          
-          // 3초 후 뉴스레터 대시보드로 이동
-          setTimeout(() => {
-            router.push('/newsletter/dashboard');
-          }, 3000);
+      const registerData = await registerRes.json();
+
+      if (registerRes.ok) {
+        console.log('회원가입 완료:', registerData);
+        
+        // 뉴스레터 구독이 체크된 경우 구독 처리
+        if (formData.newsletter && formData.email) {
+          const subscribeRes = await fetch('/api/subscribe', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email: formData.email }),
+          });
+
+          if (subscribeRes.ok) {
+            console.log('뉴스레터 구독 완료:', formData.email);
+            setShowRedirectMessage(true);
+            
+            // 안내 메시지 3초 후 제거
+            setTimeout(() => {
+              setShowRedirectMessage(false);
+            }, 3000);
+          }
         }
-      }
 
-      // 회원가입 성공 후 로그인 페이지로 이동 (뉴스레터 구독이 아닌 경우)
-      if (!formData.newsletter) {
+        // 회원가입 성공 후 로그인 페이지로 이동
         router.push('/auth');
+      } else {
+        setError(registerData.message || '회원가입에 실패했습니다.');
       }
       
     } catch (err) {
@@ -284,7 +296,7 @@ export default function SignupForm() {
                 ✅ 뉴스레터 구독이 완료되었습니다!
               </p>
               <p className="text-xs text-blue-600 mt-1 animate-fade-in">
-                잠시 후 뉴스레터 대시보드로 이동합니다...
+                로그인 후 뉴스레터 서비스를 이용하실 수 있습니다.
               </p>
             </div>
           )}
