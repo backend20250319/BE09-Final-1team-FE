@@ -88,12 +88,12 @@ export default function ResetPasswordPage() {
     }
 
     try {
-      // 백엔드 API 호출
-      const response = await fetch(
-        "http://localhost:8000/api/auth/password/reset",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+      // 환경변수에서 API 기본 URL 가져오기
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      // API 호출
+      const response = await fetch(`${apiUrl}/api/auth/password/reset`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
           // 백엔드에서 요구하는 필드명(token, newPassword, confirmPassword)에 맞춰 전송
           body: JSON.stringify({
             token: token,
