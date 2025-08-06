@@ -5,17 +5,21 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input" 
 import { Badge } from "@/components/ui/badge"
-import { Bell, Search, User, Menu, Bookmark, Share2, Clock, Eye, TrendingUp, Zap } from "lucide-react"
+import { Bell, Search, User, Menu, Bookmark, Share2, Clock, Eye, TrendingUp, Zap, Shield } from "lucide-react"
 import Link from "next/link"
 import { Label } from "@/components/ui/label"
 import Header from "@/components/header"
 import { TextWithTooltips } from "@/components/tooltip"
 import WeatherWidget from "@/components/WeatherWidget"
 import { newsService } from "@/lib/newsService"
+import SubscribeForm from "@/components/SubscribeForm"
+import SubscriberCount from "@/components/SubscriberCount"
+import { getUserRole } from "@/lib/auth"
 
 export default function MainPage() {
   const [selectedCategory, setSelectedCategory] = useState("전체")
   const [isLoaded, setIsLoaded] = useState(false)
+  const [userRole, setUserRole] = useState(null)
 
   useEffect(() => {
     const fetchNews = async () => {
@@ -31,6 +35,7 @@ export default function MainPage() {
     }
 
     fetchNews()
+    setUserRole(getUserRole())
   }, [])
 
   const categories = ["전체", "정치", "경제", "사회", "IT/과학", "스포츠", "문화"]
@@ -70,6 +75,40 @@ export default function MainPage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-3">
+            {/* Welcome Message */}
+            {userRole && (
+              <div className="mb-6">
+                <Card className="glass animate-slide-in">
+                  <CardContent className="p-6">
+                    <div className="flex items-center space-x-3">
+                      {userRole === "admin" ? (
+                        <Shield className="h-6 w-6 text-blue-600" />
+                      ) : (
+                        <User className="h-6 w-6 text-green-600" />
+                      )}
+                      <div>
+                        <h3 className="text-lg font-semibold">
+                          {userRole === "admin" ? "관리자님, 환영합니다!" : "사용자님, 환영합니다!"}
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          {userRole === "admin" 
+                            ? "관리자 대시보드에서 전체 시스템을 관리하세요." 
+                            : "개인화된 뉴스와 뉴스레터를 즐겨보세요."}
+                        </p>
+                      </div>
+                      {userRole === "admin" && (
+                        <Link href="/admin" className="ml-auto">
+                          <Button size="sm" variant="outline">
+                            관리자 페이지
+                          </Button>
+                        </Link>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
             {/* Category Tabs */}
             <div className="mb-6">
               <div className="flex space-x-2 overflow-x-auto pb-2">
@@ -214,23 +253,9 @@ export default function MainPage() {
           <div className="lg:col-span-1">
             <div className="space-y-6">
               {/* Newsletter Subscription */}
-              <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.3s' }}>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center">
-                    <Zap className="h-5 w-5 mr-2 text-yellow-500" />
-                    뉴스레터 구독
-                  </CardTitle>
-                  <CardDescription>매일 아침 엄선된 뉴스를 받아보세요</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <Input placeholder="이메일 주소" type="email" className="bg-white/50 border-gray-200" />
-                    <Button className="w-full gradient-bg hover:shadow-lg transition-all duration-300">
-                      구독하기
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="animate-slide-in" style={{ animationDelay: '0.3s' }}>
+                <SubscribeForm />
+              </div>
 
               {/* Trending Topics */}
               <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.4s' }}>

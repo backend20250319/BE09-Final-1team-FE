@@ -7,16 +7,27 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
-import { Mail, Clock, Users, Star, TrendingUp, Bell, Zap, Filter } from "lucide-react"
+import { Mail, Clock, Users, Star, TrendingUp, Bell, Zap, Filter, CheckCircle, AlertCircle } from "lucide-react"
 import Header from "@/components/header"
 import { TextWithTooltips } from "@/components/tooltip"
+import { useToast } from "@/hooks/use-toast"
 
 export default function NewsletterPage() {
   const [selectedCategory, setSelectedCategory] = useState("전체")
   const [isLoaded, setIsLoaded] = useState(false)
+  const [email, setEmail] = useState("")
+  const [isSubscribing, setIsSubscribing] = useState(false)
+  const [showEmailModal, setShowEmailModal] = useState(false)
+  const [pendingNewsletterId, setPendingNewsletterId] = useState(null)
+  const { toast } = useToast()
 
   useEffect(() => {
     setIsLoaded(true)
+    // 로컬 스토리지에서 구독 정보 복원
+    const savedSubscriptions = localStorage.getItem('newsletterSubscriptions')
+    if (savedSubscriptions) {
+      setSubscribedNewsletters(JSON.parse(savedSubscriptions))
+    }
   }, [])
 
   const categories = ["전체", "정치", "경제", "사회", "IT/과학", "스포츠", "문화"]
@@ -94,15 +105,90 @@ export default function NewsletterPage() {
     newsletters.filter(nl => nl.isSubscribed)
   )
 
-  const handleSubscribe = (newsletterId) => {
-    setSubscribedNewsletters(prev => {
-      const newsletter = newsletters.find(nl => nl.id === newsletterId)
-      if (prev.find(nl => nl.id === newsletterId)) {
-        return prev.filter(nl => nl.id !== newsletterId)
-      } else {
-        return [...prev, newsletter]
-      }
-    })
+  // 구독 정보를 로컬 스토리지에 저장
+  const saveSubscriptions = (subscriptions) => {
+    localStorage.setItem('newsletterSubscriptions', JSON.stringify(subscriptions))
+  }
+
+  // 이메일 유효성 검사
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
+  }
+
+  const handleSubscribe = async (newsletterId) => {
+    const newsletter = newsletters.find(nl => nl.id === newsletterId)
+    const isCurrentlySubscribed = subscribedNewsletters.some(nl => nl.id === newsletterId)
+
+    if (isCurrentlySubscribed) {
+      // 구독 해제
+      const updatedSubscriptions = subscribedNewsletters.filter(nl => nl.id !== newsletterId)
+      setSubscribedNewsletters(updatedSubscriptions)
+      saveSubscriptions(updatedSubscriptions)
+      
+      toast({
+        title: "구독 해제 완료",
+        description: `${newsletter.title} 구독이 해제되었습니다.`,
+        icon: <CheckCircle className="h-4 w-4 text-green-500" />
+      })
+    } else {
+      // 구독 추가 - 이메일 입력 필요
+      setPendingNewsletterId(newsletterId)
+      setShowEmailModal(true)
+    }
+  }
+
+  const handleEmailSubmit = async () => {
+    if (!email.trim()) {
+      toast({
+        title: "이메일 주소를 입력해주세요",
+        description: "뉴스레터를 받으실 이메일 주소를 입력해주세요.",
+        variant: "destructive",
+        icon: <AlertCircle className="h-4 w-4 text-red-500" />
+      })
+      return
+    }
+
+    if (!validateEmail(email)) {
+      toast({
+        title: "올바른 이메일 주소를 입력해주세요",
+        description: "이메일 형식이 올바르지 않습니다.",
+        variant: "destructive",
+        icon: <AlertCircle className="h-4 w-4 text-red-500" />
+      })
+      return
+    }
+
+    setIsSubscribing(true)
+
+    try {
+      // 서버 연동 시뮬레이션
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      
+      const newsletter = newsletters.find(nl => nl.id === pendingNewsletterId)
+      const updatedSubscriptions = [...subscribedNewsletters, newsletter]
+      setSubscribedNewsletters(updatedSubscriptions)
+      saveSubscriptions(updatedSubscriptions)
+
+      toast({
+        title: "구독 완료!",
+        description: `${newsletter.title} 구독이 완료되었습니다. ${email}로 뉴스레터를 발송해드립니다.`,
+        icon: <CheckCircle className="h-4 w-4 text-green-500" />
+      })
+
+      setEmail("")
+      setShowEmailModal(false)
+      setPendingNewsletterId(null)
+    } catch (error) {
+      toast({
+        title: "구독 실패",
+        description: "일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
+        variant: "destructive",
+        icon: <AlertCircle className="h-4 w-4 text-red-500" />
+      })
+    } finally {
+      setIsSubscribing(false)
+    }
   }
 
   // 카테고리별 필터링된 뉴스레터 목록
@@ -354,6 +440,56 @@ export default function NewsletterPage() {
           </div>
         </div>
       </div>
+
+      {/* 이메일 입력 모달 */}
+      {showEmailModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md mx-4">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Mail className="h-5 w-5 mr-2 text-blue-500" />
+                뉴스레터 구독
+              </CardTitle>
+              <CardDescription>
+                뉴스레터를 받으실 이메일 주소를 입력해주세요
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="email">이메일 주소</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="example@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <div className="flex space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowEmailModal(false)
+                    setEmail("")
+                    setPendingNewsletterId(null)
+                  }}
+                  className="flex-1"
+                >
+                  취소
+                </Button>
+                <Button
+                  onClick={handleEmailSubmit}
+                  disabled={isSubscribing}
+                  className="flex-1"
+                >
+                  {isSubscribing ? "구독 중..." : "구독하기"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 } 

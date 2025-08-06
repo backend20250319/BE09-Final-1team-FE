@@ -4,6 +4,12 @@
 
 ## 🚀 주요 기능
 
+### 🔐 권한 관리 시스템
+- **관리자/사용자 구분**: 역할 기반 접근 제어 (RBAC)
+- **미들웨어 보안**: Next.js middleware를 통한 서버 사이드 권한 체크
+- **쿠키 기반 인증**: 안전한 쿠키 기반 사용자 역할 관리
+- **동적 UI**: 로그인 상태에 따른 헤더 및 페이지 내용 변경
+
 ### 📰 뉴스 관리
 - **카테고리별 필터링**: 정치, 경제, 사회, IT/과학, 스포츠, 문화 카테고리 지원
 - **성능 최적화**: `useMemo`를 활용한 필터링 캐싱으로 빠른 응답 속도
@@ -40,20 +46,26 @@
 news2/
 ├── app/                    # Next.js App Router
 │   ├── page.jsx           # 메인 페이지
+│   ├── admin/             # 관리자 전용 페이지
+│   ├── user/              # 사용자 전용 페이지
+│   ├── login/             # 로그인 페이지
+│   ├── unauthorized/      # 권한 없음 페이지
 │   ├── community/         # 커뮤니티 페이지
 │   ├── newsletter/        # 뉴스레터 페이지
 │   ├── mypage/           # 마이페이지
 │   └── globals.css       # 전역 스타일
 ├── components/            # 재사용 가능한 컴포넌트
 │   ├── ui/               # 기본 UI 컴포넌트
-│   ├── header.jsx        # 헤더 컴포넌트
+│   ├── header.jsx        # 헤더 컴포넌트 (로그인 상태 반영)
 │   ├── CommentSection.jsx # 댓글 시스템
 │   ├── WeatherWidget.jsx # 날씨 위젯
 │   └── theme-provider.jsx # 테마 관리
 ├── lib/                  # 유틸리티 및 서비스
+│   ├── auth.js           # 권한 관리 유틸리티
 │   ├── newsService.js    # 뉴스 데이터 관리
 │   ├── relatedArticles.js # 관련 기사 처리
 │   └── utils.ts          # 공통 유틸리티
+├── middleware.ts          # Next.js 미들웨어 (권한 체크)
 └── public/               # 정적 파일
 ```
 
@@ -128,6 +140,46 @@ export function getRelatedArticles(allArticles, currentArticle, strategy = 'cate
 }
 ```
 
+## 🔐 권한 관리 시스템
+
+### 역할 기반 접근 제어 (RBAC)
+- **관리자 (admin)**: 전체 시스템 관리, 사용자 관리, 뉴스레터 관리
+- **일반 사용자 (user)**: 뉴스 읽기, 뉴스레터 구독, 개인 설정
+
+### 보안 구현
+```javascript
+// middleware.ts - 서버 사이드 권한 체크
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+  
+  if (pathname.startsWith("/admin")) {
+    const role = request.cookies.get("userRole")?.value
+    if (role !== "admin") {
+      return NextResponse.redirect(new URL("/unauthorized", request.url))
+    }
+  }
+  return NextResponse.next()
+}
+```
+
+### 인증 시스템
+```javascript
+// lib/auth.js - 권한 관리 유틸리티
+export function login(email, password) {
+  if (email === "admin@example.com" && password === "admin123") {
+    setUserRole("admin")
+    return { success: true, role: "admin" }
+  } else if (email === "user@example.com" && password === "user123") {
+    setUserRole("user")
+    return { success: true, role: "user" }
+  }
+}
+```
+
+### 테스트 계정
+- **관리자**: admin@example.com / admin123
+- **일반 사용자**: user@example.com / user123
+
 ## 🌤️ 실시간 날씨 위젯
 
 ### 기능
@@ -170,6 +222,12 @@ export class WeatherService {
 - [ ] 실시간 알림
 - [ ] 북마크 기능
 - [ ] 소셜 공유 기능
+
+### 5. 보안 강화
+- [ ] JWT 토큰 기반 인증
+- [ ] 세션 관리
+- [ ] 비밀번호 암호화
+- [ ] 2단계 인증 (2FA)
 
 ## 🚀 실행 방법
 
