@@ -1,4 +1,5 @@
 // 권한 관리 유틸리티 함수들
+import { getApiUrl } from './config'
 
 // 쿠키 설정 함수
 export function setUserRole(role) {
@@ -41,7 +42,7 @@ export function isUser() {
 // 로그인 함수
 export async function login(email, password) {
   try {
-    const response = await fetch('/api/auth/login', {
+    const response = await fetch(getApiUrl('auth/login'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

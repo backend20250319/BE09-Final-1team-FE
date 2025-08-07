@@ -22,6 +22,7 @@ import {
   RefreshCw
 } from "lucide-react"
 import Header from "@/components/header"
+import { getApiUrl } from "@/lib/config"
 
 export default function NewsletterDashboard() {
   const [activeTab, setActiveTab] = useState("overview")
@@ -32,7 +33,7 @@ export default function NewsletterDashboard() {
   const fetchSubscribers = async () => {
     setIsLoadingSubscribers(true)
     try {
-      const response = await fetch('/api/subscribe')
+      const response = await fetch(getApiUrl('subscribe'))
       if (response.ok) {
         const data = await response.json()
         setSubscribers(data.subscribers || [])

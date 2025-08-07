@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Mail, CheckCircle, AlertCircle, PartyPopper } from 'lucide-react'
+import { getApiUrl } from '@/lib/config'
 
 export default function SubscribeForm({ onSubscribeSuccess }) {
   const router = useRouter()
@@ -22,7 +23,7 @@ export default function SubscribeForm({ onSubscribeSuccess }) {
     setIsLoading(true)
     
     try {
-      const res = await fetch('/api/subscribe', {
+      const res = await fetch(getApiUrl('subscribe'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

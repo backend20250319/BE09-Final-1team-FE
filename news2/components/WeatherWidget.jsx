@@ -191,9 +191,11 @@ export default function WeatherWidget() {
 }
 
 // 날씨 API 서비스 (실제 연동 시 사용)
+import { config } from '@/lib/config'
+
 export class WeatherService {
   constructor() {
-    this.apiKey = process.env.NEXT_PUBLIC_WEATHER_API_KEY
+    this.apiKey = config.external.weatherApiKey
     this.baseUrl = 'https://api.openweathermap.org/data/2.5'
   }
 

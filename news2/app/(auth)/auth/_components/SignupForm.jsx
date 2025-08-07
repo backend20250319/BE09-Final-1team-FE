@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Mail, Lock, User, Heart } from "lucide-react";
 import Link from "next/link";
+import { getApiUrl } from "@/lib/config";
 
 /**
  * 회원가입 폼 컴포넌트
@@ -84,7 +85,7 @@ export default function SignupForm() {
 
     try {
       // 회원가입 API 호출
-      const registerRes = await fetch('/api/auth/register', {
+      const registerRes = await fetch(getApiUrl('auth/register'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -104,7 +105,7 @@ export default function SignupForm() {
         
         // 뉴스레터 구독이 체크된 경우 구독 처리
         if (formData.newsletter && formData.email) {
-          const subscribeRes = await fetch('/api/subscribe', {
+          const subscribeRes = await fetch(getApiUrl('subscribe'), {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
