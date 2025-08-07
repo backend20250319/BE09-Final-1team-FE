@@ -29,6 +29,7 @@ export default function AuthPage() {
             href="/"
             className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-4"
           >
+            
             <ArrowLeft className="h-4 w-4 mr-2" />
             홈으로 돌아가기
           </Link>

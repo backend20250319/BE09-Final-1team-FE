@@ -213,7 +213,7 @@ export default function ProfileTab() {
         </CardContent>
       </Card>
 
-      {/* 뉴스레터 및 보안 설정 카드 ... */}
+      {/* 뉴스레터 및 보안    설정 카드 ... */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">

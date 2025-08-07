@@ -26,7 +26,7 @@ export default function SettingsTab() {
   const [deleteError, setDeleteError] = useState("");
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
-  // 회원 탈퇴 처리 함수
+  // 회원 탈퇴 처리  함수
   const handleDeleteAccount = async () => {
     try {
       setIsDeleting(true);

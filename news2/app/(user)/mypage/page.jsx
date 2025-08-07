@@ -19,7 +19,7 @@ import HistoryTab from "./_components/HistoryTab";
 import SettingsTab from "./_components/SettingsTab";
 
 export default function MyPage() {
-  const searchParams = useSearchParams();
+  const searchParams =  useSearchParams();
   const [activeTab, setActiveTab] = useState("profile");
 
   useEffect(() => {
