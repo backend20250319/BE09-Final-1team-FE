@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -18,12 +18,39 @@ import {
   Trash2, 
   Send,
   Calendar,
-  Clock
+  Clock,
+  RefreshCw
 } from "lucide-react"
 import Header from "@/components/header"
+import { getApiUrl } from "@/lib/config"
 
 export default function NewsletterDashboard() {
   const [activeTab, setActiveTab] = useState("overview")
+  const [subscribers, setSubscribers] = useState([])
+  const [isLoadingSubscribers, setIsLoadingSubscribers] = useState(false)
+
+  // 구독자 목록 가져오기
+  const fetchSubscribers = async () => {
+    setIsLoadingSubscribers(true)
+    try {
+      const response = await fetch(getApiUrl('subscribe'))
+      if (response.ok) {
+        const data = await response.json()
+        setSubscribers(data.subscribers || [])
+      } else {
+        console.error('구독자 목록 가져오기 실패')
+      }
+    } catch (error) {
+      console.error('구독자 목록 가져오기 오류:', error)
+    } finally {
+      setIsLoadingSubscribers(false)
+    }
+  }
+
+  // 컴포넌트 마운트 시 구독자 목록 가져오기
+  useEffect(() => {
+    fetchSubscribers()
+  }, [])
 
   // 샘플 데이터
   const statsData = [
@@ -99,11 +126,12 @@ export default function NewsletterDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="overview">개요</TabsTrigger>
-            <TabsTrigger value="campaigns">캠페인</TabsTrigger>
-            <TabsTrigger value="analytics">분석</TabsTrigger>
-          </TabsList>
+                  <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview">개요</TabsTrigger>
+          <TabsTrigger value="campaigns">캠페인</TabsTrigger>
+          <TabsTrigger value="subscribers">구독자</TabsTrigger>
+          <TabsTrigger value="analytics">분석</TabsTrigger>
+        </TabsList>
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
@@ -115,8 +143,12 @@ export default function NewsletterDashboard() {
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">24,600</div>
-                  <p className="text-xs text-muted-foreground">+15% from last month</p>
+                  <div className="text-2xl font-bold">
+                    {isLoadingSubscribers ? '...' : subscribers.length}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {isLoadingSubscribers ? '로딩 중...' : '실시간 구독자 수'}
+                  </p>
                 </CardContent>
               </Card>
 
@@ -232,6 +264,84 @@ export default function NewsletterDashboard() {
                     ))}
                   </TableBody>
                 </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Subscribers Tab */}
+          <TabsContent value="subscribers" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">구독자 관리</h2>
+              <Button onClick={fetchSubscribers} disabled={isLoadingSubscribers}>
+                <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingSubscribers ? 'animate-spin' : ''}`} />
+                새로고침
+              </Button>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>구독자 목록</CardTitle>
+                <CardDescription>
+                  총 {subscribers.length}명의 구독자가 있습니다
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoadingSubscribers ? (
+                  <div className="flex items-center justify-center py-8">
+                    <RefreshCw className="h-6 w-6 animate-spin text-blue-500" />
+                    <span className="ml-2">구독자 목록을 불러오는 중...</span>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>이메일</TableHead>
+                        <TableHead>구독일</TableHead>
+                        <TableHead>상태</TableHead>
+                        <TableHead>액션</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {subscribers.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                            아직 구독자가 없습니다.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        subscribers.map((subscriber, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="font-medium">{subscriber.email}</TableCell>
+                            <TableCell>
+                              {new Date(subscriber.subscribedAt).toLocaleDateString('ko-KR', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="default" className="bg-green-100 text-green-800">
+                                활성
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex space-x-2">
+                                <Button variant="ghost" size="sm">
+                                  <Mail className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

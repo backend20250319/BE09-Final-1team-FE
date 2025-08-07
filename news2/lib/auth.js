@@ -1,4 +1,5 @@
 // 권한 관리 유틸리티 함수들
+import { getApiUrl } from './config'
 
 // 쿠키 설정 함수
 export function setUserRole(role) {
@@ -38,17 +39,28 @@ export function isUser() {
   return role === "user" || role === "admin" // admin도 user 권한을 가짐
 }
 
-// 로그인 함수 (실제 구현에서는 API 호출)
-export function login(email, password) {
-  // 간단한 예시 - 실제로는 API 호출
-  if (email === "admin@example.com" && password === "admin123") {
-    setUserRole("admin")
-    return { success: true, role: "admin" }
-  } else if (email === "user@example.com" && password === "user123") {
-    setUserRole("user")
-    return { success: true, role: "user" }
-  } else {
-    return { success: false, message: "이메일 또는 비밀번호가 올바르지 않습니다." }
+// 로그인 함수
+export async function login(email, password) {
+  try {
+    const response = await fetch(getApiUrl('auth/login'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    })
+
+    const data = await response.json()
+
+    if (response.ok) {
+      setUserRole(data.user.role)
+      return { success: true, role: data.user.role }
+    } else {
+      return { success: false, message: data.message }
+    }
+  } catch (error) {
+    console.error('로그인 오류:', error)
+    return { success: false, message: "로그인 중 오류가 발생했습니다." }
   }
 }
 
