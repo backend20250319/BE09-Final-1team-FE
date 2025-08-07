@@ -88,17 +88,6 @@ export default function NewsletterPage() {
     },
     {
       id: 5,
-      title: "스포츠 하이라이트",
-      description: "주요 스포츠 이벤트와 선수들의 활약을 요약해드립니다",
-      category: "스포츠",
-      subscribers: 9870,
-      frequency: "매일",
-      lastSent: "4시간 전",
-      isSubscribed: false,
-      tags: ["스포츠", "경기", "선수"]
-    },
-    {
-      id: 6,
       title: "문화 & 라이프스타일",
       description: "문화, 예술, 라이프스타일 관련 트렌드를 소개합니다",
       category: "문화",
@@ -128,21 +117,21 @@ export default function NewsletterPage() {
   }
 
   const handleSubscribe = async (newsletterId) => {
-    if (!userRole) {
-      toast({
-        title: "로그인이 필요합니다",
-        description: "뉴스레터를 구독하려면 먼저 로그인해주세요.",
-        variant: "destructive",
-        icon: <AlertCircle className="h-4 w-4 text-red-500" />
-      })
-      return
-    }
-
     const newsletter = newsletters.find(nl => nl.id === newsletterId)
     const isCurrentlySubscribed = subscribedNewsletters.some(nl => nl.id === newsletterId)
 
     if (isCurrentlySubscribed) {
-      // 구독 해제
+      // 구독 해제 - 로그인한 사용자만 가능
+      if (!userRole) {
+        toast({
+          title: "로그인이 필요합니다",
+          description: "구독 해제를 위해 로그인해주세요.",
+          variant: "destructive",
+          icon: <AlertCircle className="h-4 w-4 text-red-500" />
+        })
+        return
+      }
+
       const updatedSubscriptions = subscribedNewsletters.filter(nl => nl.id !== newsletterId)
       setSubscribedNewsletters(updatedSubscriptions)
       saveSubscriptions(updatedSubscriptions)
@@ -200,6 +189,13 @@ export default function NewsletterPage() {
       setEmail("")
       setShowEmailModal(false)
       setPendingNewsletterId(null)
+      
+      // 구독 완료 후 이동 - 로그인한 사용자만 이동
+      if (userRole) {
+        setTimeout(() => {
+          window.location.href = "/mypage?tab=settings"
+        }, 2000)
+      }
     } catch (error) {
       toast({
         title: "구독 실패",
@@ -259,7 +255,7 @@ export default function NewsletterPage() {
               {/* 필터링 결과 표시 */}
               <div className="mt-2 text-sm text-gray-500">
                 {selectedCategory === "전체" 
-                  ? `전체 ${newsletters.length}개의 뉴스레터`
+                  ? `전체 ${filteredNewsletters.length}개의 뉴스레터`
                   : `${selectedCategory} 카테고리 ${filteredNewsletters.length}개의 뉴스레터`
                 }
               </div>
@@ -352,6 +348,8 @@ export default function NewsletterPage() {
                   </Button>
                 </div>
               )}
+
+
             </div>
           </div>
 
@@ -416,22 +414,22 @@ export default function NewsletterPage() {
                 </Card>
               )}
 
-              {/* 로그인하지 않은 사용자를 위한 로그인 안내 */}
+              {/* 로그인하지 않은 사용자를 위한 안내 */}
               {!userRole && (
                 <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.3s' }}>
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center">
                       <User className="h-5 w-5 mr-2 text-gray-500" />
-                      로그인 필요
+                      뉴스레터 구독
                     </CardTitle>
                     <CardDescription>
-                      뉴스레터 구독을 위해 로그인해주세요
+                      로그인 없이도 뉴스레터를 구독할 수 있습니다
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="text-center py-4">
                       <p className="text-sm text-gray-500 mb-3">
-                        뉴스레터를 구독하고 관리하려면 로그인이 필요합니다.
+                        뉴스레터를 구독하고 관리하려면 로그인을 권장합니다.
                       </p>
                       <Link href="/auth">
                         <Button className="w-full hover-lift">

@@ -38,7 +38,7 @@ export default function MainPage() {
     setUserRole(getUserRole())
   }, [])
 
-  const categories = ["전체", "정치", "경제", "사회", "IT/과학", "스포츠", "문화"]
+  const categories = ["전체", "정치", "경제", "사회", "생활/문화", "IT/과학", "국제"]
   const [newsItems, setNewsItems] = useState([])
   const [loading, setLoading] = useState(true)
 
