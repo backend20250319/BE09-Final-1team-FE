@@ -4,7 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ca6686e2-3358-4d44-87a8-37fd958c7929" name="Changes" comment="[FEAT] AI 요약기능 추가&#10;&#10;- 상세페이지(news\[id]\page.jsx)에 이미지 및 요약기능 버튼 추가" />
+    <list default="true" id="ca6686e2-3358-4d44-87a8-37fd958c7929" name="Changes" comment="[FEAT] AI 요약기능 추가&#10;&#10;- 상세페이지(news\[id]\page.jsx)에 이미지 및 요약기능 버튼 추가">
+      <change beforePath="$PROJECT_DIR$/news2/app/(newsletter)/newsletter/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(newsletter)/newsletter/page.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(user)/mypage/_components/SettingsTab.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(user)/mypage/_components/SettingsTab.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(user)/mypage/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(user)/mypage/page.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/page.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/components/SubscribeForm.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/components/SubscribeForm.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/lib/auth.js" beforeDir="false" afterPath="$PROJECT_DIR$/news2/lib/auth.js" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -71,12 +78,12 @@
       </list>
     </option>
   </component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/backend20250319/BE09-Final-1team-FE.git&quot;,
-    &quot;accountId&quot;: &quot;a9928801-d60d-4285-b2ee-0d55ea62bcbb&quot;
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/backend20250319/BE09-Final-1team-FE.git",
+    "accountId": "e578d4f4-9776-4582-b575-dd84fb04e5fb"
   }
-}</component>
+}]]></component>
   <component name="KubernetesApiPersistence">{}</component>
   <component name="KubernetesApiProvider">{
   &quot;isMigrated&quot;: true
@@ -91,28 +98,28 @@
   <component name="ProjectViewState">
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Node.js.page.jsx.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;develop&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/dev/finalproject/code/BE09-Final-1team-FE&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;C:\\dev\\finalproject\\code\\BE09-Final-1team-FE\\news2\\node_modules\\typescript\\lib&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Node.js.page.jsx.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "Merging feature/chaehee",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/dev/BE09-Final-1team-FE",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "ts.external.directory.path": "C:\\dev\\finalproject\\code\\BE09-Final-1team-FE\\news2\\node_modules\\typescript\\lib",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;DatabaseDriversLRU&quot;: [
-      &quot;mysql&quot;
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "mysql"
     ]
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\dev\finalproject\code\BE09-Final-1team-FE\news2\hooks" />
@@ -121,17 +128,6 @@
     </key>
   </component>
   <component name="RunManager">
-    <configuration default="true" type="JetRunConfigurationType">
-      <module name="BE09-Final-1team-FE" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
-      <module name="BE09-Final-1team-FE" />
-      <option name="filePath" />
-      <method v="2" />
-    </configuration>
     <configuration default="true" type="PythonConfigurationType" factoryName="Python">
       <module name="BE09-Final-1team-FE" />
       <option name="ENV_FILES" value="" />
@@ -210,6 +206,7 @@
       <workItem from="1754443149793" duration="14854000" />
       <workItem from="1754462500660" duration="198000" />
       <workItem from="1754462713406" duration="17000" />
+      <workItem from="1754555232732" duration="18000" />
     </task>
     <task id="LOCAL-00001" summary="commit">
       <option name="closed" value="true" />
