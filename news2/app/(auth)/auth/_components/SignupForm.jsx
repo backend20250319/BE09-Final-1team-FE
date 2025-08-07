@@ -44,10 +44,8 @@ export default function SignupForm() {
     { id: "ECONOMY", label: "경제", icon: "💰" },
     { id: "SOCIETY", label: "사회", icon: "👥" },
     { id: "IT_SCIENCE", label: "IT/과학", icon: "💻" },
-    { id: "SPORTS", label: "스포츠", icon: "⚽" },
-    { id: "CULTURE", label: "문화", icon: "🎭" },
+    { id: "CULTURE", label: "생활/문화", icon: "🎭" },
     { id: "INTERNATIONAL", label: "국제", icon: "🌍" },
-    { id: "ENTERTAINMENT", label: "연예", icon: "🎬" },
   ];
 
   // --- 핸들러 ---
