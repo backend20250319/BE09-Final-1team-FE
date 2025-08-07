@@ -1,20 +1,20 @@
-import { GeistMono } from 'geist/font/mono'
-import './globals.css'
-import { ThemeProvider } from '@/components/theme-provider'
+import { GeistMono } from "geist/font/mono";
+import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
+import Header from "@/components/header";
+import Footer from "@/components/footer";
 
 export const metadata = {
-  title: 'NewNews - 최신 뉴스와 정보',
-  description: '실시간 뉴스, 커뮤니티, 뉴스레터를 제공하는 종합 뉴스 플랫폼',
-  keywords: '뉴스, 커뮤니티, 뉴스레터, 실시간뉴스',
-  authors: [{ name: 'NewsHub Team' }],
-}
-
+  title: "NewNews - 최신 뉴스와 정보",
+  description: "실시간 뉴스, 커뮤니티, 뉴스레터를 제공하는 종합 뉴스 플랫폼",
+  keywords: "뉴스, 커뮤니티, 뉴스레터, 실시간뉴스",
+  authors: [{ name: "NewsHub Team" }],
+};
 
 export const viewport = {
-  width: 'device-width',
+  width: "device-width",
   initialScale: 1,
-}
-
+};
 
 export default function RootLayout({ children }) {
   return (
@@ -34,9 +34,11 @@ html {
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <Header />
+          <main style={{ paddingTop: "64px" }}>{children}</main>
+          <Footer />
         </ThemeProvider>
       </body>
     </html>
-  )
+  );
 }
