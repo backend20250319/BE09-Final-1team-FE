@@ -19,7 +19,6 @@ import {
   Bell,
   Settings
 } from "lucide-react"
-import Header from "@/components/header"
 
 export default function UserDashboard() {
   const [activeTab, setActiveTab] = useState("overview")
@@ -85,7 +84,6 @@ export default function UserDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

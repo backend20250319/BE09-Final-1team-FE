@@ -22,7 +22,6 @@ import {
   Type,
   Layout
 } from "lucide-react"
-import Header from "@/components/header"
 import { useToast } from "@/hooks/use-toast"
 
 export default function NewsletterSettings() {
@@ -118,7 +117,6 @@ export default function NewsletterSettings() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
-      <Header />
       
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}

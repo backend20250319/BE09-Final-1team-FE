@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Eye, EyeOff, Download, Share2, Copy } from "lucide-react"
-import Header from "@/components/header"
 import NewsletterTemplate from "@/components/NewsletterTemplate"
 
 export default function NewsletterTemplatePage() {
@@ -128,7 +127,6 @@ export default function NewsletterTemplatePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
       
       <div className="container mx-auto px-4 py-8">
         {/* 컨트롤 패널 */}

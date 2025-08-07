@@ -1,18 +1,21 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Shield, Home, ArrowLeft } from "lucide-react"
-import { useRouter } from "next/navigation"
-import Header from "@/components/header"
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Shield, Home, ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function UnauthorizedPage() {
-  const router = useRouter()
+  const router = useRouter();
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
-      
       <div className="max-w-md mx-auto px-4 py-16">
         <Card className="text-center">
           <CardHeader>
@@ -32,14 +35,11 @@ export default function UnauthorizedPage() {
               <p>• 권한이 필요한 경우 관리자에게 문의하세요</p>
             </div>
             <div className="flex flex-col space-y-2">
-              <Button 
-                onClick={() => router.push("/")}
-                className="w-full"
-              >
+              <Button onClick={() => router.push("/")} className="w-full">
                 <Home className="h-4 w-4 mr-2" />
                 홈으로 돌아가기
               </Button>
-              <Button 
+              <Button
                 variant="outline"
                 onClick={() => router.back()}
                 className="w-full"
@@ -52,5 +52,5 @@ export default function UnauthorizedPage() {
         </Card>
       </div>
     </div>
-  )
-} 
+  );
+}

@@ -4,7 +4,26 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ca6686e2-3358-4d44-87a8-37fd958c7929" name="Changes" comment="[FEAT] AI 요약기능 추가&#10;&#10;- 상세페이지(news\[id]\page.jsx)에 이미지 및 요약기능 버튼 추가" />
+    <list default="true" id="ca6686e2-3358-4d44-87a8-37fd958c7929" name="Changes" comment="[FEAT] AI 요약기능 추가&#10;&#10;- 상세페이지(news\[id]\page.jsx)에 이미지 및 요약기능 버튼 추가">
+      <change beforePath="$PROJECT_DIR$/news2/app/(admin)/admin/newsletter/dashboard/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(admin)/admin/newsletter/dashboard/page.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(admin)/admin/newsletter/settings/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(admin)/admin/newsletter/settings/page.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(admin)/admin/newsletter/template/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(admin)/admin/newsletter/template/page.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(admin)/admin/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(admin)/admin/page.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(auth)/unauthorized/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(auth)/unauthorized/page.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(community)/community/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(community)/community/page.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(news)/news/[id]/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(news)/news/[id]/page.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(newsletter)/newsletter/dashboard/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(newsletter)/newsletter/dashboard/page.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(newsletter)/newsletter/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(newsletter)/newsletter/page.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(newsletter)/newsletter/settings/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(newsletter)/newsletter/settings/page.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(newsletter)/newsletter/template/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(newsletter)/newsletter/template/page.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(user)/mypage/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(user)/mypage/page.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(user)/user/newsletter/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(user)/user/newsletter/page.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(user)/user/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(user)/user/page.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/layout.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/layout.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/page.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/components/header.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/components/header.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/lib/newsService.js" beforeDir="false" afterPath="$PROJECT_DIR$/news2/lib/newsService.js" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -71,12 +90,12 @@
       </list>
     </option>
   </component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/backend20250319/BE09-Final-1team-FE.git&quot;,
-    &quot;accountId&quot;: &quot;a9928801-d60d-4285-b2ee-0d55ea62bcbb&quot;
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/backend20250319/BE09-Final-1team-FE.git",
+    "accountId": "2aeec0c1-65b9-465c-89e4-48e90fdf76b2"
   }
-}</component>
+}]]></component>
   <component name="KubernetesApiPersistence">{}</component>
   <component name="KubernetesApiProvider">{
   &quot;isMigrated&quot;: true
@@ -91,28 +110,28 @@
   <component name="ProjectViewState">
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Node.js.page.jsx.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;develop&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/dev/finalproject/code/BE09-Final-1team-FE&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;C:\\dev\\finalproject\\code\\BE09-Final-1team-FE\\news2\\node_modules\\typescript\\lib&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Node.js.page.jsx.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/dev/finalproject/code/BE09-Final-1team-FE",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "ts.external.directory.path": "/Users/parkchangjun/Documents/Dev/BE09-Final-1team/BE09-Final-1team-FE1/news2/node_modules/typescript/lib",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;DatabaseDriversLRU&quot;: [
-      &quot;mysql&quot;
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "mysql"
     ]
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\dev\finalproject\code\BE09-Final-1team-FE\news2\hooks" />
@@ -120,74 +139,11 @@
       <recent name="C:\dev\finalproject\code\BE09-Final-1team-FE\news2\components\aisummarybot" />
     </key>
   </component>
-  <component name="RunManager">
-    <configuration default="true" type="JetRunConfigurationType">
-      <module name="BE09-Final-1team-FE" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
-      <module name="BE09-Final-1team-FE" />
-      <option name="filePath" />
-      <method v="2" />
-    </configuration>
-    <configuration default="true" type="PythonConfigurationType" factoryName="Python">
-      <module name="BE09-Final-1team-FE" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="" />
-      <option name="IS_MODULE_SDK" value="false" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration default="true" type="Python.FlaskServer">
-      <module name="BE09-Final-1team-FE" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="" />
-      <option name="IS_MODULE_SDK" value="false" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="launchJavascriptDebuger" value="false" />
-      <method v="2" />
-    </configuration>
-    <configuration default="true" type="Tox" factoryName="Tox">
-      <module name="BE09-Final-1team-FE" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="" />
-      <option name="IS_MODULE_SDK" value="false" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <method v="2" />
-    </configuration>
-  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-9823dce3aa75-a94e463ab2e7-intellij.indexing.shared.core-IU-243.26053.27" />
-        <option value="bundled-js-predefined-d6986cc7102b-1632447f56bf-JavaScript-IU-243.26053.27" />
+        <option value="bundled-jdk-9823dce3aa75-fbdcb00ec9e3-intellij.indexing.shared.core-IU-251.26094.121" />
+        <option value="bundled-js-predefined-d6986cc7102b-b26f3e71634d-JavaScript-IU-251.26094.121" />
       </set>
     </attachedChunks>
   </component>
@@ -210,6 +166,7 @@
       <workItem from="1754443149793" duration="14854000" />
       <workItem from="1754462500660" duration="198000" />
       <workItem from="1754462713406" duration="17000" />
+      <workItem from="1754548247066" duration="380000" />
     </task>
     <task id="LOCAL-00001" summary="commit">
       <option name="closed" value="true" />
