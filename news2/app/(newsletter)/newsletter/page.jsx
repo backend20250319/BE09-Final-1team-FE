@@ -88,17 +88,6 @@ export default function NewsletterPage() {
     },
     {
       id: 5,
-      title: "스포츠 하이라이트",
-      description: "주요 스포츠 이벤트와 선수들의 활약을 요약해드립니다",
-      category: "스포츠",
-      subscribers: 9870,
-      frequency: "매일",
-      lastSent: "4시간 전",
-      isSubscribed: false,
-      tags: ["스포츠", "경기", "선수"]
-    },
-    {
-      id: 6,
       title: "문화 & 라이프스타일",
       description: "문화, 예술, 라이프스타일 관련 트렌드를 소개합니다",
       category: "문화",
@@ -200,6 +189,11 @@ export default function NewsletterPage() {
       setEmail("")
       setShowEmailModal(false)
       setPendingNewsletterId(null)
+      
+      // 구독 완료 후 마이페이지 설정 탭으로 이동
+      setTimeout(() => {
+        window.location.href = "/mypage?tab=settings"
+      }, 2000)
     } catch (error) {
       toast({
         title: "구독 실패",
@@ -258,16 +252,22 @@ export default function NewsletterPage() {
               </div>
               {/* 필터링 결과 표시 */}
               <div className="mt-2 text-sm text-gray-500">
-                {selectedCategory === "전체" 
-                  ? `전체 ${newsletters.length}개의 뉴스레터`
-                  : `${selectedCategory} 카테고리 ${filteredNewsletters.length}개의 뉴스레터`
-                }
+                {(() => {
+                  const availableNewsletters = filteredNewsletters.filter(
+                    newsletter => !subscribedNewsletters.some(sub => sub.id === newsletter.id)
+                  )
+                  return selectedCategory === "전체" 
+                    ? `전체 ${availableNewsletters.length}개의 구독 가능한 뉴스레터`
+                    : `${selectedCategory} 카테고리 ${availableNewsletters.length}개의 구독 가능한 뉴스레터`
+                })()}
               </div>
             </div>
 
             {/* Newsletter Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {filteredNewsletters.map((newsletter, index) => (
+              {filteredNewsletters
+                .filter(newsletter => !subscribedNewsletters.some(sub => sub.id === newsletter.id))
+                .map((newsletter, index) => (
                 <Card 
                   key={newsletter.id} 
                   className={`glass hover-lift animate-slide-in ${
@@ -350,6 +350,37 @@ export default function NewsletterPage() {
                   >
                     전체 뉴스레터 보기
                   </Button>
+                </div>
+              )}
+
+              {/* 구독한 뉴스레터가 모두 숨겨져서 표시할 뉴스레터가 없을 때 */}
+              {filteredNewsletters.length > 0 && 
+               filteredNewsletters.filter(newsletter => !subscribedNewsletters.some(sub => sub.id === newsletter.id)).length === 0 && (
+                <div className="col-span-2 text-center py-12">
+                  <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    이미 모든 뉴스레터를 구독하셨습니다!
+                  </h3>
+                  <p className="text-gray-500 mb-4">
+                    {selectedCategory === "전체" 
+                      ? "현재 표시 가능한 모든 뉴스레터를 구독하고 계십니다."
+                      : `${selectedCategory} 카테고리의 모든 뉴스레터를 구독하고 계십니다.`
+                    }
+                  </p>
+                  <div className="flex space-x-2 justify-center">
+                    <Link href="/mypage">
+                      <Button variant="outline" className="hover-lift">
+                        마이페이지에서 관리
+                      </Button>
+                    </Link>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setSelectedCategory("전체")}
+                      className="hover-lift"
+                    >
+                      다른 카테고리 보기
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>

@@ -67,7 +67,9 @@ export async function login(email, password) {
 // 로그아웃 함수
 export function logout() {
   clearUserRole()
+  // 구독 상태도 초기화
   if (typeof window !== "undefined") {
+    localStorage.removeItem('subscribed')
     window.location.href = "/"
   }
 } 

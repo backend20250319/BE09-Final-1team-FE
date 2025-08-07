@@ -8,6 +8,8 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Header from "@/components/header";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 // 분리된 컴포넌트들 import
 import ProfileSidebar from "./_components/ProfileSidebar";
@@ -18,6 +20,17 @@ import HistoryTab from "./_components/HistoryTab";
 import SettingsTab from "./_components/SettingsTab";
 
 export default function MyPage() {
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState("profile");
+
+  useEffect(() => {
+    // URL 파라미터에서 탭 정보 확인
+    const tab = searchParams.get("tab");
+    if (tab && ["profile", "interests", "scraps", "history", "settings"].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -31,7 +44,7 @@ export default function MyPage() {
 
           {/* 메인 콘텐츠 영역 */}
           <div className="lg:col-span-3">
-            <Tabs defaultValue="profile" className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               {/* 탭 메뉴 */}
               <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="profile">프로필</TabsTrigger>

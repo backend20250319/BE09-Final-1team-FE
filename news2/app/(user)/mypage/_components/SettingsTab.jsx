@@ -6,21 +6,137 @@
  */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Mail, Bell, Settings } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Mail, Bell, Settings, Users, Clock, Star, X } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { getUserRole } from "@/lib/auth";
 
 export default function SettingsTab() {
   const [newsletterEnabled, setNewsletterEnabled] = useState(true);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [subscribedNewsletters, setSubscribedNewsletters] = useState([]);
+  const [userRole, setUserRole] = useState(null);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // 사용자 역할 확인
+    const role = getUserRole();
+    setUserRole(role);
+    
+    // 로그인한 사용자인 경우에만 로컬 스토리지에서 구독 정보 복원
+    if (role) {
+      const savedSubscriptions = localStorage.getItem('newsletterSubscriptions');
+      if (savedSubscriptions) {
+        setSubscribedNewsletters(JSON.parse(savedSubscriptions));
+      }
+    }
+  }, []);
+
+  // 구독 해제 함수
+  const handleUnsubscribe = (newsletterId) => {
+    const updatedSubscriptions = subscribedNewsletters.filter(nl => nl.id !== newsletterId);
+    setSubscribedNewsletters(updatedSubscriptions);
+    
+    if (userRole) {
+      localStorage.setItem('newsletterSubscriptions', JSON.stringify(updatedSubscriptions));
+    }
+    
+    toast({
+      title: "구독 해제 완료",
+      description: "뉴스레터 구독이 해제되었습니다.",
+    });
+  };
 
   return (
     <div className="space-y-6">
+      {/* 구독 중인 뉴스레터 관리 카드 */}
+      {userRole && subscribedNewsletters.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Mail className="h-5 w-5 mr-2" />
+              구독 중인 뉴스레터 ({subscribedNewsletters.length}개)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {subscribedNewsletters.map((newsletter) => (
+                <div key={newsletter.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Badge className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full">
+                        {newsletter.category}
+                      </Badge>
+                      <Badge className="bg-green-600 text-white text-xs px-3 py-1 rounded-full">
+                        {newsletter.frequency}
+                      </Badge>
+                    </div>
+                    <h4 className="font-medium text-gray-900 mb-1">{newsletter.title}</h4>
+                    <p className="text-sm text-gray-600 mb-2">{newsletter.description}</p>
+                    <div className="flex items-center space-x-4 text-xs text-gray-500">
+                      <div className="flex items-center space-x-1">
+                        <Users className="h-3 w-3" />
+                        <span>{newsletter.subscribers.toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <Clock className="h-3 w-3" />
+                        <span>{newsletter.lastSent}</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <Star className="h-3 w-3" />
+                        <span>4.8</span>
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleUnsubscribe(newsletter.id)}
+                    className="ml-4 hover:bg-red-50 hover:text-red-600"
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    구독해제
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 구독 중인 뉴스레터가 없을 때 안내 */}
+      {userRole && subscribedNewsletters.length === 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Mail className="h-5 w-5 mr-2" />
+              뉴스레터 구독
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-6">
+              <Mail className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                구독 중인 뉴스레터가 없습니다
+              </h3>
+              <p className="text-gray-500 mb-4">
+                관심 있는 주제의 뉴스레터를 구독하고 최신 정보를 받아보세요
+              </p>
+              <Button asChild>
+                <a href="/newsletter">뉴스레터 둘러보기</a>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* 뉴스레터 설정 카드 */}
       <Card>
         <CardHeader>
