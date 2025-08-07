@@ -117,21 +117,21 @@ export default function NewsletterPage() {
   }
 
   const handleSubscribe = async (newsletterId) => {
+    if (!userRole) {
+      toast({
+        title: "로그인이 필요합니다",
+        description: "뉴스레터를 구독하려면 먼저 로그인해주세요.",
+        variant: "destructive",
+        icon: <AlertCircle className="h-4 w-4 text-red-500" />
+      })
+      return
+    }
+
     const newsletter = newsletters.find(nl => nl.id === newsletterId)
     const isCurrentlySubscribed = subscribedNewsletters.some(nl => nl.id === newsletterId)
 
     if (isCurrentlySubscribed) {
-      // 구독 해제 - 로그인한 사용자만 가능
-      if (!userRole) {
-        toast({
-          title: "로그인이 필요합니다",
-          description: "구독 해제를 위해 로그인해주세요.",
-          variant: "destructive",
-          icon: <AlertCircle className="h-4 w-4 text-red-500" />
-        })
-        return
-      }
-
+      // 구독 해제
       const updatedSubscriptions = subscribedNewsletters.filter(nl => nl.id !== newsletterId)
       setSubscribedNewsletters(updatedSubscriptions)
       saveSubscriptions(updatedSubscriptions)
@@ -190,12 +190,10 @@ export default function NewsletterPage() {
       setShowEmailModal(false)
       setPendingNewsletterId(null)
       
-      // 구독 완료 후 이동 - 로그인한 사용자만 이동
-      if (userRole) {
-        setTimeout(() => {
-          window.location.href = "/mypage?tab=settings"
-        }, 2000)
-      }
+      // 구독 완료 후 마이페이지 설정 탭으로 이동
+      setTimeout(() => {
+        window.location.href = "/mypage?tab=settings"
+      }, 2000)
     } catch (error) {
       toast({
         title: "구독 실패",
@@ -254,16 +252,22 @@ export default function NewsletterPage() {
               </div>
               {/* 필터링 결과 표시 */}
               <div className="mt-2 text-sm text-gray-500">
-                {selectedCategory === "전체" 
-                  ? `전체 ${filteredNewsletters.length}개의 뉴스레터`
-                  : `${selectedCategory} 카테고리 ${filteredNewsletters.length}개의 뉴스레터`
-                }
+                {(() => {
+                  const availableNewsletters = filteredNewsletters.filter(
+                    newsletter => !subscribedNewsletters.some(sub => sub.id === newsletter.id)
+                  )
+                  return selectedCategory === "전체" 
+                    ? `전체 ${availableNewsletters.length}개의 구독 가능한 뉴스레터`
+                    : `${selectedCategory} 카테고리 ${availableNewsletters.length}개의 구독 가능한 뉴스레터`
+                })()}
               </div>
             </div>
 
             {/* Newsletter Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {filteredNewsletters.map((newsletter, index) => (
+              {filteredNewsletters
+                .filter(newsletter => !subscribedNewsletters.some(sub => sub.id === newsletter.id))
+                .map((newsletter, index) => (
                 <Card 
                   key={newsletter.id} 
                   className={`glass hover-lift animate-slide-in ${
@@ -349,7 +353,36 @@ export default function NewsletterPage() {
                 </div>
               )}
 
-
+              {/* 구독한 뉴스레터가 모두 숨겨져서 표시할 뉴스레터가 없을 때 */}
+              {filteredNewsletters.length > 0 && 
+               filteredNewsletters.filter(newsletter => !subscribedNewsletters.some(sub => sub.id === newsletter.id)).length === 0 && (
+                <div className="col-span-2 text-center py-12">
+                  <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    이미 모든 뉴스레터를 구독하셨습니다!
+                  </h3>
+                  <p className="text-gray-500 mb-4">
+                    {selectedCategory === "전체" 
+                      ? "현재 표시 가능한 모든 뉴스레터를 구독하고 계십니다."
+                      : `${selectedCategory} 카테고리의 모든 뉴스레터를 구독하고 계십니다.`
+                    }
+                  </p>
+                  <div className="flex space-x-2 justify-center">
+                    <Link href="/mypage">
+                      <Button variant="outline" className="hover-lift">
+                        마이페이지에서 관리
+                      </Button>
+                    </Link>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setSelectedCategory("전체")}
+                      className="hover-lift"
+                    >
+                      다른 카테고리 보기
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -414,22 +447,22 @@ export default function NewsletterPage() {
                 </Card>
               )}
 
-              {/* 로그인하지 않은 사용자를 위한 안내 */}
+              {/* 로그인하지 않은 사용자를 위한 로그인 안내 */}
               {!userRole && (
                 <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.3s' }}>
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center">
                       <User className="h-5 w-5 mr-2 text-gray-500" />
-                      뉴스레터 구독
+                      로그인 필요
                     </CardTitle>
                     <CardDescription>
-                      로그인 없이도 뉴스레터를 구독할 수 있습니다
+                      뉴스레터 구독을 위해 로그인해주세요
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="text-center py-4">
                       <p className="text-sm text-gray-500 mb-3">
-                        뉴스레터를 구독하고 관리하려면 로그인을 권장합니다.
+                        뉴스레터를 구독하고 관리하려면 로그인이 필요합니다.
                       </p>
                       <Link href="/auth">
                         <Button className="w-full hover-lift">

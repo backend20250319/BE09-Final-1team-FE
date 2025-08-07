@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,6 +16,15 @@ export default function SubscribeForm({ onSubscribeSuccess }) {
   const [isLoading, setIsLoading] = useState(false)
   const [showCelebration, setShowCelebration] = useState(false)
   const [showRedirectMessage, setShowRedirectMessage] = useState(false)
+  const [isSubscribed, setIsSubscribed] = useState(false)
+
+  // 컴포넌트 마운트 시 localStorage에서 구독 상태 확인
+  useEffect(() => {
+    const stored = localStorage.getItem('subscribed')
+    if (stored === 'true') {
+      setIsSubscribed(true)
+    }
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -35,9 +44,13 @@ export default function SubscribeForm({ onSubscribeSuccess }) {
       
       if (res.ok) {
         setSuccess(true)
+        setIsSubscribed(true)
         setEmail('')
         setShowCelebration(true)
         setShowRedirectMessage(true)
+        
+        // localStorage에 구독 상태 저장
+        localStorage.setItem('subscribed', 'true')
         
         // 축하 애니메이션 3초 후 제거
         setTimeout(() => {
@@ -70,9 +83,17 @@ export default function SubscribeForm({ onSubscribeSuccess }) {
 
   const resetForm = () => {
     setSuccess(false)
+    setIsSubscribed(false)
     setError('')
     setShowCelebration(false)
     setShowRedirectMessage(false)
+    // localStorage에서 구독 상태 제거
+    localStorage.removeItem('subscribed')
+  }
+
+  // 구독한 사용자에게는 카드가 보이지 않음
+  if (isSubscribed) {
+    return null
   }
 
   if (success) {
