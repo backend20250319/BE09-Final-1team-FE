@@ -54,7 +54,7 @@ export default function Header() {
               className="flex items-center space-x-2 animate-slide-in"
             >
               <h1 className="text-2xl font-logo font-bold text-white drop-shadow-lg animate-pulse-slow">
-                NewSphere
+                NewNews
               </h1>
             </Link>
 
@@ -100,7 +100,7 @@ export default function Header() {
                   3
                 </Badge>
               </Button>
-              
+
               {userRole ? (
                 <div className="flex items-center space-x-2">
                   {userRole === "admin" && (

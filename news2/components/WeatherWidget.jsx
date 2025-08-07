@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Cloud, Sun, CloudRain, CloudSnow, Wind, Thermometer } from "lucide-react"
 
 export default function WeatherWidget() {
-  const [weather, setWeather] = useState(null)
+  const [weather, setWeather] = useState(nullnews_crawl)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 

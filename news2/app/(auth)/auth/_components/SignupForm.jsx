@@ -13,126 +13,106 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Mail, Lock, User, Heart } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Mail, Lock, User, Heart, AlertCircle } from "lucide-react";
 import Link from "next/link";
-import { getApiUrl } from "@/lib/config";
 
 /**
  * 회원가입 폼 컴포넌트
- * - 이름, 이메일, 비밀번호 입력받아 회원가입 처리
- * - 관심사 선택 기능 (최대 3개 제한)
- * - 약관 동의 및 뉴스레터 구독 옵션 제공
+ * - API와 연동하여 실제 회원가입 기능 수행
+ * - 환경변수를 통해 API 주소 관리
  */
 export default function SignupForm() {
   const router = useRouter();
-  // 사용자가 선택한 관심사 목록 상태 관리
-  const [selectedInterests, setSelectedInterests] = useState([]);
 
-  // 사용자가 선택할 수 있는 관심사 카테고리 목록
+  // --- 상태 관리 ---
+  // 1. 폼 입력 데이터
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [selectedInterests, setSelectedInterests] = useState([]);
+  const [newsletterOk, setNewsletterOk] = useState(false);
+  const [termsOk, setTermsOk] = useState(false);
+
+  // 2. UI 상태
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // --- 데이터 ---
   const interests = [
-    { id: "politics", label: "정치", icon: "🏛️" },
-    { id: "economy", label: "경제", icon: "💰" },
-    { id: "society", label: "사회", icon: "👥" },
-    { id: "it", label: "IT/과학", icon: "💻" },
-    { id: "sports", label: "스포츠", icon: "⚽" },
-    { id: "culture", label: "문화", icon: "🎭" },
-    { id: "international", label: "국제", icon: "🌍" },
-    { id: "entertainment", label: "연예", icon: "🎬" },
+    { id: "POLITICS", label: "정치", icon: "🏛️" },
+    { id: "ECONOMY", label: "경제", icon: "💰" },
+    { id: "SOCIETY", label: "사회", icon: "👥" },
+    { id: "IT_SCIENCE", label: "IT/과학", icon: "💻" },
+    { id: "SPORTS", label: "스포츠", icon: "⚽" },
+    { id: "CULTURE", label: "문화", icon: "🎭" },
+    { id: "INTERNATIONAL", label: "국제", icon: "🌍" },
+    { id: "ENTERTAINMENT", label: "연예", icon: "🎬" },
   ];
 
-  // 폼 상태 관리
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    newsletter: false,
-    terms: false
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [showRedirectMessage, setShowRedirectMessage] = useState(false);
-
+  // --- 핸들러 ---
   /**
    * 관심사 선택/해제 토글 함수
-   * @param {string} interestId - 선택/해제할 관심사 ID
-   *
-   * 동작 방식:
-   * - 이미 선택된 항목: 제거
-   * - 새로운 항목: 3개 제한 확인 후 추가
    */
   const toggleInterest = (interestId) => {
     setSelectedInterests((prev) => {
       if (prev.includes(interestId)) {
-        // 이미 선택된 항목이면 제거
         return prev.filter((id) => id !== interestId);
       } else {
-        // 새로 선택하는 경우 3개 제한 확인 후 추가
-        if (prev.length >= 3) {
-          return prev; // 3개 이상이면 추가하지 않음
-        }
+        if (prev.length >= 3) return prev;
         return [...prev, interestId];
       }
     });
   };
 
   /**
-   * 회원가입 및 뉴스레터 구독 처리
+   * 회원가입 폼 제출 핸들러
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setIsLoading(true);
+    setError("");
+
+    // --- 유효성 검사 ---
+    if (!termsOk) {
+      setError("이용약관 및 개인정보처리방침에 동의해야 합니다.");
+      setIsLoading(false);
+      return;
+    }
+    if (password.length < 8) {
+      setError("비밀번호는 최소 8자 이상이어야 합니다.");
+      setIsLoading(false);
+      return;
+    }
 
     try {
-      // 회원가입 API 호출
-      const registerRes = await fetch(getApiUrl('auth/register'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      // 환경변수에서 API 기본 URL 가져오기
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      // API 호출
+      const response = await fetch(`${apiUrl}/api/users/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // 백엔드에서 요구하는 필드명에 맞춰 전송
         body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          newsletter: formData.newsletter
+          name,
+          email,
+          password,
+          hobbies: selectedInterests,
+          letterOk: newsletterOk,
         }),
       });
 
-      const registerData = await registerRes.json();
-
-      if (registerRes.ok) {
-        console.log('회원가입 완료:', registerData);
-        
-        // 뉴스레터 구독이 체크된 경우 구독 처리
-        if (formData.newsletter && formData.email) {
-          const subscribeRes = await fetch(getApiUrl('subscribe'), {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ email: formData.email }),
-          });
-
-          if (subscribeRes.ok) {
-            console.log('뉴스레터 구독 완료:', formData.email);
-            setShowRedirectMessage(true);
-            
-            // 안내 메시지 3초 후 제거
-            setTimeout(() => {
-              setShowRedirectMessage(false);
-            }, 3000);
-          }
-        }
-
-        // 회원가입 성공 후 로그인 페이지로 이동
-        router.push('/auth');
-      } else {
-        setError(registerData.message || '회원가입에 실패했습니다.');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "회원가입 중 오류가 발생했습니다.");
       }
-      
+
+      // 회원가입 성공 시 로그인 페이지로 이동 또는 성공 메시지 표시
+      alert("회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.");
+      router.push("/auth");
+
     } catch (err) {
-      setError('회원가입 중 오류가 발생했습니다.');
-      console.error('회원가입 오류:', err);
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
@@ -146,8 +126,8 @@ export default function SignupForm() {
           새 계정을 만들어 개인 맞춤 뉴스 서비스를 시작하세요
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <form onSubmit={handleSubmit}>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* 이름 입력 필드 */}
           <div className="space-y-2">
             <Label htmlFor="signup-name">이름</Label>
@@ -157,9 +137,10 @@ export default function SignupForm() {
                 id="signup-name"
                 placeholder="이름을 입력하세요"
                 className="pl-10"
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -174,9 +155,10 @@ export default function SignupForm() {
                 type="email"
                 placeholder="이메일을 입력하세요"
                 className="pl-10"
-                value={formData.email}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -189,79 +171,72 @@ export default function SignupForm() {
               <Input
                 id="signup-password"
                 type="password"
-                placeholder="비밀번호를 입력하세요"
+                placeholder="8자 이상 입력하세요"
                 className="pl-10"
-                value={formData.password}
-                onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
           </div>
 
-        {/* 관심사 선택 섹션 */}
-        <div className="space-y-3 mt-2">
-          <Label className="flex items-center justify-between">
-            <span className="flex items-center">
-              <Heart className="h-4 w-4 mr-2 text-red-500" />
-              관심 분야 선택 (선택사항)
-            </span>
-            {/* 선택된 관심사 개수 표시 (최대 3개) */}
-            <span className="text-xs text-gray-500">
-              {selectedInterests.length}/3
-            </span>
-          </Label>
-
-          {/* 관심사 선택 그리드 */}
-          <div className="grid grid-cols-2 gap-2">
-            {interests.map((interest) => {
-              const isSelected = selectedInterests.includes(interest.id);
-              const isDisabled = !isSelected && selectedInterests.length >= 3;
-
-              return (
-                <div
-                  key={interest.id}
-                  onClick={() => !isDisabled && toggleInterest(interest.id)}
-                  className={`p-3 rounded-lg border transition-all ${
-                    isSelected
-                      ? "border-blue-500 bg-blue-50" // 선택된 상태
-                      : isDisabled
-                      ? "border-gray-200 bg-gray-50 cursor-not-allowed opacity-50" // 비활성화 상태
-                      : "border-gray-200 hover:border-gray-300 cursor-pointer" // 선택 가능 상태
-                  }`}
-                >
-                  <div className="text-center">
+          {/* 관심사 선택 섹션 */}
+          <div className="space-y-3">
+            <Label className="flex items-center justify-between">
+              <span className="flex items-center">
+                <Heart className="h-4 w-4 mr-2 text-red-500" />
+                관심 분야 선택 (선택사항, 최대 3개)
+              </span>
+              <span className="text-xs text-gray-500">
+                {selectedInterests.length}/3
+              </span>
+            </Label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {interests.map((interest) => {
+                const isSelected = selectedInterests.includes(interest.id);
+                const isDisabled = !isSelected && selectedInterests.length >= 3;
+                return (
+                  <div
+                    key={interest.id}
+                    onClick={() => !isDisabled && toggleInterest(interest.id)}
+                    className={`p-3 rounded-lg border text-center transition-all ${
+                      isSelected
+                        ? "border-blue-500 bg-blue-50 ring-2 ring-blue-300"
+                        : isDisabled
+                        ? "border-gray-200 bg-gray-50 cursor-not-allowed opacity-50"
+                        : "border-gray-200 hover:border-gray-400 cursor-pointer"
+                    }`}
+                  >
                     <div className="text-lg mb-1">{interest.icon}</div>
                     <div className="text-sm font-medium">{interest.label}</div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
 
           {/* 약관 동의 섹션 */}
-          <div className="space-y-3 mb-2 mt-2">
-            {/* 뉴스레터 구독 동의 */}
+          <div className="space-y-3 pt-2">
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="newsletter" 
-                checked={formData.newsletter}
-                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, newsletter: checked }))}
+              <Checkbox
+                id="newsletter"
+                checked={newsletterOk}
+                onCheckedChange={setNewsletterOk}
+                disabled={isLoading}
               />
-              <Label htmlFor="newsletter" className="text-sm">
+              <Label htmlFor="newsletter" className="text-sm font-normal">
                 뉴스레터 구독 (매일 아침 맞춤 뉴스 받기)
               </Label>
             </div>
-
-            {/* 이용약관 및 개인정보처리방침 동의 */}
-            <div className="flex items-center space-x-2 ">
-              <Checkbox 
-                id="terms" 
-                checked={formData.terms}
-                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, terms: checked }))}
-                required
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="terms"
+                checked={termsOk}
+                onCheckedChange={setTermsOk}
+                disabled={isLoading}
               />
-              <Label htmlFor="terms" className="text-sm">
+              <Label htmlFor="terms" className="text-sm font-normal">
                 <Link href="/terms" className="text-blue-600 hover:underline">
                   이용약관
                 </Link>{" "}
@@ -269,38 +244,23 @@ export default function SignupForm() {
                 <Link href="/privacy" className="text-blue-600 hover:underline">
                   개인정보처리방침
                 </Link>
-                에 동의합니다
+                에 동의합니다 (필수)
               </Label>
             </div>
           </div>
 
-          {/* 오류 메시지 */}
+          {/* 에러 메시지 표시 */}
           {error && (
-            <div className="text-red-600 text-sm">
-              {error}
-            </div>
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
 
           {/* 회원가입 버튼 */}
-          <Button 
-            type="submit" 
-            className="w-full"
-            disabled={isLoading}
-          >
-            {isLoading ? '처리 중...' : '회원가입'}
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? "가입 처리 중..." : "회원가입"}
           </Button>
-          
-          {/* 뉴스레터 구독 안내 메시지 */}
-          {showRedirectMessage && (
-            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-700">
-                ✅ 뉴스레터 구독이 완료되었습니다!
-              </p>
-              <p className="text-xs text-blue-600 mt-1 animate-fade-in">
-                로그인 후 뉴스레터 서비스를 이용하실 수 있습니다.
-              </p>
-            </div>
-          )}
         </form>
       </CardContent>
     </Card>
