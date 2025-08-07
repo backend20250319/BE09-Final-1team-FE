@@ -229,6 +229,55 @@ export class WeatherService {
 - [ ] 비밀번호 암호화
 - [ ] 2단계 인증 (2FA)
 
+## 🔧 환경변수 설정
+
+프로젝트 루트 디렉토리에 `.env.local` 파일을 생성하고 다음 환경변수들을 설정해주세요:
+
+```bash
+# Backend API Configuration
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3001/api
+NEXT_PUBLIC_BACKEND_URL=http://localhost:3001
+
+# Authentication
+NEXTAUTH_SECRET=your-secret-key-here
+NEXTAUTH_URL=http://localhost:3000
+
+# Database (if needed)
+DATABASE_URL=your-database-url-here
+
+# External APIs (if needed)
+NEWS_API_KEY=your-news-api-key-here
+WEATHER_API_KEY=your-weather-api-key-here
+
+# Environment
+NODE_ENV=development
+```
+
+### 환경변수 설명
+- `NEXT_PUBLIC_API_BASE_URL`: 백엔드 API 기본 URL
+- `NEXT_PUBLIC_BACKEND_URL`: 백엔드 서버 URL
+- `NEXTAUTH_SECRET`: NextAuth.js 시크릿 키 (랜덤 문자열 생성 권장)
+- `NEXTAUTH_URL`: 애플리케이션 URL
+- `DATABASE_URL`: 데이터베이스 연결 문자열
+- `NEWS_API_KEY`: 뉴스 API 키 (선택사항)
+- `WEATHER_API_KEY`: 날씨 API 키 (선택사항)
+
+> ⚠️ **중요**: `.env.local` 파일은 `.gitignore`에 포함되어 있어 Git에 커밋되지 않습니다. 각 개발자가 로컬에서 개별적으로 설정해야 합니다.
+
+### 환경변수 적용 완료 ✅
+
+프로젝트에서 하드코딩된 API URL들을 환경변수로 변경했습니다:
+
+- `lib/config.js`: 환경변수 관리 설정 파일 생성
+- `lib/auth.js`: 로그인 API 호출을 환경변수 사용으로 변경
+- `components/SubscribeForm.jsx`: 구독 API 호출을 환경변수 사용으로 변경
+- `components/WeatherWidget.jsx`: 날씨 API 키를 환경변수에서 가져오도록 변경
+- `app/(auth)/auth/_components/SignupForm.jsx`: 회원가입 및 구독 API 호출을 환경변수 사용으로 변경
+- `app/(newsletter)/newsletter/dashboard/page.jsx`: 구독자 목록 API 호출을 환경변수 사용으로 변경
+- `app/(admin)/admin/newsletter/dashboard/page.jsx`: 관리자 구독자 목록 API 호출을 환경변수 사용으로 변경
+
+이제 모든 API 호출이 환경변수를 통해 안전하게 관리됩니다.
+
 ## 🚀 실행 방법
 
 ```bash
