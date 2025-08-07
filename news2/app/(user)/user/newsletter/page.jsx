@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -18,13 +18,25 @@ import {
   Clock,
   Eye,
   Bookmark,
-  Share2
+  Share2,
+  CheckCircle
 } from "lucide-react"
 import Header from "@/components/header"
+import { useToast } from "@/hooks/use-toast"
 
 export default function UserNewsletter() {
   const [activeTab, setActiveTab] = useState("subscriptions")
   const [searchTerm, setSearchTerm] = useState("")
+  const [isSubscribed, setIsSubscribed] = useState(false)
+  const { toast } = useToast()
+
+  // 컴포넌트 마운트 시 localStorage에서 구독 상태 확인
+  useEffect(() => {
+    const stored = localStorage.getItem('subscribed')
+    if (stored === 'true') {
+      setIsSubscribed(true)
+    }
+  }, [])
 
   // 샘플 데이터
   const mySubscriptions = [
@@ -119,6 +131,33 @@ export default function UserNewsletter() {
       hasAttachment: false
     }
   ]
+
+  // 구독 처리 함수
+  const handleSubscribe = (newsletterId) => {
+    const newsletter = availableNewsletters.find(nl => nl.id === newsletterId)
+    if (newsletter) {
+      // localStorage에 구독 상태 저장
+      localStorage.setItem('subscribed', 'true')
+      setIsSubscribed(true)
+      
+      toast({
+        title: "구독 완료!",
+        description: `${newsletter.name} 구독이 완료되었습니다.`,
+        icon: <CheckCircle className="h-4 w-4 text-green-500" />
+      })
+    }
+  }
+
+  // 구독 해제 함수
+  const handleUnsubscribe = () => {
+    localStorage.removeItem('subscribed')
+    setIsSubscribed(false)
+    
+    toast({
+      title: "구독 해제 완료",
+      description: "뉴스레터 구독이 해제되었습니다.",
+    })
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -221,43 +260,77 @@ export default function UserNewsletter() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {availableNewsletters.map((newsletter) => (
-                <Card key={newsletter.id} className="hover-lift">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
+            {/* 구독한 사용자에게 안내 메시지 */}
+            {isSubscribed && (
+              <Card className="border-green-200 bg-green-50">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <CheckCircle className="h-6 w-6 text-green-500" />
                       <div>
-                        <CardTitle className="text-lg">{newsletter.name}</CardTitle>
-                        <CardDescription>{newsletter.description}</CardDescription>
+                        <h3 className="text-lg font-medium text-green-900">
+                          이미 뉴스레터를 구독하고 계십니다!
+                        </h3>
+                        <p className="text-green-700 mt-1">
+                          구독 중인 뉴스레터는 "내 구독" 탭에서 관리할 수 있습니다.
+                        </p>
                       </div>
-                      <Badge variant="outline">{newsletter.category}</Badge>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">발송 주기</span>
-                        <span>{newsletter.frequency}</span>
+                    <Button 
+                      variant="outline" 
+                      onClick={handleUnsubscribe}
+                      className="border-red-300 text-red-600 hover:bg-red-50"
+                    >
+                      구독 해제
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* 구독하지 않은 사용자에게만 뉴스레터 카드 표시 */}
+            {!isSubscribed && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {availableNewsletters.map((newsletter) => (
+                  <Card key={newsletter.id} className="hover-lift">
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="text-lg">{newsletter.name}</CardTitle>
+                          <CardDescription>{newsletter.description}</CardDescription>
+                        </div>
+                        <Badge variant="outline">{newsletter.category}</Badge>
                       </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">구독자 수</span>
-                        <span>{newsletter.subscribers.toLocaleString()}</span>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">발송 주기</span>
+                          <span>{newsletter.frequency}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">구독자 수</span>
+                          <span>{newsletter.subscribers.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">평점</span>
+                          <span className="flex items-center">
+                            ⭐ {newsletter.rating}
+                          </span>
+                        </div>
+                        <Button 
+                          className="w-full"
+                          onClick={() => handleSubscribe(newsletter.id)}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          구독하기
+                        </Button>
                       </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">평점</span>
-                        <span className="flex items-center">
-                          ⭐ {newsletter.rating}
-                        </span>
-                      </div>
-                      <Button className="w-full">
-                        <Plus className="h-4 w-4 mr-2" />
-                        구독하기
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           {/* Inbox Tab */}

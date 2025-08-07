@@ -82,13 +82,10 @@ export default function SubscribeForm({ onSubscribeSuccess }) {
   }
 
   const resetForm = () => {
-    setSuccess(false)
-    setIsSubscribed(false)
+    setSuccess(false) // ✔️ 완료 메시지 숨기기
     setError('')
     setShowCelebration(false)
     setShowRedirectMessage(false)
-    // localStorage에서 구독 상태 제거
-    localStorage.removeItem('subscribed')
   }
 
   // 구독한 사용자에게는 카드가 보이지 않음
