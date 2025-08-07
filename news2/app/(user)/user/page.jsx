@@ -20,6 +20,7 @@ import {
   Settings
 } from "lucide-react"
 import Header from "@/components/header"
+import Link from "next/link"
 
 export default function UserDashboard() {
   const [activeTab, setActiveTab] = useState("overview")
@@ -326,7 +327,9 @@ export default function UserDashboard() {
                       <p className="text-sm text-muted-foreground">user@example.com</p>
                     </div>
                   </div>
+                  <Link href="/mypage">
                   <Button variant="outline" className="w-full">프로필 수정</Button>
+                  </Link> 
                 </CardContent>
               </Card>
 
