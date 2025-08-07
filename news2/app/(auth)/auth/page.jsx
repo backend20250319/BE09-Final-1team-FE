@@ -1,9 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import LoginFormWithLogic from "./_components/LoginFormWithLogic";
+import LoginForm from "./_components/LoginForm";
 import SignupForm from "./_components/SignupForm";
 
 /**
@@ -12,6 +13,13 @@ import SignupForm from "./_components/SignupForm";
  * - 각 기능을 별도 컴포넌트로 분리하여 관리
  */
 export default function AuthPage() {
+  const [activeTab, setActiveTab] = useState("login");
+
+  // 회원가입 성공 시 로그인 탭으로 전환하는 함수
+  const switchToLoginTab = () => {
+    setActiveTab("login");
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -31,7 +39,7 @@ export default function AuthPage() {
         </div>
 
         {/* 로그인/회원가입 탭 */}
-        <Tabs defaultValue="login" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="login">로그인</TabsTrigger>
             <TabsTrigger value="signup">회원가입</TabsTrigger>
@@ -39,12 +47,12 @@ export default function AuthPage() {
 
           {/* 로그인 탭 컨텐츠 */}
           <TabsContent value="login">
-            <LoginFormWithLogic />
+            <LoginForm />
           </TabsContent>
 
           {/* 회원가입 탭 컨텐츠 */}
           <TabsContent value="signup">
-            <SignupForm />
+            <SignupForm onSignupSuccess={switchToLoginTab} />
           </TabsContent>
         </Tabs>
       </div>
