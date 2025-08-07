@@ -20,6 +20,7 @@ export default function MainPage() {
   const [selectedCategory, setSelectedCategory] = useState("전체")
   const [isLoaded, setIsLoaded] = useState(false)
   const [userRole, setUserRole] = useState(null)
+  const [isSubscribed, setIsSubscribed] = useState(false)
 
   useEffect(() => {
     const fetchNews = async () => {
@@ -36,6 +37,12 @@ export default function MainPage() {
 
     fetchNews()
     setUserRole(getUserRole())
+    
+    // 구독 상태 확인
+    const stored = localStorage.getItem('subscribed')
+    if (stored === 'true') {
+      setIsSubscribed(true)
+    }
   }, [])
 
   const categories = ["전체", "정치", "경제", "사회", "생활/문화", "IT/과학", "국제"]
@@ -218,10 +225,12 @@ export default function MainPage() {
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <div className="space-y-6">
-              {/* Newsletter Subscription */}
-              <div className="animate-slide-in" style={{ animationDelay: '0.3s' }}>
-                <SubscribeForm />
-              </div>
+              {/* Newsletter Subscription - 구독하지 않은 사용자에게만 표시 */}
+              {!isSubscribed && (
+                <div className="animate-slide-in" style={{ animationDelay: '0.3s' }}>
+                  <SubscribeForm />
+                </div>
+              )}
 
               {/* Trending Topics */}
               <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.4s' }}>
