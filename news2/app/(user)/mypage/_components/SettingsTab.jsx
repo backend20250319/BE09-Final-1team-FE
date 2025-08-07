@@ -6,86 +6,76 @@
  */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Mail, Bell, Settings } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Mail, Bell, Settings, AlertCircle } from "lucide-react";
+import { authenticatedFetch } from "@/lib/auth";
 
 export default function SettingsTab() {
   const [newsletterEnabled, setNewsletterEnabled] = useState(true);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
+  // 회원 탈퇴 관련 상태
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+
+  // 회원 탈퇴 처리  함수
+  const handleDeleteAccount = async () => {
+    try {
+      setIsDeleting(true);
+      setDeleteError("");
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const response = await authenticatedFetch(`${apiUrl}/api/users/delete`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response && response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          // 탈퇴 성공 시 로컬 스토리지 정리 및 로그인 페이지로 리다이렉트
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+          alert("회원 탈퇴가 완료되었습니다.");
+          window.location.href = "/auth";
+        } else {
+          throw new Error(data.message || "회원 탈퇴에 실패했습니다.");
+        }
+      } else {
+        throw new Error("회원 탈퇴 요청에 실패했습니다.");
+      }
+    } catch (err) {
+      console.error("회원 탈퇴 오류:", err);
+      setDeleteError(err.message || "회원 탈퇴 중 오류가 발생했습니다.");
+    } finally {
+      setIsDeleting(false);
+      setShowConfirmDialog(false);
+    }
+  };
+
+  // 회원 탈퇴 확인 다이얼로그
+  const confirmDeleteAccount = () => {
+    const isConfirmed = window.confirm(
+      "정말로 회원 탈퇴를 하시겠습니까?\n\n탈퇴 시 모든 데이터가 삭제되며, 이는 되돌릴 수 없습니다."
+    );
+
+    if (isConfirmed) {
+      handleDeleteAccount();
+    }
+  };
+
   return (
     <div className="space-y-6">
-      {/* 뉴스레터 설정 카드 */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Mail className="h-5 w-5 mr-2" />
-            뉴스레터 설정
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* 뉴스레터 구독 토글 */}
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="newsletter">뉴스레터 구독</Label>
-              <p className="text-sm text-gray-600">
-                매일 아침 맞춤 뉴스를 이메일로 받아보세요
-              </p>
-            </div>
-            <Switch
-              id="newsletter"
-              checked={newsletterEnabled}
-              onCheckedChange={setNewsletterEnabled}
-            />
-          </div>
-
-          {/* 뉴스레터 구독 시 추가 설정 */}
-          {newsletterEnabled && (
-            <div className="ml-4 space-y-3 border-l-2 border-blue-200 pl-4">
-              <div>
-                <Label htmlFor="newsletter-time">발송 시간</Label>
-                <Input
-                  id="newsletter-time"
-                  type="time"
-                  defaultValue="07:00"
-                  className="w-32"
-                />
-              </div>
-              <div>
-                <Label>발송 빈도</Label>
-                <div className="flex space-x-4 mt-2">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="frequency"
-                      value="daily"
-                      defaultChecked
-                      className="mr-2"
-                    />
-                    매일
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="frequency"
-                      value="weekly"
-                      className="mr-2"
-                    />
-                    주간
-                  </label>
-                </div>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       {/* 알림 설정 카드 */}
       <Card>
         <CardHeader>
@@ -133,6 +123,14 @@ export default function SettingsTab() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-3">
+            {/* 회원 탈퇴 에러 메시지 */}
+            {deleteError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{deleteError}</AlertDescription>
+              </Alert>
+            )}
+
             {/* 계정 관리 메뉴 버튼들 */}
             <Button
               variant="outline"
@@ -154,8 +152,13 @@ export default function SettingsTab() {
             </Button>
             <Separator />
             {/* 회원 탈퇴 버튼 */}
-            <Button variant="destructive" className="w-full">
-              회원 탈퇴
+            <Button
+              variant="destructive"
+              className="w-full"
+              onClick={confirmDeleteAccount}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "탈퇴 처리 중..." : "회원 탈퇴"}
             </Button>
           </div>
         </CardContent>

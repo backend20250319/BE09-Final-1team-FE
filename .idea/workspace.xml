@@ -1,88 +1,52 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="AutoImportSettings">
-    <option name="autoReloadType" value="SELECTIVE" />
-  </component>
   <component name="ChangeListManager">
-    <list default="true" id="ca6686e2-3358-4d44-87a8-37fd958c7929" name="Changes" comment="[FEAT] AI 요약기능 추가&#10;&#10;- 상세페이지(news\[id]\page.jsx)에 이미지 및 요약기능 버튼 추가">
-      <change beforePath="$PROJECT_DIR$/news2/app/(admin)/admin/newsletter/dashboard/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(admin)/admin/newsletter/dashboard/page.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/news2/app/(admin)/admin/newsletter/settings/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(admin)/admin/newsletter/settings/page.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/news2/app/(admin)/admin/newsletter/template/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(admin)/admin/newsletter/template/page.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/news2/app/(admin)/admin/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(admin)/admin/page.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/news2/app/(auth)/unauthorized/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(auth)/unauthorized/page.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/news2/app/(community)/community/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(community)/community/page.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/news2/app/(news)/news/[id]/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(news)/news/[id]/page.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/news2/app/(newsletter)/newsletter/dashboard/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(newsletter)/newsletter/dashboard/page.jsx" afterDir="false" />
+    <list default="true" id="d45f7f00-7177-4736-b0b7-ed98e5b912ff" name="변경" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/BE09-Final-1team-FE.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/git_toolbox_prj.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/material_theme_project_new.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/material_theme_project_new.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/news2/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/.idea/git_toolbox_prj.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/.idea/misc.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/.idea/modules.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/.idea/news2.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(auth)/auth/_components/LoginFormWithLogic.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(auth)/auth/_components/LoginForm.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(auth)/auth/_components/SignupForm.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(auth)/auth/_components/SignupForm.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(auth)/auth/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(auth)/auth/page.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/news2/app/(newsletter)/newsletter/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(newsletter)/newsletter/page.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/news2/app/(newsletter)/newsletter/settings/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(newsletter)/newsletter/settings/page.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/news2/app/(newsletter)/newsletter/template/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(newsletter)/newsletter/template/page.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(user)/mypage/_components/InterestsTab.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(user)/mypage/_components/ProfileTab.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(user)/mypage/_components/ProfileTab.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(user)/mypage/_components/SettingsTab.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(user)/mypage/_components/SettingsTab.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/news2/app/(user)/mypage/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(user)/mypage/page.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/news2/app/(user)/user/newsletter/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(user)/user/newsletter/page.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/news2/app/(user)/user/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(user)/user/page.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/news2/app/layout.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/layout.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/news2/app/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/page.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/news2/components/header.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/components/header.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/news2/lib/newsService.js" beforeDir="false" afterPath="$PROJECT_DIR$/news2/lib/newsService.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/components/SubscribeForm.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/components/SubscribeForm.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/lib/auth.js" beforeDir="false" afterPath="$PROJECT_DIR$/news2/lib/auth.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/news2/package-lock.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="FileTemplateManagerImpl">
-    <option name="RECENT_TEMPLATES">
-      <list>
-        <option value="Python Script" />
-      </list>
-    </option>
-  </component>
   <component name="Git.Settings">
-    <option name="RECENT_BRANCH_BY_REPOSITORY">
-      <map>
-        <entry key="$PROJECT_DIR$" value="develop" />
-      </map>
-    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory">{
-  &quot;lastFilter&quot;: {
-    &quot;state&quot;: &quot;OPEN&quot;,
-    &quot;assignee&quot;: &quot;FerryLa&quot;
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "changjunpark13"
   }
-}</component>
-  <component name="GitToolBoxStore">
-    <option name="recentBranches">
-      <RecentBranches>
-        <option name="branchesForRepo">
-          <list>
-            <RecentBranchesForRepo>
-              <option name="branches">
-                <list>
-                  <RecentBranch>
-                    <option name="branchName" value="feature/jihwan" />
-                    <option name="lastUsedInstant" value="1754443315" />
-                  </RecentBranch>
-                  <RecentBranch>
-                    <option name="branchName" value="develop" />
-                    <option name="lastUsedInstant" value="1754291050" />
-                  </RecentBranch>
-                  <RecentBranch>
-                    <option name="branchName" value="feature/jieun" />
-                    <option name="lastUsedInstant" value="1754290982" />
-                  </RecentBranch>
-                  <RecentBranch>
-                    <option name="branchName" value="main" />
-                    <option name="lastUsedInstant" value="1753839956" />
-                  </RecentBranch>
-                </list>
-              </option>
-              <option name="repositoryRootUrl" value="file://$PROJECT_DIR$" />
-            </RecentBranchesForRepo>
-          </list>
-        </option>
-      </RecentBranches>
-    </option>
-  </component>
+}]]></component>
   <component name="GithubProjectSettings">
     <option name="branchProtectionPatterns">
       <list>
@@ -96,14 +60,14 @@
     "accountId": "2aeec0c1-65b9-465c-89e4-48e90fdf76b2"
   }
 }]]></component>
-  <component name="KubernetesApiPersistence">{}</component>
-  <component name="KubernetesApiProvider">{
-  &quot;isMigrated&quot;: true
-}</component>
-  <component name="ProjectColorInfo">{
-  &quot;associatedIndex&quot;: 6
-}</component>
-  <component name="ProjectId" id="30ZfGzhFVH8kV21ggjxxD4i3uKZ" />
+  <component name="KubernetesApiPersistence"><![CDATA[{}]]></component>
+  <component name="KubernetesApiProvider"><![CDATA[{
+  "isMigrated": true
+}]]></component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 0
+}]]></component>
+  <component name="ProjectId" id="30xAGdaHSNZCMhMpV4WygRP0dxx" />
   <component name="ProjectLevelVcsManager">
     <ConfirmationsSetting value="2" id="Add" />
   </component>
@@ -112,33 +76,14 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
-    "Node.js.page.jsx.executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "main",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/dev/finalproject/code/BE09-Final-1team-FE",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
+    "git-widget-placeholder": "feature/changjun 병합 중에 #24개",
     "nodejs_package_manager_path": "npm",
-    "ts.external.directory.path": "/Users/parkchangjun/Documents/Dev/BE09-Final-1team/BE09-Final-1team-FE1/news2/node_modules/typescript/lib",
     "vue.rearranger.settings.migration": "true"
-  },
-  "keyToStringList": {
-    "DatabaseDriversLRU": [
-      "mysql"
-    ]
   }
 }]]></component>
-  <component name="RecentsManager">
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="C:\dev\finalproject\code\BE09-Final-1team-FE\news2\hooks" />
-      <recent name="C:\dev\finalproject\code\BE09-Final-1team-FE\news2\public\images" />
-      <recent name="C:\dev\finalproject\code\BE09-Final-1team-FE\news2\components\aisummarybot" />
-    </key>
-  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -147,52 +92,10 @@
       </set>
     </attachedChunks>
   </component>
-  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
-    <task active="true" id="Default" summary="Default task">
-      <changelist id="ca6686e2-3358-4d44-87a8-37fd958c7929" name="Changes" comment="" />
-      <created>1753839923718</created>
-      <option name="number" value="Default" />
-      <option name="presentableId" value="Default" />
-      <updated>1753839923718</updated>
-      <workItem from="1753839924846" duration="17508000" />
-      <workItem from="1753927762627" duration="4571000" />
-      <workItem from="1754035308056" duration="775000" />
-      <workItem from="1754036746679" duration="661000" />
-      <workItem from="1754224994536" duration="1422000" />
-      <workItem from="1754289997155" duration="1034000" />
-      <workItem from="1754291222662" duration="800000" />
-      <workItem from="1754352494853" duration="2340000" />
-      <workItem from="1754443149793" duration="14854000" />
-      <workItem from="1754462500660" duration="198000" />
-      <workItem from="1754462713406" duration="17000" />
-      <workItem from="1754548247066" duration="380000" />
-    </task>
-    <task id="LOCAL-00001" summary="commit">
-      <option name="closed" value="true" />
-      <created>1754443295821</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1754443295821</updated>
-    </task>
-    <task id="LOCAL-00002" summary="[FEAT] AI 요약기능 추가&#10;&#10;- 상세페이지(news\[id]\page.jsx)에 이미지 및 요약기능 버튼 추가">
-      <option name="closed" value="true" />
-      <created>1754462135968</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
-      <option name="project" value="LOCAL" />
-      <updated>1754462135968</updated>
-    </task>
-    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
-  </component>
-  <component name="VcsManagerConfiguration">
-    <MESSAGE value="commit" />
-    <MESSAGE value="[FEAT] AI 요약기능 추가&#10;&#10;- 상세페이지(news\[id]\page.jsx)에 이미지 및 요약기능 버튼 추가" />
-    <option name="LAST_COMMIT_MESSAGE" value="[FEAT] AI 요약기능 추가&#10;&#10;- 상세페이지(news\[id]\page.jsx)에 이미지 및 요약기능 버튼 추가" />
   </component>
 </project>
