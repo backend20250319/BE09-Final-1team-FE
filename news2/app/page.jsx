@@ -15,6 +15,7 @@ import { newsService } from "@/lib/newsService"
 import SubscribeForm from "@/components/SubscribeForm"
 import SubscriberCount from "@/components/SubscriberCount"
 import { getUserRole } from "@/lib/auth"
+import RealTimeKeywordWidget from "@/components/RealTimeKeywordWidget"
 
 export default function MainPage() {
   const [selectedCategory, setSelectedCategory] = useState("전체")
@@ -76,8 +77,9 @@ export default function MainPage() {
           {/* Main Content */}
           <div className="lg:col-span-3">
             {/* Category Tabs */}
-            <div className="mb-6">
-              <div className="flex space-x-2 overflow-x-auto pb-2">
+            <div className="mb-6 flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+              {/* 카테고리 버튼 */}
+              <div className="flex-1 overflow-x-auto flex space-x-2 pb-2">
                 {categories.map((category, index) => (
                   <Button
                     key={category}
@@ -92,6 +94,11 @@ export default function MainPage() {
                     {category}
                   </Button>
                 ))}
+              </div>
+
+              {/* 실시간 키워드 */}
+              <div className="min-w-[280px]">
+                <RealTimeKeywordWidget />
               </div>
             </div>
 

@@ -287,36 +287,79 @@ export default function NewsletterDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column */}
           <div className="lg:col-span-2 space-y-8">
-            {/* 카테고리별 읽기 통계 */}
-            <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.5s' }}>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <BarChart3 className="h-5 w-5 mr-2 text-blue-500" />
-                  가장 많이 읽는 뉴스레터 카테고리
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {categoryStats.map((category, index) => (
-                    <div key={category.name} className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <span className="text-sm font-medium text-gray-600 w-16">{category.name}</span>
-                        <div className="flex-1 bg-gray-200 rounded-full h-2">
-                          <div 
-                            className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${category.percentage}%` }}
-                          ></div>
+            {/* 카테고리별 읽기 통계와 실시간 인기 키워드를 나란히 배치 */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* 카테고리별 읽기 통계 */}
+              <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.5s' }}>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <BarChart3 className="h-5 w-5 mr-2 text-blue-500" />
+                    가장 많이 읽는 뉴스레터 카테고리
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {categoryStats.map((category, index) => (
+                      <div key={category.name} className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <span className="text-sm font-medium text-gray-600 w-16">{category.name}</span>
+                          <div className="flex-1 bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                              style={{ width: `${category.percentage}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-medium text-gray-900">{category.reads}회 읽음</p>
+                          <p className="text-xs text-gray-500">{category.percentage}%</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium text-gray-900">{category.reads}회 읽음</p>
-                        <p className="text-xs text-gray-500">{category.percentage}%</p>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* 실시간 인기 키워드 */}
+              <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.55s' }}>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <TrendingUp className="h-5 w-5 mr-2 text-red-500" />
+                    실시간 인기 키워드
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-1">
+                    {["인공지능", "경제정책", "환경보호", "디지털전환", "스타트업", "블록체인", "메타버스", "ESG"].map((keyword, index) => (
+                      <div
+                        key={keyword}
+                        className="flex items-center justify-between px-4 py-2 rounded-md hover:bg-blue-50 transition-colors duration-200 group cursor-pointer"
+                      >
+                        <span className="flex items-center space-x-2">
+                          <span
+                            className={`font-bold w-5 text-right ${
+                              index === 0
+                                ? "text-red-500"
+                                : index === 1
+                                ? "text-orange-500"
+                                : index === 2
+                                ? "text-yellow-500"
+                                : "text-blue-600"
+                            }`}
+                          >
+                            {index + 1}
+                          </span>
+                          <span className="text-sm text-gray-800 group-hover:underline group-hover:text-blue-700 transition">
+                            {keyword}
+                          </span>
+                        </span>
+                        <span className="text-xs bg-red-500 text-white px-2 py-1 rounded-full shadow">HOT</span>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
             {/* 인기 콘텐츠 */}
             <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.6s' }}>
