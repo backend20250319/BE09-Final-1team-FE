@@ -95,54 +95,86 @@ export default function MainPage() {
               </div>
             </div>
 
-          <div className="flex flex-col lg:flex-row items-start gap-4 ">
-          {/* Left: Featured News */}
-           <div className="w-full lg:w-[70%] ">
-            <Card className="relative overflow-hidden glass hover-lift animate-slide-in">
-           {/* 이미지 영역 */}
-            <img
-              src="/placeholder.svg?height=300&width=500"
-              alt="Featured news"
-              className="w-full h-full object-cover"
-            />
+          <div className="flex flex-col lg:flex-row items-start gap-6">
+            {/* Left: Featured News */}
+            <div className="w-full lg:w-2/3">
+              <Card className="relative overflow-hidden glass hover-lift animate-slide-in h-[560px] rounded-xl">
+                {/* 이미지 영역 */}
+                <img
+                  src="/placeholder.svg?height=300&width=500"
+                  alt="Featured news"
+                  className="w-full h-full object-cover"
+                />
 
-            {/* 텍스트 오버레이 */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent p-6 flex flex-col justify-end text-white">
-              <Badge className="bg-red-600 text-white px-4 py-1 rounded-full shadow-lg font-bold tracking-wider mb-4 w-fit">
-                속보
-              </Badge>
-              <h2 className="text-3xl font-bold mb-2">
-                주요 경제 정책 발표, 시장에 미치는 파급효과 분석
-              </h2>
-              <p className="text-sm mb-4">
-                <TextWithTooltips text="정부가 발표한 새로운 경제 정책이 금융시장과 실물경제에 미칠 영향에 대해 전문가들이 다양한 분석을 내놓고 있습니다. 이번 정책은 기업 투자 활성화와 소비 진작을 목표로 하고 있어..." />
-              </p>
+                {/* 텍스트 오버레이 */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent p-4 md:p-6 flex flex-col justify-end text-white">
+                  <Badge className="bg-red-600 text-white px-4 py-1 rounded-full shadow-lg font-bold tracking-wider mb-3 w-fit">
+                    속보
+                  </Badge>
+                  <h2 className="text-lg lg:text-xl font-bold mb-2 line-clamp-2">
+                    주요 경제 정책 발표, 시장에 미치는 파급효과 분석
+                  </h2>
+                  <p className="text-sm mb-4 line-clamp-2">
+                    <TextWithTooltips text="정부가 발표한 새로운 경제 정책이 금융시장과 실물경제에 미칠 영향에 대해 전문가들이 다양한 분석을 내놓고 있습니다..." />
+                  </p>
 
-              {/* 하단 메타정보 */}
-              <div className="flex items-center justify-between text-xs text-gray-300">
-                <span>경제신문 • 1시간 전</span>
-                <div className="flex items-center space-x-4">
-                  <span className="flex items-center">
-                    <Eye className="h-4 w-4 mr-1" />
-                    2,345
-                  </span>
-                  <Button variant="ghost" size="sm" className="hover-glow text-white">
-                    <Share2 className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" className="hover-glow text-white">
-                    <Bookmark className="h-4 w-4" />
-                  </Button>
+                  {/* 하단 메타정보 */}
+                  <div className="flex items-center justify-between text-xs text-gray-300">
+                    <span>경제신문 • 1시간 전</span>
+                    <div className="flex items-center space-x-4">
+                      <span className="flex items-center">
+                        <Eye className="h-4 w-4 mr-1" />
+                        2,345
+                      </span>
+                      <Button variant="ghost" size="sm" className="hover-glow text-white">
+                        <Share2 className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="hover-glow text-white">
+                        <Bookmark className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </Card>
             </div>
-            </Card>
-          
 
-
-          
-          
+            {/* Right: Side News List */}
+            <div className="w-full lg:w-1/3 space-y-4">
+              {filteredNewsItems.slice(0, 4).map((item, index) => (
+                <Card 
+                  key={item.id} 
+                  className="flex items-center gap-4 p-4 glass hover-lift rounded-xl h-[130px] transition animate-slide-in"
+                  style={{ animationDelay: `${0.3 + index * 0.1}s` }}
+                >
+                  <img
+                    src={item.image || "/placeholder.svg"}
+                    alt={item.title}
+                    className="w-24 h-24 object-cover rounded-lg flex-shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-base font-semibold line-clamp-2 text-gray-800 mb-2">
+                      {item.title}
+                    </p>
+                    <p className="text-sm text-gray-500 mb-2">
+                      {new Date(item.publishedAt).toLocaleDateString("ko-KR", {
+                        month: "short",
+                        day: "numeric"
+                      })}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline" className="text-xs">
+                        {item.category}
+                      </Badge>
+                      <span className="text-xs text-gray-500 flex items-center">
+                        <Eye className="h-3 w-3 mr-1" />
+                        {item.views?.toLocaleString() || "0"}
+                      </span>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
           </div>
-    </div>
 
 
    {/* News List */}

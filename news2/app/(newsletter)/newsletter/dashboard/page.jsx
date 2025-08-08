@@ -202,40 +202,34 @@ export default function NewsletterDashboard() {
             </Card>
           </div>
 
-          {/* Right: Sidebar */}
-          <div className="w-full lg:basis-1/3 flex flex-col space-y-6">
-            {/* Newsletter */}
-            <div className="animate-slide-in flex-1" style={{ animationDelay: '0.3s' }}>
-              <SubscribeForm />
+          {/* Right: Related Articles */}
+          <div className="w-full lg:basis-1/3 flex flex-col gap-4">
+            <div className="animate-slide-in" style={{ animationDelay: '0.3s' }}>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                <TrendingUp className="h-5 w-5 mr-2 text-blue-500" />
+                관련 기사
+              </h3>
             </div>
-
-            {/* Trending Topics */}
-            <Card className="glass hover-lift animate-slide-in flex-1" style={{ animationDelay: '0.4s' }}>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center">
-                  <TrendingUp className="h-5 w-5 mr-2 text-red-500" />
-                  실시간 인기 키워드
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1">
-                <div className="space-y-2">
-                  {["인공지능", "경제정책", "환경보호", "디지털전환", "스타트업"].map((keyword, index) => (
-                    <div
-                      key={keyword}
-                      className="flex items-center justify-between p-2 rounded-lg hover:bg-white/50 transition-all duration-300 trending-keyword"
-                    >
-                      <span className="flex items-center">
-                        <span className="text-sm font-medium text-blue-600 mr-2">{index + 1}</span>
-                        {keyword}
-                      </span>
-                      <Badge className="!bg-red-500 !text-white text-xs rounded-full px-3 py-1 shadow-md">
-                        HOT
-                      </Badge>
-                    </div>
-                  ))}
+            
+            {[1, 2, 3, 4].map((_, i) => (
+              <div
+                key={i}
+                className="flex items-start gap-3 p-2 bg-white rounded-xl shadow hover:shadow-md transition animate-slide-in"
+                style={{ animationDelay: `${0.4 + i * 0.1}s` }}
+              >
+                <img
+                  src={`/placeholder.svg?height=80&width=96`}
+                  alt="thumb"
+                  className="w-24 h-20 object-cover rounded-lg"
+                />
+                <div className="flex flex-col justify-between h-full">
+                  <p className="text-sm text-gray-400">15 Jan, 2024 · 5 min Read</p>
+                  <p className="text-base font-semibold leading-tight">
+                    Example article title goes here
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            ))}
           </div>
         </div>
 
