@@ -15,18 +15,18 @@ export default function WeatherWidget() {
     switch (condition?.toLowerCase()) {
       case '맑음':
       case 'clear':
-        return <Sun className="h-8 w-8 text-yellow-500" />
+        return <Sun className="h-6 w-6 text-yellow-500" />
       case '흐림':
       case 'cloudy':
-        return <Cloud className="h-8 w-8 text-gray-500" />
+        return <Cloud className="h-6 w-6 text-gray-500" />
       case '비':
       case 'rain':
-        return <CloudRain className="h-8 w-8 text-blue-500" />
+        return <CloudRain className="h-6 w-6 text-blue-500" />
       case '눈':
       case 'snow':
-        return <CloudSnow className="h-8 w-8 text-blue-300" />
+        return <CloudSnow className="h-6 w-6 text-blue-300" />
       default:
-        return <Sun className="h-8 w-8 text-yellow-500" />
+        return <Sun className="h-6 w-6 text-yellow-500" />
     }
   }
 
@@ -79,15 +79,15 @@ export default function WeatherWidget() {
   if (loading) {
     return (
       <Card className="glass hover-lift animate-slide-in">
-        <CardHeader>
-          <CardTitle className="text-lg">오늘의 날씨</CardTitle>
+        <CardHeader className="pb-0.5">
+          <CardTitle className="text-sm">오늘의 날씨</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           <div className="text-center">
             <div className="animate-pulse">
-              <div className="h-8 w-8 bg-gray-300 rounded mx-auto mb-2"></div>
-              <div className="h-6 bg-gray-300 rounded w-16 mx-auto mb-2"></div>
-              <div className="h-4 bg-gray-300 rounded w-24 mx-auto"></div>
+              <div className="h-5 w-5 bg-gray-300 rounded mx-auto mb-1"></div>
+              <div className="h-4 bg-gray-300 rounded w-10 mx-auto mb-1"></div>
+              <div className="h-2 bg-gray-300 rounded w-12 mx-auto"></div>
             </div>
           </div>
         </CardContent>
@@ -98,16 +98,16 @@ export default function WeatherWidget() {
   if (error) {
     return (
       <Card className="glass hover-lift animate-slide-in">
-        <CardHeader>
-          <CardTitle className="text-lg">오늘의 날씨</CardTitle>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">오늘의 날씨</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           <div className="text-center text-red-500">
-            <Cloud className="h-8 w-8 mx-auto mb-2" />
-            <p className="text-sm">{error}</p>
+            <Cloud className="h-5 w-5 mx-auto mb-1" />
+            <p className="text-xs">{error}</p>
             <button 
               onClick={fetchWeather}
-              className="mt-2 text-xs text-blue-500 hover:underline"
+              className="mt-1 text-xs text-blue-500 hover:underline"
             >
               다시 시도
             </button>
@@ -119,60 +119,39 @@ export default function WeatherWidget() {
 
   return (
     <Card className="glass hover-lift animate-slide-in">
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center justify-between">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm flex items-center justify-between">
           오늘의 날씨
           <Badge className="text-xs bg-green-100 text-green-600">
             실시간
           </Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         <div className="text-center">
           {/* 메인 날씨 정보 */}
-          <div className="mb-4">
+          <div className="mb-2">
             {getWeatherIcon(weather.condition)}
-            <div className="text-3xl font-bold text-blue-600 mt-2">
+            <div className="text-xl font-bold text-blue-600 mt-1">
               {weather.temperature}°C
             </div>
-            <div className="text-gray-600 mb-2">{weather.condition}</div>
-            <div className="text-sm text-gray-500">{weather.location}</div>
+            <div className="text-xs text-gray-600">{weather.condition}</div>
           </div>
 
-          {/* 상세 정보 */}
-          <div className="grid grid-cols-2 gap-3 text-xs">
-            <div className="flex items-center justify-center space-x-1">
+          {/* 간소화된 상세 정보 */}
+          <div className="flex justify-center space-x-4 text-xs">
+            <div className="flex items-center space-x-1">
               <Thermometer className="h-3 w-3 text-red-500" />
               <span>체감 {weather.feelsLike}°C</span>
             </div>
-            <div className="flex items-center justify-center space-x-1">
+            <div className="flex items-center space-x-1">
               <Wind className="h-3 w-3 text-blue-500" />
-              <span>풍속 {weather.windSpeed}m/s</span>
-            </div>
-            <div className="flex items-center justify-center">
-              <span>습도 {weather.humidity}%</span>
-            </div>
-            <div className="flex items-center justify-center">
-              <span>기압 {weather.pressure}hPa</span>
-            </div>
-          </div>
-
-          {/* 일출/일몰 정보 */}
-          <div className="mt-4 pt-3 border-t border-gray-200">
-            <div className="flex justify-between text-xs text-gray-500">
-              <div className="flex items-center space-x-1">
-                <Sun className="h-3 w-3 text-yellow-500" />
-                <span>일출 {weather.sunrise}</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <Sun className="h-3 w-3 text-orange-500" />
-                <span>일몰 {weather.sunset}</span>
-              </div>
+              <span>{weather.windSpeed}m/s</span>
             </div>
           </div>
 
           {/* 자외선 지수 */}
-          <div className="mt-2">
+          <div className="mt-1">
             <Badge 
               className={`text-xs ${
                 weather.uvIndex <= 2 ? 'bg-green-100 text-green-600' :
@@ -181,7 +160,7 @@ export default function WeatherWidget() {
                 'bg-red-100 text-red-600'
               }`}
             >
-              자외선 지수 {weather.uvIndex}
+              자외선 {weather.uvIndex}
             </Badge>
           </div>
         </div>
