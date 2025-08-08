@@ -53,8 +53,8 @@ export default function ResetPasswordPage() {
     if (password.length < 8) {
       return "비밀번호는 최소 8자 이상이어야 합니다.";
     }
-    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
-      return "비밀번호는 대문자, 소문자, 숫자를 포함해야 합니다.";
+    if (!/(?=.*[a-z])(?=.*\d)/.test(password)) {
+      return "비밀번호는 영문자, 숫자를 포함해야 합니다.";
     }
     return null;
   };
@@ -94,14 +94,13 @@ export default function ResetPasswordPage() {
       const response = await fetch(`${apiUrl}/api/auth/password/reset`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-          // 백엔드에서 요구하는 필드명(token, newPassword, confirmPassword)에 맞춰 전송
-          body: JSON.stringify({
-            token: token,
-            newPassword: newPassword,
-            confirmPassword: confirmPassword,
-          }),
-        }
-      );
+        // 백엔드에서 요구하는 필드명(token, newPassword, confirmPassword)에 맞춰 전송
+        body: JSON.stringify({
+          token: token,
+          newPassword: newPassword,
+          confirmPassword: confirmPassword,
+        }),
+      });
 
       const result = await response.json();
 
@@ -232,7 +231,7 @@ export default function ResetPasswordPage() {
                   <p className="font-medium">비밀번호 요구사항:</p>
                   <ul className="list-disc list-inside space-y-1 text-xs">
                     <li>최소 8자 이상</li>
-                    <li>대문자, 소문자, 숫자 포함</li>
+                    <li>영문자, 숫자 포함</li>
                     <li>특수문자 포함 권장</li>
                   </ul>
                 </div>

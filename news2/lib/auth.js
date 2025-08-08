@@ -1,10 +1,53 @@
 // 권한 관리 유틸리티 함수들 (JWT 토큰 기반)
 
+// JWT 토큰 디코딩 함수 (Base64 디코딩)
+export function decodeJWT(token) {
+  try {
+    // JWT는 header.payload.signature 형태로 구성됨
+    const parts = token.split(".");
+    if (parts.length !== 3) {
+      throw new Error("Invalid JWT format");
+    }
+
+    // payload 부분 디코딩 (Base64)
+    const payload = parts[1];
+    const decodedPayload = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
+    return JSON.parse(decodedPayload);
+  } catch (error) {
+    console.error("JWT 디코딩 오류:", error);
+    return null;
+  }
+}
+
+// 토큰에서 사용자 role 추출
+export function getRoleFromToken(token) {
+  if (!token) return null;
+
+  const decoded = decodeJWT(token);
+  return decoded?.role || decoded?.userRole || null;
+}
+
 // 토큰 저장 함수
 export function setTokens(accessToken, refreshToken) {
   if (typeof window !== "undefined") {
     localStorage.setItem("accessToken", accessToken);
     localStorage.setItem("refreshToken", refreshToken);
+
+    // 미들웨어에서 접근할 수 있도록 accessToken을 쿠키에도 저장
+    // 개발 환경에서는 secure 옵션 제거
+    const isProduction = window.location.protocol === "https:";
+    const secureOption = isProduction ? "; secure" : "";
+    document.cookie = `accessToken=${accessToken}; path=/; max-age=${
+      7 * 24 * 60 * 60
+    }; samesite=strict${secureOption}`;
+
+    console.log("🔍 토큰 저장됨 - AccessToken:", accessToken);
+    console.log(
+      "🔍 쿠키 설정:",
+      `accessToken=${accessToken}; path=/; max-age=${
+        7 * 24 * 60 * 60
+      }; samesite=strict${secureOption}`
+    );
   }
 }
 
@@ -30,6 +73,10 @@ export function clearTokens() {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("userRole");
+
+    // 쿠키에서도 토큰 삭제
+    document.cookie =
+      "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
   }
 }
 
