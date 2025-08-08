@@ -14,13 +14,12 @@ import { useEffect, useState } from "react";
 // 분리된 컴포넌트들 import
 import ProfileSidebar from "./_components/ProfileSidebar";
 import ProfileTab from "./_components/ProfileTab";
-import InterestsTab from "./_components/InterestsTab";
 import ScrapsTab from "./_components/ScrapsTab";
 import HistoryTab from "./_components/HistoryTab";
 import SettingsTab from "./_components/SettingsTab";
 
 export default function MyPage() {
-  const searchParams = useSearchParams();
+  const searchParams =  useSearchParams();
   const [activeTab, setActiveTab] = useState("profile");
 
   useEffect(() => {
@@ -46,9 +45,8 @@ export default function MyPage() {
           <div className="lg:col-span-3">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               {/* 탭 메뉴 */}
-              <TabsList className="grid w-full grid-cols-5">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="profile">프로필</TabsTrigger>
-                <TabsTrigger value="interests">관심사</TabsTrigger>
                 <TabsTrigger value="scraps">스크랩</TabsTrigger>
                 <TabsTrigger value="history">읽기 기록</TabsTrigger>
                 <TabsTrigger value="settings">설정</TabsTrigger>
@@ -57,10 +55,6 @@ export default function MyPage() {
               {/* 각 탭별 컨텐츠 */}
               <TabsContent value="profile">
                 <ProfileTab />
-              </TabsContent>
-
-              <TabsContent value="interests">
-                <InterestsTab />
               </TabsContent>
 
               <TabsContent value="scraps">

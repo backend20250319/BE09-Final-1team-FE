@@ -17,7 +17,7 @@ import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { login } from "@/lib/auth";
 import Link from "next/link";
 
-export default function LoginFormWithLogic() {
+export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -134,7 +134,7 @@ export default function LoginFormWithLogic() {
               </div>
               <div className="flex justify-between">
                 <span>일반 사용자:</span>
-                <span>user@example.com / user123</span>
+                <span>user@example.com / user1234</span>
               </div>
             </div>
           </div>

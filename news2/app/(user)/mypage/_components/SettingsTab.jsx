@@ -13,195 +13,69 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { Mail, Bell, Settings, Users, Clock, Star, X } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { getUserRole } from "@/lib/auth";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Mail, Bell, Settings, AlertCircle } from "lucide-react";
+import { authenticatedFetch } from "@/lib/auth";
 
 export default function SettingsTab() {
   const [newsletterEnabled, setNewsletterEnabled] = useState(true);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [subscribedNewsletters, setSubscribedNewsletters] = useState([]);
-  const [userRole, setUserRole] = useState(null);
-  const { toast } = useToast();
 
-  useEffect(() => {
-    // 사용자 역할 확인
-    const role = getUserRole();
-    setUserRole(role);
-    
-    // 로그인한 사용자인 경우에만 로컬 스토리지에서 구독 정보 복원
-    if (role) {
-      const savedSubscriptions = localStorage.getItem('newsletterSubscriptions');
-      if (savedSubscriptions) {
-        setSubscribedNewsletters(JSON.parse(savedSubscriptions));
+  // 회원 탈퇴 관련 상태
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+
+  // 회원 탈퇴 처리  함수
+  const handleDeleteAccount = async () => {
+    try {
+      setIsDeleting(true);
+      setDeleteError("");
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const response = await authenticatedFetch(`${apiUrl}/api/users/delete`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response && response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          // 탈퇴 성공 시 로컬 스토리지 정리 및 로그인 페이지로 리다이렉트
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+          alert("회원 탈퇴가 완료되었습니다.");
+          window.location.href = "/auth";
+        } else {
+          throw new Error(data.message || "회원 탈퇴에 실패했습니다.");
+        }
+      } else {
+        throw new Error("회원 탈퇴 요청에 실패했습니다.");
       }
+    } catch (err) {
+      console.error("회원 탈퇴 오류:", err);
+      setDeleteError(err.message || "회원 탈퇴 중 오류가 발생했습니다.");
+    } finally {
+      setIsDeleting(false);
+      setShowConfirmDialog(false);
     }
-  }, []);
+  };
 
-  // 구독 해제 함수
-  const handleUnsubscribe = (newsletterId) => {
-    const updatedSubscriptions = subscribedNewsletters.filter(nl => nl.id !== newsletterId);
-    setSubscribedNewsletters(updatedSubscriptions);
-    
-    if (userRole) {
-      localStorage.setItem('newsletterSubscriptions', JSON.stringify(updatedSubscriptions));
+  // 회원 탈퇴 확인 다이얼로그
+  const confirmDeleteAccount = () => {
+    const isConfirmed = window.confirm(
+      "정말로 회원 탈퇴를 하시겠습니까?\n\n탈퇴 시 모든 데이터가 삭제되며, 이는 되돌릴 수 없습니다."
+    );
+
+    if (isConfirmed) {
+      handleDeleteAccount();
     }
-    
-    toast({
-      title: "구독 해제 완료",
-      description: "뉴스레터 구독이 해제되었습니다.",
-    });
   };
 
   return (
     <div className="space-y-6">
-      {/* 구독 중인 뉴스레터 관리 카드 */}
-      {userRole && subscribedNewsletters.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Mail className="h-5 w-5 mr-2" />
-              구독 중인 뉴스레터 ({subscribedNewsletters.length}개)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {subscribedNewsletters.map((newsletter) => (
-                <div key={newsletter.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Badge className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full">
-                        {newsletter.category}
-                      </Badge>
-                      <Badge className="bg-green-600 text-white text-xs px-3 py-1 rounded-full">
-                        {newsletter.frequency}
-                      </Badge>
-                    </div>
-                    <h4 className="font-medium text-gray-900 mb-1">{newsletter.title}</h4>
-                    <p className="text-sm text-gray-600 mb-2">{newsletter.description}</p>
-                    <div className="flex items-center space-x-4 text-xs text-gray-500">
-                      <div className="flex items-center space-x-1">
-                        <Users className="h-3 w-3" />
-                        <span>{newsletter.subscribers.toLocaleString()}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Clock className="h-3 w-3" />
-                        <span>{newsletter.lastSent}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Star className="h-3 w-3" />
-                        <span>4.8</span>
-                      </div>
-                    </div>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleUnsubscribe(newsletter.id)}
-                    className="ml-4 hover:bg-red-50 hover:text-red-600"
-                  >
-                    <X className="h-4 w-4 mr-1" />
-                    구독해제
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* 구독 중인 뉴스레터가 없을 때 안내 */}
-      {userRole && subscribedNewsletters.length === 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Mail className="h-5 w-5 mr-2" />
-              뉴스레터 구독
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-6">
-              <Mail className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                구독 중인 뉴스레터가 없습니다
-              </h3>
-              <p className="text-gray-500 mb-4">
-                관심 있는 주제의 뉴스레터를 구독하고 최신 정보를 받아보세요
-              </p>
-              <Button asChild>
-                <a href="/newsletter">뉴스레터 둘러보기</a>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* 뉴스레터 설정 카드 */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Mail className="h-5 w-5 mr-2" />
-            뉴스레터 설정
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* 뉴스레터 구독 토글 */}
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="newsletter">뉴스레터 구독</Label>
-              <p className="text-sm text-gray-600">
-                매일 아침 맞춤 뉴스를 이메일로 받아보세요
-              </p>
-            </div>
-            <Switch
-              id="newsletter"
-              checked={newsletterEnabled}
-              onCheckedChange={setNewsletterEnabled}
-            />
-          </div>
-
-          {/* 뉴스레터 구독 시 추가 설정 */}
-          {newsletterEnabled && (
-            <div className="ml-4 space-y-3 border-l-2 border-blue-200 pl-4">
-              <div>
-                <Label htmlFor="newsletter-time">발송 시간</Label>
-                <Input
-                  id="newsletter-time"
-                  type="time"
-                  defaultValue="07:00"
-                  className="w-32"
-                />
-              </div>
-              <div>
-                <Label>발송 빈도</Label>
-                <div className="flex space-x-4 mt-2">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="frequency"
-                      value="daily"
-                      defaultChecked
-                      className="mr-2"
-                    />
-                    매일
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="frequency"
-                      value="weekly"
-                      className="mr-2"
-                    />
-                    주간
-                  </label>
-                </div>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       {/* 알림 설정 카드 */}
       <Card>
         <CardHeader>
@@ -249,6 +123,14 @@ export default function SettingsTab() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-3">
+            {/* 회원 탈퇴 에러 메시지 */}
+            {deleteError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{deleteError}</AlertDescription>
+              </Alert>
+            )}
+
             {/* 계정 관리 메뉴 버튼들 */}
             <Button
               variant="outline"
@@ -270,8 +152,13 @@ export default function SettingsTab() {
             </Button>
             <Separator />
             {/* 회원 탈퇴 버튼 */}
-            <Button variant="destructive" className="w-full">
-              회원 탈퇴
+            <Button
+              variant="destructive"
+              className="w-full"
+              onClick={confirmDeleteAccount}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "탈퇴 처리 중..." : "회원 탈퇴"}
             </Button>
           </div>
         </CardContent>
