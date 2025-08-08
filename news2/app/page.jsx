@@ -136,43 +136,11 @@ export default function MainPage() {
               </div>
             </div>
             </Card>
-          </div>
+          
 
-          {/* Right: Sidebar */}
-          <div className="w-full lg:w-[30%] space-y-4">
-            {/* Newsletter */}
-            <div className="animate-slide-in flex-1" style={{ animationDelay: '0.3s' }}>
-              <SubscribeForm />
-            </div>
 
-            {/* Trending Topics */}
-            <Card className="glass hover-lift animate-slide-in flex-1" style={{ animationDelay: '0.4s' }}>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center">
-                  <TrendingUp className="h-5 w-5 mr-2 text-red-500" />
-                  실시간 인기 키워드
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1">
-                <div className="space-y-2">
-                  {["인공지능", "경제정책", "환경보호", "디지털전환", "스타트업"].map((keyword, index) => (
-                    <div
-                      key={keyword}
-                      className="flex items-center justify-between p-2 rounded-lg hover:bg-white/50 transition-all duration-300 trending-keyword"
-                    >
-                      <span className="flex items-center">
-                        <span className="text-sm font-medium text-blue-600 mr-2">{index + 1}</span>
-                        {keyword}
-                      </span>
-                      <Badge className="!bg-red-500 !text-white text-xs rounded-full px-3 py-1 shadow-md">
-                        HOT
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-              <WeatherWidget/>
+          
+          
           </div>
     </div>
 
