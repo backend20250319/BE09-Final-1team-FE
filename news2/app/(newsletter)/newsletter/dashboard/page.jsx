@@ -20,12 +20,14 @@ import {
   ArrowLeft,
   CheckCircle,
   AlertCircle,
-  Bookmark
+  Bookmark,
+  Share2
 } from "lucide-react"
 import Header from "@/components/header"
 import { TextWithTooltips } from "@/components/tooltip"
 import Link from "next/link"
 import { getUserRole } from "@/lib/auth"
+import SubscribeForm from "@/components/SubscribeForm"
 
 export default function NewsletterDashboard() {
   const [userRole, setUserRole] = useState(null)
@@ -151,6 +153,90 @@ export default function NewsletterDashboard() {
             </Badge>
           </div>
           <p className="text-gray-600">구독 활동과 읽기 패턴을 한눈에 확인하세요</p>
+        </div>
+
+        {/* Featured News Section */}
+        <div className="flex flex-col lg:flex-row gap-8 items-stretch mb-8">
+          {/* Left: Featured News */}
+          <div className="w-full lg:basis-2/3">
+            <Card className="overflow-hidden glass hover-lift animate-slide-in h-full">
+              <div className="md:flex h-full">
+                <div className="md:w-1/2 relative">
+                  <img
+                    src="/placeholder.svg?height=300&width=500"
+                    alt="Featured news"
+                    className="w-full h-64 md:h-full object-cover"
+                  />
+                  <div className="absolute top-4 left-4">
+                    <Badge className="bg-red-600 text-white px-4 py-1 rounded-full shadow-lg font-bold tracking-wider">
+                      속보
+                    </Badge>
+                  </div>
+                </div>
+                <div className="md:w-1/2 p-6 flex flex-col justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold mb-3 text-gray-800">
+                      주요 경제 정책 발표, 시장에 미치는 파급효과 분석
+                    </h2>
+                    <p className="text-gray-600 mb-4">
+                      <TextWithTooltips text="정부가 발표한 새로운 경제 정책이 금융시장과 실물경제에 미칠 영향에 대해 전문가들이 다양한 분석을 내놓고 있습니다. 이번 정책은 기업 투자 활성화와 소비 진작을 목표로 하고 있어..." />
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between text-sm text-gray-500">
+                    <span>경제신문 • 1시간 전</span>
+                    <div className="flex items-center space-x-4">
+                      <span className="flex items-center">
+                        <Eye className="h-4 w-4 mr-1" />
+                        2,345
+                      </span>
+                      <Button variant="ghost" size="sm" className="hover-glow">
+                        <Share2 className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="hover-glow">
+                        <Bookmark className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Right: Sidebar */}
+          <div className="w-full lg:basis-1/3 flex flex-col space-y-6">
+            {/* Newsletter */}
+            <div className="animate-slide-in flex-1" style={{ animationDelay: '0.3s' }}>
+              <SubscribeForm />
+            </div>
+
+            {/* Trending Topics */}
+            <Card className="glass hover-lift animate-slide-in flex-1" style={{ animationDelay: '0.4s' }}>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center">
+                  <TrendingUp className="h-5 w-5 mr-2 text-red-500" />
+                  실시간 인기 키워드
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex-1">
+                <div className="space-y-2">
+                  {["인공지능", "경제정책", "환경보호", "디지털전환", "스타트업"].map((keyword, index) => (
+                    <div
+                      key={keyword}
+                      className="flex items-center justify-between p-2 rounded-lg hover:bg-white/50 transition-all duration-300 trending-keyword"
+                    >
+                      <span className="flex items-center">
+                        <span className="text-sm font-medium text-blue-600 mr-2">{index + 1}</span>
+                        {keyword}
+                      </span>
+                      <Badge className="!bg-red-500 !text-white text-xs rounded-full px-3 py-1 shadow-md">
+                        HOT
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         {/* Key Metrics */}
