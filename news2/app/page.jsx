@@ -76,29 +76,55 @@ export default function MainPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-3">
-            {/* Category Tabs */}
-            <div className="mb-6 flex flex-col lg:flex-row lg:items-start justify-between gap-4">
-              {/* 카테고리 버튼 */}
-              <div className="flex-1 overflow-x-auto flex space-x-2 pb-2">
-                {categories.map((category, index) => (
-                  <Button
-                    key={category}
-                    variant={selectedCategory === category ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedCategory(category)}
-                    className={`whitespace-nowrap hover-lift ${
-                      isLoaded ? 'animate-slide-in' : 'opacity-0'
-                    }`}
-                    style={{ animationDelay: `${index * 0.1}s` }}
-                  >
-                    {category}
-                  </Button>
-                ))}
-              </div>
+                                                {/* Category Tabs, Newsletter Subscription, and Real-time Keywords */}
+            <div className="mb-2">
+              {/* 카테고리 버튼과 뉴스레터 구독 */}
+              <div className="flex flex-col lg:flex-row items-start gap-2 mb-2">
+                {/* 왼쪽: 카테고리 버튼과 실시간 키워드 */}
+                <div className="flex flex-col gap-2">
+                  {/* 카테고리 버튼 */}
+                  <div className="lg:w-auto overflow-x-auto flex space-x-1 pb-0">
+                    {categories.map((category, index) => (
+                      <Button
+                        key={category}
+                        variant={selectedCategory === category ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setSelectedCategory(category)}
+                        className={`whitespace-nowrap hover-lift ${
+                          isLoaded ? 'animate-slide-in' : 'opacity-0'
+                        }`}
+                        style={{ animationDelay: `${index * 0.1}s` }}
+                      >
+                        {category}
+                      </Button>
+                    ))}
+                  </div>
 
-              {/* 실시간 키워드 */}
-              <div className="min-w-[280px]">
-                <RealTimeKeywordWidget />
+                  {/* 실시간 인기 키워드 */}
+                  <div className="lg:w-auto">
+                    <RealTimeKeywordWidget width="100%" />
+                  </div>
+                </div>
+
+                {/* 오른쪽: 뉴스레터 구독 */}
+                <div className="lg:w-80">
+                  <Card className="glass hover-lift animate-slide-in shadow-lg border-0" style={{ animationDelay: '0.3s' }}>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-lg font-bold flex items-center text-gray-800">
+                        <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-2">
+                          <Zap className="h-4 w-4 text-white" />
+                        </div>
+                        뉴스레터 구독
+                      </CardTitle>
+                      <CardDescription className="text-gray-600 text-sm">
+                        매일 아침 엄선된 뉴스를 받아보세요 · <SubscriberCount />
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <SubscribeForm compact={true} />
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
             </div>
 
@@ -145,8 +171,9 @@ export default function MainPage() {
               </Card>
             </div>
 
-            {/* Right: Side News List */}
+            {/* Right: Sidebar */}
             <div className="w-full lg:w-1/3 space-y-4">
+              {/* Side News List */}
               {filteredNewsItems.slice(0, 4).map((item, index) => (
                 <Card 
                   key={item.id} 
@@ -184,7 +211,7 @@ export default function MainPage() {
           </div>
 
 
-   {/* News List */}
+          {/* News List */}
            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
             
               {filteredNewsItems.map((news, index) => (
@@ -274,6 +301,8 @@ export default function MainPage() {
               ))}
             </div>
           </div>
+
+       
 
         </div>
       </div>
