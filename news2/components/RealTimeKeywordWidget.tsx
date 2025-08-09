@@ -21,9 +21,11 @@ export default function RealTimeKeywordWidget({
   const [paused, setPaused] = useState(false)
   const [showFullList, setShowFullList] = useState(false)
   const [cardPosition, setCardPosition] = useState({ top: 0, left: 0 })
+  const [isHoveringCard, setIsHoveringCard] = useState(false)
 
   const timerRef = useRef<number | null>(null)
   const widgetRef = useRef<HTMLDivElement>(null)
+  const cardRef = useRef<HTMLDivElement>(null)
 
   // 주기적 순환
   useEffect(() => {
@@ -69,16 +71,32 @@ export default function RealTimeKeywordWidget({
     setPaused(true)
   }
 
-  const handleMouseEnter = () => {
+  const handleWidgetMouseEnter = () => {
     setPaused(true)
   }
 
-  const handleMouseLeave = () => {
-    // 약간의 지연을 두어 호버링 카드로 마우스가 이동할 시간을 줍니다
-    setTimeout(() => {
-      setShowFullList(false)
-      setPaused(false)
-    }, 100)
+  const handleWidgetMouseLeave = () => {
+    // 호버링 카드에 마우스가 있으면 카드를 유지
+    if (!isHoveringCard) {
+      setTimeout(() => {
+        if (!isHoveringCard) {
+          setShowFullList(false)
+          setPaused(false)
+        }
+      }, 100)
+    }
+  }
+
+  const handleCardMouseEnter = () => {
+    setIsHoveringCard(true)
+    setPaused(true)
+    setShowFullList(true)
+  }
+
+  const handleCardMouseLeave = () => {
+    setIsHoveringCard(false)
+    setShowFullList(false)
+    setPaused(false)
   }
 
   return (
@@ -87,8 +105,8 @@ export default function RealTimeKeywordWidget({
         ref={widgetRef}
         className="glass-enhanced hover-lift animate-slide-in rounded-xl shadow-md px-4 py-3 shimmer-effect relative"
         style={{ width, "--delay": "0.2s" } as React.CSSProperties}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
+        onMouseEnter={handleWidgetMouseEnter}
+        onMouseLeave={handleWidgetMouseLeave}
       >
         <div className="glass-content">
           {/* 헤더 */}
@@ -145,6 +163,7 @@ export default function RealTimeKeywordWidget({
       {/* 전체 리스트 호버링 카드 - 컨테이너 밖으로 나오도록 */}
       {showFullList && (
         <div 
+          ref={cardRef}
           className="fixed bg-white rounded-xl shadow-2xl border border-gray-200 z-[9999] max-h-64 overflow-y-auto"
           style={{
             top: `${cardPosition.top}px`,
@@ -152,14 +171,8 @@ export default function RealTimeKeywordWidget({
             width: typeof width === 'number' ? `${width}px` : width,
             minWidth: '250px'
           }}
-          onMouseEnter={() => {
-            setPaused(true)
-            setShowFullList(true)
-          }}
-          onMouseLeave={() => {
-            setShowFullList(false)
-            setPaused(false)
-          }}
+          onMouseEnter={handleCardMouseEnter}
+          onMouseLeave={handleCardMouseLeave}
         >
           <div className="p-3">
             <div className="text-xs font-semibold text-gray-600 mb-2 px-2">전체 순위</div>
