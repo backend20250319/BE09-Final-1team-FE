@@ -38,46 +38,48 @@ export default function RealTimeKeywordWidget() {
   }
 
   return (
-    <div className="glass hover-lift animate-slide-in rounded-xl px-4 py-3 w-[270px] transition-all duration-300">
-      <div className="flex items-center mb-3 text-sm font-semibold">
-        <TrendingUp className="h-4 w-4 mr-2 text-red-500" />
-        실시간 인기 키워드
-      </div>
-      <div className="space-y-1">
-        {keywords.map((item, index) => (
-          <div 
-            key={item.keyword} 
-            className="flex items-center justify-between text-sm px-3 py-2 hover:bg-white/50 rounded-lg transition-all duration-200 group cursor-pointer animate-slide-in"
-            style={{ animationDelay: `${0.1 + index * 0.05}s` }}
-          >
-            <span className="flex items-center gap-2">
-              <span 
-                className={`font-bold w-5 text-right ${
-                  item.rank === 1
-                    ? "text-red-500"
-                    : item.rank === 2
-                    ? "text-orange-500"
-                    : item.rank === 3
-                    ? "text-yellow-500"
-                    : "text-blue-600"
-                }`}
-              >
-                {item.rank}
+    <div className="glass-enhanced hover-lift animate-slide-in rounded-xl px-4 py-3 w-[270px] shimmer-effect" style={{ "--delay": "0.2s" }}>
+      <div className="glass-content">
+        <div className="flex items-center mb-3 text-sm font-semibold">
+          <TrendingUp className="h-4 w-4 mr-2 text-red-500" />
+          실시간 인기 키워드
+        </div>
+        <div className="space-y-2">
+          {keywords.map((item, index) => (
+            <div 
+              key={item.keyword} 
+              className="keyword-item-glass flex items-center justify-between text-sm px-3 py-2 rounded-lg transition-all duration-300 group cursor-pointer"
+              style={{ "--delay": `${0.3 + index * 0.1}s` }}
+            >
+              <span className="flex items-center gap-2">
+                <span 
+                  className={`font-bold w-5 text-right ${
+                    item.rank === 1
+                      ? "text-red-500"
+                      : item.rank === 2
+                      ? "text-orange-500"
+                      : item.rank === 3
+                      ? "text-yellow-500"
+                      : "text-blue-600"
+                  }`}
+                >
+                  {item.rank}
+                </span>
+                <span className="text-gray-800 group-hover:text-blue-700 group-hover:underline transition-colors duration-200">
+                  {item.keyword}
+                </span>
               </span>
-              <span className="text-gray-800 group-hover:text-blue-700 group-hover:underline transition">
-                {item.keyword}
-              </span>
-            </span>
-            <div className="flex items-center gap-1">
-              {getDiffIcon(item.diff)}
-              {item.rank <= 3 && (
-                <Badge className="text-xs bg-red-500 text-white px-2 py-1 rounded-full shadow">
-                  HOT
-                </Badge>
-              )}
+              <div className="flex items-center gap-1">
+                {getDiffIcon(item.diff)}
+                {item.rank <= 3 && (
+                  <Badge className="text-xs bg-gradient-to-r from-red-500 to-pink-500 text-white px-2 py-1 rounded-full shadow-lg hover:shadow-xl transition-shadow duration-200">
+                    HOT
+                  </Badge>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   )

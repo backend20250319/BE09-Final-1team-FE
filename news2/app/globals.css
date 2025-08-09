@@ -116,12 +116,155 @@
   position: relative;
 }
 
-/* 글래스모피즘 효과 */
+/* --- Glassmorphism --- */
 .glass {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  background: linear-gradient( to bottom right,
+    rgba(255,255,255,0.18),
+    rgba(255,255,255,0.10)
+  );
+  border: 1px solid rgba(255,255,255,0.25);
+  box-shadow: 0 8px 28px rgba(2,6,23,0.12);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%); /* Safari */
+  /* 살짝 빛나는 테두리 느낌 */
+  outline: 1px solid rgba(255,255,255,0.06);
+  transition: background 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+/* 향상된 Glassmorphism 효과 */
+.glass-enhanced {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.25) 0%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 8px 32px rgba(31, 38, 135, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  position: relative;
+  overflow: hidden;
+}
+
+/* 반사광 레이어 효과 */
+.glass-enhanced::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  transition: left 0.5s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.glass-enhanced:hover::before {
+  left: 100%;
+}
+
+/* 내부 콘텐츠를 위한 z-index */
+.glass-content {
+  position: relative;
+  z-index: 2;
+}
+
+/* 반사광 애니메이션 */
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+.shimmer-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer-effect::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.6),
+    transparent
+  );
+  animation: shimmer 3s infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 키워드 아이템에 대한 특별한 Glassmorphism */
+.keyword-item-glass {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.2) 0%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.keyword-item-glass::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transition: left 0.4s ease;
+  pointer-events: none;
+}
+
+.keyword-item-glass:hover::before {
+  left: 100%;
+}
+
+.keyword-item-glass:hover {
+  transform: translateX(4px) scale(1.02);
+  box-shadow: 
+    0 4px 20px rgba(31, 38, 135, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* hover lift */
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 36px rgba(2,6,23,0.18);
+}
+
+/* 백드롭 미지원 브라우저(일부 안드로이드/Safari 구버전) fallback */
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .glass {
+    background: rgba(248, 250, 252, 0.85); /* #f8fafc 기반 반투명 */
+  }
 }
 
 .glass-dark {
@@ -182,7 +325,7 @@
 @keyframes slideIn {
   from {
     opacity: 0;
-    transform: translateY(30px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -306,26 +449,14 @@
   transform: translateY(0);
 }
 
-/* 트렌딩 키워드 플로팅 */
+/* 리스트 아이템 미세 인터랙션 */
 .trending-keyword {
-  position: relative;
-  overflow: hidden;
+  transform: translateZ(0);
+  transition: transform .25s ease, background-color .25s ease, box-shadow .25s ease;
 }
-
-.trending-keyword::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.4),
-    transparent
-  );
-  animation: shimmer 2s infinite;
+.trending-keyword:hover {
+  transform: translateX(2px);
+  box-shadow: 0 4px 14px rgba(2,6,23,0.06);
 }
 
 @keyframes shimmer {
