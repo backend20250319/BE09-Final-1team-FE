@@ -19,15 +19,10 @@ export default function NewsDetailPage() {
 
   useEffect(() => {
     const fetchArticle = async () => {
-      console.log('🔄 뉴스 상세 데이터 로딩 시작:', id)
       const data = await newsService.getNewsById(id)
-      console.log('📦 받은 뉴스 데이터:', data)
-      
       if (!data) {
-        console.error('❌ 뉴스 데이터 없음')
         setError("뉴스를 찾을 수 없습니다.")
       } else {
-        console.log('✅ 뉴스 데이터 설정 완료')
         setArticle(data)
         // 조회수 증가
         await newsService.incrementViews(id)

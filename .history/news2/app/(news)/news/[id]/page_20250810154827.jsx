@@ -19,15 +19,10 @@ export default function NewsDetailPage() {
 
   useEffect(() => {
     const fetchArticle = async () => {
-      console.log('🔄 뉴스 상세 데이터 로딩 시작:', id)
       const data = await newsService.getNewsById(id)
-      console.log('📦 받은 뉴스 데이터:', data)
-      
       if (!data) {
-        console.error('❌ 뉴스 데이터 없음')
         setError("뉴스를 찾을 수 없습니다.")
       } else {
-        console.log('✅ 뉴스 데이터 설정 완료')
         setArticle(data)
         // 조회수 증가
         await newsService.incrementViews(id)
@@ -93,13 +88,7 @@ export default function NewsDetailPage() {
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between mb-4">
                 <Badge className="bg-blue-600 text-white px-4 py-1 rounded-full shadow-lg">
-                  {article.category === 'POLITICS' ? '정치' :
-                   article.category === 'ECONOMY' ? '경제' :
-                   article.category === 'SOCIETY' ? '사회' :
-                   article.category === 'LIFESTYLE' ? '생활/문화' :
-                   article.category === 'TECHNOLOGY' ? 'IT/과학' :
-                   article.category === 'INTERNATIONAL' ? '국제' :
-                   article.category}
+                  {article.category}
                 </Badge>
                 <div className="flex items-center space-x-4">
                   <Button variant="ghost" size="sm" className="hover-glow">

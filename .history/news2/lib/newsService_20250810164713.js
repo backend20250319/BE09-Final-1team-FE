@@ -1,5 +1,6 @@
 // 뉴스 데이터 관리 서비스
 import { newsArticles, NEWS_CATEGORIES } from "./news-data"
+import { getApiUrl } from "./config"
 import { safeApiCall, diagnoseCorsIssue } from "./api-utils"
 
 /**
@@ -63,18 +64,18 @@ class NewsService {
     if (cached) return cached
 
     try {
+      // 백엔드 연결 강제 비활성화 (개발용)
+      if (process.env.NEXT_PUBLIC_USE_DUMMY_DATA === 'true') {
+        throw new Error('더미 데이터 사용 모드')
+      }
+      
       // CORS 문제 진단 (개발 환경에서만)
       if (process.env.NODE_ENV === 'development') {
         await diagnoseCorsIssue()
       }
       
       // 안전한 API 호출
-      const data = await safeApiCall('/api/news', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
+      const data = await safeApiCall('/api/news')
       
       // 백엔드 응답 구조에 맞게 변환
       const newsItems = data.content ? data.content.map(item => ({
@@ -105,7 +106,12 @@ class NewsService {
       return newsItems
     } catch (error) {
       console.error('❌ 뉴스 데이터 로딩 실패:', error)
-      throw error
+      
+      // 백엔드 API 실패 시 로컬 데이터 사용
+      console.log('🔄 로컬 데이터로 폴백')
+      const newsItems = newsArticles.map(createNewsItem)
+      this.setCachedData(cacheKey, newsItems)
+      return newsItems
     }
   }
 
@@ -120,27 +126,28 @@ class NewsService {
     try {
       // 백엔드 API 호출
       const categoryParam = category === "전체" ? "" : `?category=${category}`
-      const apiUrl = `/api/news${categoryParam}`
-      console.log('🔗 카테고리별 API 호출:', apiUrl)
-      
-      const data = await safeApiCall(apiUrl, {
+      const response = await fetch(getApiUrl(`/api/news${categoryParam}`), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
       })
-      
-      console.log('📡 카테고리별 API 응답:', data)
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
       
       // 백엔드 응답 구조에 맞게 변환
       const newsItems = data.content ? data.content.map(item => ({
-        id: item.newsId || item.id,
+        id: item.id,
         title: item.title,
-        summary: item.summary || item.content?.substring(0, 200) + '...',
+        summary: item.summary || item.content?.substring(0, 100) + '...',
         content: item.content,
-        category: item.categoryName || item.category,
+        category: item.category,
         source: item.press || item.source,
-        author: item.reporterName || item.author,
+        author: item.author,
         publishedAt: item.publishedAt,
         updatedAt: item.updatedAt,
         views: item.viewCount || 0,
@@ -149,18 +156,19 @@ class NewsService {
         tags: item.tags || [],
         isPublished: true,
         isFeatured: false,
-        link: item.link,
-        trusted: item.trusted,
-        dedupState: item.dedupState,
-        dedupStateDescription: item.dedupStateDescription,
-        oidAid: item.oidAid
       })) : []
 
       this.setCachedData(cacheKey, newsItems)
       return newsItems
     } catch (error) {
       console.error('카테고리별 뉴스 로딩 실패:', error)
-      throw error
+      // 백엔드 API 실패 시 로컬 데이터 사용
+      const filteredNews = newsArticles.filter(item => 
+        category === NEWS_CATEGORIES.ALL || item.category === category
+      ).map(createNewsItem)
+      
+      this.setCachedData(cacheKey, filteredNews)
+      return filteredNews
     }
   }
 
@@ -174,14 +182,18 @@ class NewsService {
 
     try {
       // 백엔드 API 호출
-      const item = await safeApiCall(`/api/news/${id}`, {
+      const response = await fetch(getApiUrl(`/api/news/${id}`), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
       })
-      
-      console.log('🔍 백엔드 응답 원본:', item)
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const item = await response.json()
       
       // 백엔드 응답 구조에 맞게 변환
       const newsItem = {
@@ -206,14 +218,19 @@ class NewsService {
         dedupStateDescription: item.dedupStateDescription,
         oidAid: item.oidAid
       }
-      
-      console.log('🔄 변환된 뉴스 아이템:', newsItem)
 
       this.setCachedData(cacheKey, newsItem)
       return newsItem
     } catch (error) {
       console.error('뉴스 상세 로딩 실패:', error)
-      throw error
+      // 백엔드 API 실패 시 로컬 데이터 사용
+      const newsItem = newsArticles.find(item => item.id === Number(id))
+      if (newsItem) {
+        const createdItem = createNewsItem(newsItem)
+        this.setCachedData(cacheKey, createdItem)
+        return createdItem
+      }
+      return null
     }
   }
 
@@ -227,12 +244,18 @@ class NewsService {
 
     try {
       // 백엔드 API 호출
-      const data = await safeApiCall(`/api/news/search?query=${encodeURIComponent(query)}`, {
+      const response = await fetch(getApiUrl(`/api/news/search?query=${encodeURIComponent(query)}`), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
       })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
       
       // 백엔드 응답 구조에 맞게 변환
       const searchResults = data.content ? data.content.map(item => ({
@@ -262,7 +285,14 @@ class NewsService {
       return searchResults
     } catch (error) {
       console.error('뉴스 검색 실패:', error)
-      throw error
+      // 백엔드 API 실패 시 로컬 데이터 사용
+      const searchResults = newsArticles.filter(item => 
+        item.title.toLowerCase().includes(query.toLowerCase()) ||
+        item.summary.toLowerCase().includes(query.toLowerCase())
+      ).map(createNewsItem)
+      
+      this.setCachedData(cacheKey, searchResults)
+      return searchResults
     }
   }
 
@@ -282,7 +312,7 @@ class NewsService {
   async incrementViews(id) {
     try {
       // 백엔드 API 호출
-      await safeApiCall(`/api/news/${id}/view`, {
+      await fetch(getApiUrl(`/api/news/${id}/view`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -299,14 +329,17 @@ class NewsService {
   async toggleLike(id) {
     try {
       // 백엔드 API 호출 (좋아요 기능이 구현되어 있다면)
-      const response = await safeApiCall(`/api/news/${id}/like`, {
+      const response = await fetch(getApiUrl(`/api/news/${id}/like`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
       })
       
-      return { success: true, data: response }
+      if (response.ok) {
+        return { success: true }
+      }
+      return { success: false }
     } catch (error) {
       console.error('좋아요 토글 실패:', error)
       return { success: false }
@@ -323,22 +356,28 @@ class NewsService {
 
     try {
       // 백엔드 API 호출
-      const data = await safeApiCall('/api/news/trending', {
+      const response = await fetch(getApiUrl('/api/news/trending'), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
       })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
       
       // 백엔드 응답 구조에 맞게 변환
       const newsItems = data.content ? data.content.map(item => ({
-        id: item.newsId || item.id,
+        id: item.id,
         title: item.title,
-        summary: item.summary || item.content?.substring(0, 200) + '...',
+        summary: item.summary || item.content?.substring(0, 100) + '...',
         content: item.content,
-        category: item.categoryName || item.category,
+        category: item.category,
         source: item.press || item.source,
-        author: item.reporterName || item.author,
+        author: item.author,
         publishedAt: item.publishedAt,
         updatedAt: item.updatedAt,
         views: item.viewCount || 0,
@@ -347,18 +386,16 @@ class NewsService {
         tags: item.tags || [],
         isPublished: true,
         isFeatured: false,
-        link: item.link,
-        trusted: item.trusted,
-        dedupState: item.dedupState,
-        dedupStateDescription: item.dedupStateDescription,
-        oidAid: item.oidAid
       })) : []
 
       this.setCachedData(cacheKey, newsItems)
       return newsItems
     } catch (error) {
       console.error('트렌딩 뉴스 로딩 실패:', error)
-      throw error
+      // 백엔드 API 실패 시 로컬 데이터 사용
+      const newsItems = newsArticles.slice(0, 10).map(createNewsItem)
+      this.setCachedData(cacheKey, newsItems)
+      return newsItems
     }
   }
 
@@ -372,22 +409,28 @@ class NewsService {
 
     try {
       // 백엔드 API 호출
-      const data = await safeApiCall('/api/news/latest', {
+      const response = await fetch(getApiUrl('/api/news/latest'), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
       })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
       
       // 백엔드 응답 구조에 맞게 변환
       const newsItems = data.content ? data.content.map(item => ({
-        id: item.newsId || item.id,
+        id: item.id,
         title: item.title,
-        summary: item.summary || item.content?.substring(0, 200) + '...',
+        summary: item.summary || item.content?.substring(0, 100) + '...',
         content: item.content,
-        category: item.categoryName || item.category,
+        category: item.category,
         source: item.press || item.source,
-        author: item.reporterName || item.author,
+        author: item.author,
         publishedAt: item.publishedAt,
         updatedAt: item.updatedAt,
         views: item.viewCount || 0,
@@ -396,18 +439,16 @@ class NewsService {
         tags: item.tags || [],
         isPublished: true,
         isFeatured: false,
-        link: item.link,
-        trusted: item.trusted,
-        dedupState: item.dedupState,
-        dedupStateDescription: item.dedupStateDescription,
-        oidAid: item.oidAid
       })) : []
 
       this.setCachedData(cacheKey, newsItems)
       return newsItems
     } catch (error) {
       console.error('최신 뉴스 로딩 실패:', error)
-      throw error
+      // 백엔드 API 실패 시 로컬 데이터 사용
+      const newsItems = newsArticles.slice(0, 10).map(createNewsItem)
+      this.setCachedData(cacheKey, newsItems)
+      return newsItems
     }
   }
 
@@ -421,22 +462,28 @@ class NewsService {
 
     try {
       // 백엔드 API 호출
-      const data = await safeApiCall('/api/news/popular', {
+      const response = await fetch(getApiUrl('/api/news/popular'), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
       })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
       
       // 백엔드 응답 구조에 맞게 변환
       const newsItems = data.content ? data.content.map(item => ({
-        id: item.newsId || item.id,
+        id: item.id,
         title: item.title,
-        summary: item.summary || item.content?.substring(0, 200) + '...',
+        summary: item.summary || item.content?.substring(0, 100) + '...',
         content: item.content,
-        category: item.categoryName || item.category,
+        category: item.category,
         source: item.press || item.source,
-        author: item.reporterName || item.author,
+        author: item.author,
         publishedAt: item.publishedAt,
         updatedAt: item.updatedAt,
         views: item.viewCount || 0,
@@ -445,18 +492,16 @@ class NewsService {
         tags: item.tags || [],
         isPublished: true,
         isFeatured: false,
-        link: item.link,
-        trusted: item.trusted,
-        dedupState: item.dedupState,
-        dedupStateDescription: item.dedupStateDescription,
-        oidAid: item.oidAid
       })) : []
 
       this.setCachedData(cacheKey, newsItems)
       return newsItems
     } catch (error) {
       console.error('인기 뉴스 로딩 실패:', error)
-      throw error
+      // 백엔드 API 실패 시 로컬 데이터 사용
+      const newsItems = newsArticles.slice(0, 10).map(createNewsItem)
+      this.setCachedData(cacheKey, newsItems)
+      return newsItems
     }
   }
 }

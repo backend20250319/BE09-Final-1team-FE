@@ -1,5 +1,6 @@
 // 뉴스 데이터 관리 서비스
 import { newsArticles, NEWS_CATEGORIES } from "./news-data"
+import { getApiUrl } from "./config"
 import { safeApiCall, diagnoseCorsIssue } from "./api-utils"
 
 /**
@@ -120,17 +121,12 @@ class NewsService {
     try {
       // 백엔드 API 호출
       const categoryParam = category === "전체" ? "" : `?category=${category}`
-      const apiUrl = `/api/news${categoryParam}`
-      console.log('🔗 카테고리별 API 호출:', apiUrl)
-      
-      const data = await safeApiCall(apiUrl, {
+      const data = await safeApiCall(`/api/news${categoryParam}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
       })
-      
-      console.log('📡 카테고리별 API 응답:', data)
       
       // 백엔드 응답 구조에 맞게 변환
       const newsItems = data.content ? data.content.map(item => ({

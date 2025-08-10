@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input" 
@@ -24,14 +24,11 @@ export default function MainPage() {
 
   useEffect(() => {
     const fetchNews = async () => {
-      console.log('🔄 뉴스 데이터 로딩 시작...')
       try {
         const data = await newsService.getAllNews()
-        console.log('✅ 뉴스 데이터 로딩 성공:', data.length, '개')
-        console.log('📰 첫 번째 뉴스:', data[0])
         setNewsItems(data)
       } catch (error) {
-        console.error('❌ 뉴스 데이터 로딩 실패:', error)
+        console.error('뉴스 데이터 로딩 실패:', error)
       } finally {
         setLoading(false)
         setIsLoaded(true)
@@ -45,14 +42,16 @@ export default function MainPage() {
   // 카테고리 변경 시 백엔드 API 호출
   useEffect(() => {
     const fetchNewsByCategory = async () => {
-      console.log('🔄 카테고리별 뉴스 로딩 시작:', selectedCategory)
+      if (selectedCategory === "전체") {
+        return // 전체 카테고리는 이미 로드된 데이터 사용
+      }
+      
       setLoading(true)
       try {
         const data = await newsService.getNewsByCategory(selectedCategory)
-        console.log('✅ 카테고리별 뉴스 로딩 성공:', selectedCategory, data.length, '개')
         setNewsItems(data)
       } catch (error) {
-        console.error('❌ 카테고리별 뉴스 로딩 실패:', selectedCategory, error)
+        console.error('카테고리별 뉴스 로딩 실패:', error)
       } finally {
         setLoading(false)
       }
@@ -63,7 +62,7 @@ export default function MainPage() {
     }
   }, [selectedCategory, isLoaded])
 
-  const categories = ["전체", "POLITICS", "ECONOMY", "SOCIETY", "CULTURE", "IT_SCIENCE", "INTERNATIONAL"]
+  const categories = ["전체", "POLITICS", "ECONOMY", "SOCIETY", "LIFESTYLE", "TECHNOLOGY", "INTERNATIONAL"]
   
   // 카테고리 표시명 매핑
   const categoryDisplayNames = {
@@ -71,15 +70,20 @@ export default function MainPage() {
     "POLITICS": "정치",
     "ECONOMY": "경제", 
     "SOCIETY": "사회",
-    "CULTURE": "생활/문화",
-    "IT_SCIENCE": "IT/과학",
+    "LIFESTYLE": "생활/문화",
+    "TECHNOLOGY": "IT/과학",
     "INTERNATIONAL": "국제"
   }
   const [newsItems, setNewsItems] = useState([])
   const [loading, setLoading] = useState(true)
 
-  // 백엔드 API에서 이미 필터링된 데이터를 사용하므로 그대로 반환
-  const filteredNewsItems = newsItems
+  // 카테고리별 필터링된 뉴스 아이템을 useMemo로 캐싱
+  const filteredNewsItems = useMemo(() => {
+    if (selectedCategory === "전체") {
+      return newsItems
+    }
+    return newsItems.filter(item => item.category === selectedCategory)
+  }, [selectedCategory, newsItems])
 
   if (loading) {
     return (

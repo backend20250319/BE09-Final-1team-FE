@@ -45,14 +45,12 @@ export default function MainPage() {
   // 카테고리 변경 시 백엔드 API 호출
   useEffect(() => {
     const fetchNewsByCategory = async () => {
-      console.log('🔄 카테고리별 뉴스 로딩 시작:', selectedCategory)
       setLoading(true)
       try {
         const data = await newsService.getNewsByCategory(selectedCategory)
-        console.log('✅ 카테고리별 뉴스 로딩 성공:', selectedCategory, data.length, '개')
         setNewsItems(data)
       } catch (error) {
-        console.error('❌ 카테고리별 뉴스 로딩 실패:', selectedCategory, error)
+        console.error('카테고리별 뉴스 로딩 실패:', error)
       } finally {
         setLoading(false)
       }
@@ -63,7 +61,7 @@ export default function MainPage() {
     }
   }, [selectedCategory, isLoaded])
 
-  const categories = ["전체", "POLITICS", "ECONOMY", "SOCIETY", "CULTURE", "IT_SCIENCE", "INTERNATIONAL"]
+  const categories = ["전체", "POLITICS", "ECONOMY", "SOCIETY", "LIFESTYLE", "TECHNOLOGY", "INTERNATIONAL"]
   
   // 카테고리 표시명 매핑
   const categoryDisplayNames = {
@@ -71,8 +69,8 @@ export default function MainPage() {
     "POLITICS": "정치",
     "ECONOMY": "경제", 
     "SOCIETY": "사회",
-    "CULTURE": "생활/문화",
-    "IT_SCIENCE": "IT/과학",
+    "LIFESTYLE": "생활/문화",
+    "TECHNOLOGY": "IT/과학",
     "INTERNATIONAL": "국제"
   }
   const [newsItems, setNewsItems] = useState([])
