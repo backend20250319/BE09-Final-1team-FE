@@ -59,7 +59,6 @@ class NewsService {
    * 모든 뉴스 기사를 가져옵니다
    */
   async getAllNews(options = {}) {
-    const { page = 1, size = 21 } = options
     const cacheKey = `all-news-${JSON.stringify(options)}`
     const cached = this.getCachedData(cacheKey)
     if (cached) return cached
@@ -71,7 +70,7 @@ class NewsService {
       }
       
       // 실제 백엔드 API 호출
-      const response = await fetch(getApiUrl(`/api/news?page=${page}&size=${size}`), {
+      const response = await fetch(getApiUrl('/api/news'), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -84,45 +83,33 @@ class NewsService {
       
       const data = await response.json()
       
-      // 실제 백엔드 응답 구조에 맞게 변환
+      // 백엔드 응답 구조에 맞게 변환
       const newsItems = data.content ? data.content.map(item => ({
-        id: item.newsId,
+        id: item.newsId || item.id,
         title: item.title,
         summary: item.summary || item.content?.substring(0, 200) + '...',
         content: item.content,
-        category: item.categoryName,
-        source: item.press,
-        author: item.reporterName,
+        category: item.categoryName || item.category,
+        source: item.press || item.source,
+        author: item.reporterName || item.author,
         publishedAt: item.publishedAt,
         updatedAt: item.updatedAt,
-        views: 0, // 실제 백엔드에는 조회수 필드가 없음
-        likes: 0, // 실제 백엔드에는 좋아요 필드가 없음
+        views: item.viewCount || 0,
+        likes: item.likes || 0,
         image: item.imageUrl || "/placeholder.svg",
-        tags: [], // 실제 백엔드에는 태그 필드가 없음
+        tags: item.tags || [],
         isPublished: true,
         isFeatured: false,
         link: item.link,
-        trusted: item.trusted === 1,
+        trusted: item.trusted,
         dedupState: item.dedupState,
         dedupStateDescription: item.dedupStateDescription,
         oidAid: item.oidAid
       })) : []
 
       console.log('✅ 변환된 뉴스 아이템:', newsItems.length, '개')
-      
-      // 페이지네이션 정보와 함께 반환
-      const result = {
-        content: newsItems,
-        totalElements: data.totalElements,
-        totalPages: data.totalPages,
-        currentPage: data.number + 1,
-        size: data.size,
-        first: data.first,
-        last: data.last
-      }
-      
-      this.setCachedData(cacheKey, result)
-      return result
+      this.setCachedData(cacheKey, newsItems)
+      return newsItems
     } catch (error) {
       console.error('❌ 뉴스 데이터 로딩 실패:', error)
       throw error
@@ -133,15 +120,14 @@ class NewsService {
    * 카테고리별 뉴스를 가져옵니다
    */
   async getNewsByCategory(category, options = {}) {
-    const { page = 1, size = 21 } = options
     const cacheKey = `news-category-${category}-${JSON.stringify(options)}`
     const cached = this.getCachedData(cacheKey)
     if (cached) return cached
 
     try {
       // 실제 백엔드 API 호출
-      const categoryParam = category === "전체" ? "?" : `?category=${category}&`
-      const response = await fetch(getApiUrl(`/api/news${categoryParam}page=${page}&size=${size}`), {
+      const categoryParam = category === "전체" ? "" : `?category=${category}`
+      const response = await fetch(getApiUrl(`/api/news${categoryParam}`), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -154,43 +140,32 @@ class NewsService {
       
       const data = await response.json()
       
-      // 실제 백엔드 응답 구조에 맞게 변환
+      // 백엔드 응답 구조에 맞게 변환
       const newsItems = data.content ? data.content.map(item => ({
-        id: item.newsId,
+        id: item.newsId || item.id,
         title: item.title,
         summary: item.summary || item.content?.substring(0, 200) + '...',
         content: item.content,
-        category: item.categoryName,
-        source: item.press,
-        author: item.reporterName,
+        category: item.categoryName || item.category,
+        source: item.press || item.source,
+        author: item.reporterName || item.author,
         publishedAt: item.publishedAt,
         updatedAt: item.updatedAt,
-        views: 0, // 실제 백엔드에는 조회수 필드가 없음
-        likes: 0, // 실제 백엔드에는 좋아요 필드가 없음
+        views: item.viewCount || 0,
+        likes: item.likes || 0,
         image: item.imageUrl || "/placeholder.svg",
-        tags: [], // 실제 백엔드에는 태그 필드가 없음
+        tags: item.tags || [],
         isPublished: true,
         isFeatured: false,
         link: item.link,
-        trusted: item.trusted === 1,
+        trusted: item.trusted,
         dedupState: item.dedupState,
         dedupStateDescription: item.dedupStateDescription,
         oidAid: item.oidAid
       })) : []
 
-      // 페이지네이션 정보와 함께 반환
-      const result = {
-        content: newsItems,
-        totalElements: data.totalElements,
-        totalPages: data.totalPages,
-        currentPage: data.number + 1,
-        size: data.size,
-        first: data.first,
-        last: data.last
-      }
-      
-      this.setCachedData(cacheKey, result)
-      return result
+      this.setCachedData(cacheKey, newsItems)
+      return newsItems
     } catch (error) {
       console.error('카테고리별 뉴스 로딩 실패:', error)
       throw error

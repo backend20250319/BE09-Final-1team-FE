@@ -109,20 +109,8 @@ class NewsService {
       })) : []
 
       console.log('✅ 변환된 뉴스 아이템:', newsItems.length, '개')
-      
-      // 페이지네이션 정보와 함께 반환
-      const result = {
-        content: newsItems,
-        totalElements: data.totalElements,
-        totalPages: data.totalPages,
-        currentPage: data.number + 1,
-        size: data.size,
-        first: data.first,
-        last: data.last
-      }
-      
-      this.setCachedData(cacheKey, result)
-      return result
+      this.setCachedData(cacheKey, newsItems)
+      return newsItems
     } catch (error) {
       console.error('❌ 뉴스 데이터 로딩 실패:', error)
       throw error
@@ -178,19 +166,8 @@ class NewsService {
         oidAid: item.oidAid
       })) : []
 
-      // 페이지네이션 정보와 함께 반환
-      const result = {
-        content: newsItems,
-        totalElements: data.totalElements,
-        totalPages: data.totalPages,
-        currentPage: data.number + 1,
-        size: data.size,
-        first: data.first,
-        last: data.last
-      }
-      
-      this.setCachedData(cacheKey, result)
-      return result
+      this.setCachedData(cacheKey, newsItems)
+      return newsItems
     } catch (error) {
       console.error('카테고리별 뉴스 로딩 실패:', error)
       throw error

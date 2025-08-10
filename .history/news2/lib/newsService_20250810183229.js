@@ -59,7 +59,6 @@ class NewsService {
    * 모든 뉴스 기사를 가져옵니다
    */
   async getAllNews(options = {}) {
-    const { page = 1, size = 21 } = options
     const cacheKey = `all-news-${JSON.stringify(options)}`
     const cached = this.getCachedData(cacheKey)
     if (cached) return cached
@@ -71,7 +70,7 @@ class NewsService {
       }
       
       // 실제 백엔드 API 호출
-      const response = await fetch(getApiUrl(`/api/news?page=${page}&size=${size}`), {
+      const response = await fetch(getApiUrl('/api/news'), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -109,20 +108,8 @@ class NewsService {
       })) : []
 
       console.log('✅ 변환된 뉴스 아이템:', newsItems.length, '개')
-      
-      // 페이지네이션 정보와 함께 반환
-      const result = {
-        content: newsItems,
-        totalElements: data.totalElements,
-        totalPages: data.totalPages,
-        currentPage: data.number + 1,
-        size: data.size,
-        first: data.first,
-        last: data.last
-      }
-      
-      this.setCachedData(cacheKey, result)
-      return result
+      this.setCachedData(cacheKey, newsItems)
+      return newsItems
     } catch (error) {
       console.error('❌ 뉴스 데이터 로딩 실패:', error)
       throw error
@@ -133,15 +120,14 @@ class NewsService {
    * 카테고리별 뉴스를 가져옵니다
    */
   async getNewsByCategory(category, options = {}) {
-    const { page = 1, size = 21 } = options
     const cacheKey = `news-category-${category}-${JSON.stringify(options)}`
     const cached = this.getCachedData(cacheKey)
     if (cached) return cached
 
     try {
       // 실제 백엔드 API 호출
-      const categoryParam = category === "전체" ? "?" : `?category=${category}&`
-      const response = await fetch(getApiUrl(`/api/news${categoryParam}page=${page}&size=${size}`), {
+      const categoryParam = category === "전체" ? "" : `?category=${category}`
+      const response = await fetch(getApiUrl(`/api/news${categoryParam}`), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -178,19 +164,8 @@ class NewsService {
         oidAid: item.oidAid
       })) : []
 
-      // 페이지네이션 정보와 함께 반환
-      const result = {
-        content: newsItems,
-        totalElements: data.totalElements,
-        totalPages: data.totalPages,
-        currentPage: data.number + 1,
-        size: data.size,
-        first: data.first,
-        last: data.last
-      }
-      
-      this.setCachedData(cacheKey, result)
-      return result
+      this.setCachedData(cacheKey, newsItems)
+      return newsItems
     } catch (error) {
       console.error('카테고리별 뉴스 로딩 실패:', error)
       throw error

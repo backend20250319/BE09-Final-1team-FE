@@ -30,9 +30,9 @@ export default function MainPage() {
       console.log('🔄 뉴스 데이터 로딩 시작...')
       try {
         const data = await newsService.getAllNews({ page: currentPage, size: 21 })
-        console.log('✅ 뉴스 데이터 로딩 성공:', data.content?.length || 0, '개')
-        console.log('📰 첫 번째 뉴스:', data.content?.[0])
-        setNewsItems(data.content || [])
+        console.log('✅ 뉴스 데이터 로딩 성공:', data.length, '개')
+        console.log('📰 첫 번째 뉴스:', data[0])
+        setNewsItems(data)
         setTotalPages(data.totalPages || 1)
         setTotalElements(data.totalElements || 0)
       } catch (error) {
@@ -55,8 +55,8 @@ export default function MainPage() {
       setCurrentPage(1) // 카테고리 변경 시 첫 페이지로 리셋
       try {
         const data = await newsService.getNewsByCategory(selectedCategory, { page: 1, size: 21 })
-        console.log('✅ 카테고리별 뉴스 로딩 성공:', selectedCategory, data.content?.length || 0, '개')
-        setNewsItems(data.content || [])
+        console.log('✅ 카테고리별 뉴스 로딩 성공:', selectedCategory, data.length, '개')
+        setNewsItems(data)
         setTotalPages(data.totalPages || 1)
         setTotalElements(data.totalElements || 0)
       } catch (error) {
@@ -340,127 +340,119 @@ export default function MainPage() {
             </div>
             
             {/* 페이지네이션 */}
-            {console.log('🔍 페이지네이션 디버그:', { totalPages, totalElements, currentPage })}
             {totalPages > 1 && (
-              <div className="flex flex-col items-center space-y-6 mt-16 mb-12">
-                {/* 페이지 정보 카드 */}
-                <Card className="glass hover-lift shadow-lg border-0 px-6 py-4">
-                  <div className="text-center">
-                    <p className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                      {currentPage} / {totalPages} 페이지
-                    </p>
-                    <p className="text-base text-gray-600 mt-2">
-                      총 {totalElements.toLocaleString()}개의 뉴스
-                    </p>
-                  </div>
-                </Card>
+              <div className="flex flex-col items-center space-y-4 mt-12 mb-8">
+                {/* 페이지 정보 */}
+                <div className="text-center">
+                  <p className="text-lg font-semibold text-gray-800">
+                    {currentPage} / {totalPages} 페이지
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    총 {totalElements.toLocaleString()}개의 뉴스
+                  </p>
+                </div>
                 
                 {/* 페이지네이션 버튼 */}
-                <Card className="glass hover-lift shadow-lg border-0 p-4">
-                  <div className="flex items-center space-x-3">
-                    {/* 첫 페이지로 */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setCurrentPage(1)}
-                      disabled={currentPage === 1}
-                      className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-white/20 hover-lift transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <ChevronsLeft className="h-4 w-4" />
-                      <span className="hidden sm:inline text-base font-medium">첫 페이지</span>
-                    </Button>
-                    
-                    {/* 이전 페이지 */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                      disabled={currentPage === 1}
-                      className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-white/20 hover-lift transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                      <span className="hidden sm:inline text-base font-medium">이전</span>
-                    </Button>
-                    
-                    {/* 페이지 번호들 */}
-                    <div className="flex items-center space-x-2">
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        let pageNum;
-                        if (totalPages <= 5) {
-                          pageNum = i + 1;
-                        } else if (currentPage <= 3) {
-                          pageNum = i + 1;
-                        } else if (currentPage >= totalPages - 2) {
-                          pageNum = totalPages - 4 + i;
-                        } else {
-                          pageNum = currentPage - 2 + i;
-                        }
-                        
-                        return (
-                          <Button
-                            key={pageNum}
-                            variant={currentPage === pageNum ? "default" : "ghost"}
-                            size="sm"
-                            onClick={() => setCurrentPage(pageNum)}
-                            className={`w-14 h-14 px-0 rounded-lg font-bold text-lg transition-all duration-300 ${
-                              currentPage === pageNum 
-                                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg hover:shadow-xl hover-lift' 
-                                : 'hover:bg-white/20 hover-lift hover:scale-105'
-                            }`}
-                          >
-                            {pageNum}
-                          </Button>
-                        );
-                      })}
-                    </div>
-                    
-                    {/* 다음 페이지 */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                      disabled={currentPage === totalPages}
-                      className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-white/20 hover-lift transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <span className="hidden sm:inline text-base font-medium">다음</span>
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                    
-                    {/* 마지막 페이지로 */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setCurrentPage(totalPages)}
-                      disabled={currentPage === totalPages}
-                      className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-white/20 hover-lift transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <span className="hidden sm:inline text-base font-medium">마지막</span>
-                      <ChevronsRight className="h-4 w-4" />
-                    </Button>
+                <div className="flex items-center space-x-2">
+                  {/* 첫 페이지로 */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                    className="flex items-center space-x-1 px-3 py-2 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
+                  >
+                    <ChevronsLeft className="h-4 w-4" />
+                    <span className="hidden sm:inline">첫 페이지</span>
+                  </Button>
+                  
+                  {/* 이전 페이지 */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="flex items-center space-x-1 px-3 py-2 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    <span className="hidden sm:inline">이전</span>
+                  </Button>
+                  
+                  {/* 페이지 번호들 */}
+                  <div className="flex items-center space-x-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+                      
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={currentPage === pageNum ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={`w-10 h-10 px-0 transition-all duration-200 ${
+                            currentPage === pageNum 
+                              ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                              : 'hover:bg-blue-50 hover:border-blue-300'
+                          }`}
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
                   </div>
-                </Card>
+                  
+                  {/* 다음 페이지 */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                    className="flex items-center space-x-1 px-3 py-2 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
+                  >
+                    <span className="hidden sm:inline">다음</span>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  
+                  {/* 마지막 페이지로 */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
+                    className="flex items-center space-x-1 px-3 py-2 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
+                  >
+                    <span className="hidden sm:inline">마지막</span>
+                    <ChevronsRight className="h-4 w-4" />
+                  </Button>
+                </div>
                 
                 {/* 페이지 점프 */}
-                <Card className="glass hover-lift shadow-lg border-0 px-6 py-4">
-                  <div className="flex items-center space-x-3 text-base">
-                    <span className="text-gray-700 font-semibold">페이지로 이동:</span>
-                    <input
-                      type="number"
-                      min="1"
-                      max={totalPages}
-                      value={currentPage}
-                      onChange={(e) => {
-                        const page = parseInt(e.target.value);
-                        if (page >= 1 && page <= totalPages) {
-                          setCurrentPage(page);
-                        }
-                      }}
-                      className="w-20 px-3 py-2 bg-white/50 border border-white/30 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 backdrop-blur-sm transition-all duration-200"
-                      placeholder="페이지"
-                    />
-                                         <span className="text-gray-600 font-medium">/ {totalPages}</span>
-                  </div>
-                </Card>
+                <div className="flex items-center space-x-2 text-sm text-gray-600">
+                  <span>페이지로 이동:</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max={totalPages}
+                    value={currentPage}
+                    onChange={(e) => {
+                      const page = parseInt(e.target.value);
+                      if (page >= 1 && page <= totalPages) {
+                        setCurrentPage(page);
+                      }
+                    }}
+                    className="w-16 px-2 py-1 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <span>/ {totalPages}</span>
+                </div>
               </div>
             )}
           </div>

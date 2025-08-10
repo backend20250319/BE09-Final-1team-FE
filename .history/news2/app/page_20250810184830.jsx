@@ -442,8 +442,8 @@ export default function MainPage() {
                 
                 {/* 페이지 점프 */}
                 <Card className="glass hover-lift shadow-lg border-0 px-6 py-4">
-                  <div className="flex items-center space-x-3 text-base">
-                    <span className="text-gray-700 font-semibold">페이지로 이동:</span>
+                  <div className="flex items-center space-x-3 text-sm">
+                    <span className="text-gray-700 font-medium">페이지로 이동:</span>
                     <input
                       type="number"
                       min="1"
@@ -458,7 +458,7 @@ export default function MainPage() {
                       className="w-20 px-3 py-2 bg-white/50 border border-white/30 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 backdrop-blur-sm transition-all duration-200"
                       placeholder="페이지"
                     />
-                                         <span className="text-gray-600 font-medium">/ {totalPages}</span>
+                    <span className="text-gray-600">/ {totalPages}</span>
                   </div>
                 </Card>
               </div>

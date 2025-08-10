@@ -422,7 +422,7 @@ export default function MainPage() {
                       disabled={currentPage === totalPages}
                       className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-white/20 hover-lift transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <span className="hidden sm:inline text-base font-medium">다음</span>
+                      <span className="hidden sm:inline text-sm font-medium">다음</span>
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                     
@@ -434,7 +434,7 @@ export default function MainPage() {
                       disabled={currentPage === totalPages}
                       className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-white/20 hover-lift transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <span className="hidden sm:inline text-base font-medium">마지막</span>
+                      <span className="hidden sm:inline text-sm font-medium">마지막</span>
                       <ChevronsRight className="h-4 w-4" />
                     </Button>
                   </div>
@@ -442,8 +442,8 @@ export default function MainPage() {
                 
                 {/* 페이지 점프 */}
                 <Card className="glass hover-lift shadow-lg border-0 px-6 py-4">
-                  <div className="flex items-center space-x-3 text-base">
-                    <span className="text-gray-700 font-semibold">페이지로 이동:</span>
+                  <div className="flex items-center space-x-3 text-sm">
+                    <span className="text-gray-700 font-medium">페이지로 이동:</span>
                     <input
                       type="number"
                       min="1"
@@ -458,7 +458,7 @@ export default function MainPage() {
                       className="w-20 px-3 py-2 bg-white/50 border border-white/30 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 backdrop-blur-sm transition-all duration-200"
                       placeholder="페이지"
                     />
-                                         <span className="text-gray-600 font-medium">/ {totalPages}</span>
+                    <span className="text-gray-600">/ {totalPages}</span>
                   </div>
                 </Card>
               </div>
