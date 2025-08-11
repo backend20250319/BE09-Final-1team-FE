@@ -51,41 +51,6 @@ export default function AdminDashboard() {
     { name: "기타", value: 10, color: "#00ff00" },
   ];
 
-  const recentArticles = [
-    {
-      id: 1,
-      title: "AI 기술의 미래 전망",
-      author: "홍길동",
-      status: "published",
-      views: 1234,
-      date: "2024-01-15",
-    },
-    {
-      id: 2,
-      title: "경제 정책 변화 분석",
-      author: "김철수",
-      status: "draft",
-      views: 0,
-      date: "2024-01-15",
-    },
-    {
-      id: 3,
-      title: "환경 보호 새로운 방안",
-      author: "이영희",
-      status: "published",
-      views: 892,
-      date: "2024-01-14",
-    },
-    {
-      id: 4,
-      title: "스포츠 산업 동향",
-      author: "박민수",
-      status: "review",
-      views: 0,
-      date: "2024-01-14",
-    },
-  ];
-
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
@@ -192,65 +157,6 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Recent Articles */}
-      <Card>
-        <CardHeader>
-          <CardTitle>최근 기사</CardTitle>
-          <CardDescription>최근에 작성된 기사들을 확인하세요</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>제목</TableHead>
-                <TableHead>작성자</TableHead>
-                <TableHead>상태</TableHead>
-                <TableHead>조회수</TableHead>
-                <TableHead>작성일</TableHead>
-                <TableHead>액션</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {recentArticles.map((article) => (
-                <TableRow key={article.id}>
-                  <TableCell className="font-medium">{article.title}</TableCell>
-                  <TableCell>{article.author}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        article.status === "published"
-                          ? "default"
-                          : article.status === "draft"
-                          ? "secondary"
-                          : "outline"
-                      }
-                    >
-                      {article.status === "published"
-                        ? "발행됨"
-                        : article.status === "draft"
-                        ? "초안"
-                        : "검토중"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{article.views.toLocaleString()}</TableCell>
-                  <TableCell>{article.date}</TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button variant="ghost" size="sm">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
     </div>
   );
 }
