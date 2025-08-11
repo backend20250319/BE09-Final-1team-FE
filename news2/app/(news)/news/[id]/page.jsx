@@ -1,204 +1,737 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useParams } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Share2, Bookmark, Eye, Clock, User } from "lucide-react"
-import Link from "next/link"
-import Header from "@/components/header"
-import { newsService } from "@/lib/newsService"
-import AiSummaryButton from "../../../../components/aisummarybot/AiSummaryButton"
-import RelatedArticles from "@/components/RelatedArticles"
+import React, { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
+import Header from "@/components/header";
+import { useScrap } from "@/contexts/ScrapContext";
 
-export default function NewsDetailPage() {
-  const { id } = useParams()
-  const [article, setArticle] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+import Link from "next/link";
+import {
+  Bookmark,
+  Bot,
+  Minus,
+  Plus,
+  Share,
+  Flag,
+  X,
+  User,
+  Eye,
+  Clock,
+  Siren,
+} from "lucide-react";
+import { Toaster, toast } from "sonner";
+import { newsArticles } from "@/lib/news-data";
+import { newsService } from "@/lib/newsService";
 
+export default function NewsPage() {
+  const params = useParams();
+  const articleId = params?.id;
+  const { addScrap } = useScrap();
+  const [newsData, setNewsData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [fontSize, setFontSize] = useState(18);
+  const [isSummaryModalOpen, setSummaryModalOpen] = useState(false);
+  const [isShareModalOpen, setShareModalOpen] = useState(false);
+  const [comments, setComments] = useState([
+    {
+      id: 1,
+      author: "김민준",
+      avatar: "https://placehold.co/40x40/C7D2FE/4338CA?text=김",
+      text: "정책의 방향성은 좋다고 생각합니다. 다만, 실행 과정에서 중소기업들에게 실질적인 혜택이 돌아갈 수 있도록 세심한 관리가 필요해 보여요.",
+      time: "2시간 전",
+    },
+    {
+      id: 2,
+      author: "이수진",
+      avatar: "https://placehold.co/40x40/FBCFE8/86198F?text=이",
+      text: "요약봇 기능 너무 좋네요! 긴 기사 읽기 전에 핵심을 파악할 수 있어서 편리해요.",
+      time: "1시간 전",
+    },
+  ]);
+  const [newComment, setNewComment] = useState("");
+  const [readingProgress, setReadingProgress] = useState(0);
+
+  // 폰트 크기 변경 핸들러
+  const handleFontSizeChange = (amount) => {
+    const newSize = fontSize + amount;
+    if (newSize >= 14 && newSize <= 24) {
+      setFontSize(newSize);
+    }
+  };
+
+  // 백엔드 카테고리명을 프론트엔드용으로 변환
+  const backendToFrontendCategory = {
+    POLITICS: "정치",
+    ECONOMY: "경제",
+    SOCIETY: "사회",
+    CULTURE: "생활/문화",
+    INTERNATIONAL: "세계",
+    IT_SCIENCE: "IT/과학",
+  };
+
+  // 뉴스 데이터 로딩 및 스크롤 이벤트 리스너 설정
   useEffect(() => {
-    const fetchArticle = async () => {
-      console.log('🔄 뉴스 상세 데이터 로딩 시작:', id)
-      const data = await newsService.getNewsById(id)
-      console.log('📦 받은 뉴스 데이터:', data)
-      
-      if (!data) {
-        console.error('❌ 뉴스 데이터 없음')
-        setError("뉴스를 찾을 수 없습니다.")
-      } else {
-        console.log('✅ 뉴스 데이터 설정 완료')
-        setArticle(data)
-        // 조회수 증가
-        await newsService.incrementViews(id)
+    const loadNewsData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await newsService.getNewsById(articleId);
+        if (!data) throw new Error("뉴스를 찾을 수 없습니다.");
+
+        const rawCategory =
+          data.category ||
+          data.categoryName ||
+          data.categoryDescription ||
+          "일반";
+        const convertedCategory =
+          backendToFrontendCategory[rawCategory] || rawCategory;
+
+        // 뉴스 데이터를 프론트엔드 포맷에 맞게 변환
+        const transformedData = {
+          category: convertedCategory,
+          date: new Date(data.publishedAt || data.createdAt).toLocaleDateString(
+            "ko-KR"
+          ),
+          title: data.title,
+          reporter: {
+            name: data.reporter || data.author || "크롤링 시스템",
+            email: "system@newsphere.com",
+            avatar: "https://placehold.co/40x40/E2E8F0/4A5568?text=기자",
+          },
+          content: data.content || "상세 내용은 원본 링크를 확인해주세요.", // HTML 문자열로 가정
+          url: "#",
+          views: data.views || 0,
+          source: data.press || data.source || "크롤링 뉴스",
+          sourceLogo: "/placeholder-logo.png", // 실제 로고 URL로 대체 필요
+          tags: data.tags || [convertedCategory],
+          newsId: data.newsId || data.id,
+          publishedAt: data.publishet,
+          dedupState: data.dedupState,
+          dedupStateDescription: data.dedupStateDescription,
+          imageUrl: data.image, // 백엔드에서 `data.image` 필드로 이미지 URL을 받아옴
+        };
+        setNewsData(transformedData);
+      } catch (err) {
+        setError(err.message);
+        setNewsData(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false)
+    };
+
+    if (articleId) {
+      loadNewsData();
     }
 
-    if (id) fetchArticle()
-  }, [id])
+    // 스크롤 진행률 계산
+    const handleScroll = () => {
+      const totalHeight =
+        document.documentElement.scrollHeight -
+        document.documentElement.clientHeight;
+      const scrollPosition = window.scrollY;
+      const progress = (scrollPosition / totalHeight) * 100;
+      setReadingProgress(progress);
+    };
 
+    window.addEventListener("scroll", handleScroll);
+    // 컴포넌트 언마운트 시 이벤트 리스너 제거
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [articleId]); // articleId가 변경될 때마다 다시 로드
+
+  // 로딩 중일 때 UI
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <>
         <Header />
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4" />
-          <div className="h-64 bg-gray-200 rounded mb-4" />
-          <div className="h-4 bg-gray-200 rounded mb-2" />
-          <div className="h-4 bg-gray-200 rounded mb-2" />
-          <div className="h-4 bg-gray-200 rounded w-3/4" />
-        </div>
-      </div>
-    )
-  }
-
-  if (error || !article) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-        <Header />
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Card className="glass">
-            <CardContent className="p-8 text-center">
-              <h1 className="text-2xl font-bold text-gray-800 mb-4">뉴스를 찾을 수 없습니다</h1>
-              <p className="text-gray-600 mb-6">{error}</p>
-              <Link href="/">
-                <Button className="gradient-bg hover:shadow-lg transition-all duration-300">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  메인으로 돌아가기
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      <Header />
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6">
-          <Link href="/">
-            <Button variant="ghost" className="hover-glow">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              목록으로 돌아가기
-            </Button>
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* 메인 콘텐츠 */}
-          <div className="lg:col-span-2">
-            <Card className="glass hover-lift">
-              <CardContent className="p-0">
-                <div className="p-6 border-b border-gray-200">
-                  <div className="flex items-center justify-between mb-4">
-                    <Badge className="bg-blue-600 text-white px-4 py-1 rounded-full shadow-lg">
-                      {article.category === 'POLITICS' ? '정치' :
-                       article.category === 'ECONOMY' ? '경제' :
-                       article.category === 'SOCIETY' ? '사회' :
-                       article.category === 'LIFESTYLE' ? '생활/문화' :
-                       article.category === 'TECHNOLOGY' ? 'IT/과학' :
-                       article.category === 'INTERNATIONAL' ? '국제' :
-                       article.category}
-                    </Badge>
-                    <div className="flex items-center space-x-4">
-                      <Button variant="ghost" size="sm" className="hover-glow">
-                        <Share2 className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="hover-glow">
-                        <Bookmark className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  <h1 className="text-3xl font-bold text-gray-800 mb-4 leading-tight">{article.title}</h1>
-
-                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                    <div className="flex items-center space-x-4">
-                      <span className="flex items-center">
-                        <User className="h-4 w-4 mr-1" />
-                        {article.author || "기자"}
-                      </span>
-                      <span className="flex items-center">
-                        <Clock className="h-4 w-4 mr-1" />
-                        {new Date(article.publishedAt).toLocaleDateString("ko-KR", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <AiSummaryButton newsId={article.id} />
-                      <span className="flex items-center">
-                        <Eye className="h-4 w-4 mr-1" />
-                        {article.views?.toLocaleString() || 0}
-                      </span>
-                      <span className="text-gray-400">|</span>
-                      <span>{article.source}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {article.image && (
-                  <div className="relative">
-                    <img src={article.image} alt={article.title} className="w-full h-96 object-cover" />
-                  </div>
-                )}
-
-                <div className="p-6">
-                  <div className="prose prose-lg max-w-none">
-                    {article.content ? (
-                      <div dangerouslySetInnerHTML={{ __html: article.content }} />
-                    ) : (
-                      <div className="space-y-4">
-                        <p className="text-lg text-gray-700 leading-relaxed">{article.summary}</p>
-                        <p className="text-gray-600">이 뉴스에 대한 자세한 내용은 곧 업데이트될 예정입니다.</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {article.tags && article.tags.length > 0 && (
-                    <div className="mt-8 pt-6 border-t border-gray-200">
-                      <h3 className="text-lg font-semibold text-gray-800 mb-3">관련 키워드</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {article.tags.map((tag, index) => (
-                          <Link key={index} href={`/search?q=${encodeURIComponent(tag)}`}>
-                            <Badge 
-                              variant="outline" 
-                              className="hover:bg-blue-50 hover:text-blue-700 cursor-pointer transition-colors"
-                            >
-                              #{tag}
-                            </Badge>
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+        <div className="container mx-auto max-w-screen-xl p-8">
+          <div className="flex justify-center items-center h-64">
+            <p className="text-gray-600">뉴스 로딩 중...</p>
           </div>
+        </div>
+      </>
+    );
+  }
 
-          {/* 사이드바 */}
-          <div className="lg:col-span-1">
-            <div className="space-y-6">
-              <RelatedArticles 
-                currentNewsId={article.id}
-                category={article.category}
-                press={article.source}
-                title={article.title}
-              />
+  // 오류 발생 시 또는 뉴스 데이터가 없을 때 UI
+  if (error || !newsData) {
+    return (
+      <>
+        <Header />
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="bg-white rounded-2xl shadow-lg p-6">
+              <h1 className="text-2xl font-bold text-center text-gray-800 mb-4">
+                뉴스를 찾을 수 없습니다
+              </h1>
+              <p className="text-center text-gray-600 mb-6">{error}</p>
+              <div className="flex justify-center">
+                <Link
+                  href="/"
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 transition-all duration-300"
+                >
+                  메인으로 돌아가기
+                </Link>
+              </div>
             </div>
           </div>
         </div>
+      </>
+    );
+  }
+
+  // 관련 뉴스, 헤드라인 뉴스, 랭킹 뉴스 필터링 (임시 데이터 사용)
+  const relatedNews = newsArticles
+    .filter(
+      (news) =>
+        news.category === newsData.category && news.title !== newsData.title
+    )
+    .slice(0, 3);
+  const headlineNews = newsArticles
+    .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt))
+    .slice(0, 5);
+  const rankingNews = newsArticles
+    .sort((a, b) => b.views - a.views)
+    .slice(0, 5);
+
+  return (
+    <>
+      <Header />
+      {/* 토스트 알림 컴포넌트 */}
+      <Toaster richColors position="bottom-right" />
+      
+      {/* 읽기 진행률 바 */}
+      <div
+        className="fixed top-16 left-0 h-2 z-[60] transition-all duration-100 ease-out shadow-sm"
+        style={{
+          width: `${readingProgress}%`,
+          background:
+            "linear-gradient(135deg, rgba(102, 126, 234, 1) 0%, rgba(118, 75, 162, 1) 50%, rgba(245, 87, 108, 1) 100%)",
+        }}
+      ></div>
+
+      <div className="container mx-auto max-w-screen-xl p-4 lg:p-8 mt-0">
+        <div className="grid grid-cols-12 gap-8">
+          {/* 메인 기사 컨텐츠 섹션 */}
+          <main className="col-span-12 lg:col-span-8 bg-white p-6 sm:p-8 rounded-2xl shadow-lg">
+            <header className="pb-6">
+              {/* 출처, 카테고리 정보 */}
+              <div className="flex items-center space-x-2 mb-4">
+                {newsData.sourceLogo && (
+                  <img
+                    src={newsData.sourceLogo}
+                    alt={`${newsData.source} 로고`}
+                    className="h-6 w-6 rounded-full"
+                  />
+                )}
+                <span className="font-semibold text-gray-700">
+                  {newsData.source}
+                </span>
+                <span className="text-gray-400">•</span>
+                <span className="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                  {newsData.category}
+                </span>
+              </div>
+
+              {/* 기사 제목 */}
+              <h1 className="text-3xl md:text-4xl font-bold leading-tight mb-4">
+                {newsData.title}
+              </h1>
+
+              {/* 기자 이름, 날짜, 조회수 정보 */}
+              <div className="flex justify-between items-center text-gray-600 text-sm">
+                <p className="flex items-center">
+                  <User className="w-4 h-4 mr-1.5" />
+                  {newsData.reporter.name} 기자
+                </p>
+                <div className="flex items-center space-x-4">
+                  <span className="flex items-center">
+                    <Clock className="h-4 w-4 mr-1" />
+                    {newsData.date}
+                  </span>
+                  <span className="flex items-center">
+                    <Eye className="h-4 w-4 mr-1" />
+                    {newsData.views?.toLocaleString() || 0}
+                  </span>
+                </div>
+              </div>
+            </header>
+
+            {/* 기능 버튼 섹션 (스크랩, 요약봇, 폰트 크기, 공유, 신고) */}
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-4 mb-6">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    addScrap(newsData);
+                    toast.success("기사가 스크랩되었습니다.");
+                  }}
+                  className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg transition-colors text-sm"
+                >
+                  <Bookmark size={18} />
+                  <span>스크랩</span>
+                </button>
+                <button
+                  onClick={() => setSummaryModalOpen(true)}
+                  className="flex items-center gap-1.5 bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-2 rounded-lg transition-colors text-sm font-semibold"
+                >
+                  <Bot size={18} />
+                  <span>요약봇</span>
+                </button>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center border rounded-lg p-1">
+                  <button
+                    onClick={() => handleFontSizeChange(-2)}
+                    className="p-1 hover:bg-gray-100 rounded-md"
+                  >
+                    <Minus className="w-5 h-5" />
+                  </button>
+                  <span className="px-2 text-sm font-medium">가</span>
+                  <button
+                    onClick={() => handleFontSizeChange(2)}
+                    className="p-1 hover:bg-gray-100 rounded-md"
+                  >
+                    <Plus className="w-5 h-5" />
+                  </button>
+                </div>
+                <button
+                  onClick={() => setShareModalOpen(true)}
+                  className="p-2 hover:bg-gray-100 rounded-full hover:shadow-md"
+                >
+                  <Share className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => toast.info("기사가 신고되었습니다.")}
+                  className="p-2 hover:bg-gray-100 rounded-full"
+                >
+                  <Siren className="w-6 h-6 text-red-500" />
+                </button>
+              </div>
+            </div>
+
+            {/* 이미지 (기능 버튼 섹션 바로 아래에 위치) */}
+            {newsData.imageUrl && (
+                <div className="my-6">
+                  <img
+                    src={newsData.imageUrl}
+                    alt={newsData.title}
+                    className="w-full max-h-[400px] object-cover rounded-xl mx-auto"
+                  />
+                </div>
+              )}
+
+            {/* 기사 본문 */}
+            <article
+              className="prose prose-lg max-w-none text-lg leading-relaxed text-gray-800"
+              style={{ fontSize: `${fontSize}px` }}
+            >
+              {/* newsData.content가 HTML 문자열로 온다고 가정하고 dangerouslySetInnerHTML 사용 */}
+              <div dangerouslySetInnerHTML={{ __html: newsData.content }} />
+
+              {/* 기존의 content 맵핑 로직 (백엔드에서 파싱된 JSON 배열을 받을 때 사용)
+              {newsData.content.map((item, index) => {
+                if (item.type === "paragraph") {
+                  return <p key={index}>{item.text}</p>;
+                }
+                if (item.type === "image") {
+                  return (
+                    <figure key={index} className="my-8">
+                      <img
+                        src={item.src}
+                        alt={item.alt}
+                        className="rounded-xl mx-auto"
+                      />
+                      <figcaption className="text-center text-sm text-gray-500 mt-2">
+                        {item.caption}
+                      </figcaption>
+                    </figure>
+                  );
+                }
+                return null;
+              })}
+              */}
+            </article>
+
+            {/* 관련 키워드 섹션 */}
+            {newsData.tags && newsData.tags.length > 0 && (
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                  관련 키워드
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {newsData.tags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="bg-gray-100 text-gray-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded-full"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 함께 보면 좋은 뉴스 섹션 */}
+            <section className="mt-12 pt-8 border-t">
+              <h2 className="text-2xl font-bold mb-6">함께 보면 좋은 뉴스</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {relatedNews.map((news) => (
+                  <Link
+                    href={`/news/${news.id}`}
+                    key={news.id}
+                    className="block group"
+                  >
+                    <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <p className="text-indigo-600 font-semibold text-sm mb-1">
+                        {news.category}
+                      </p>
+                      <h4 className="font-bold group-hover:text-indigo-700">
+                        {news.title}
+                      </h4>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+
+            {/* 댓글 섹션 */}
+            <section className="mt-12 pt-8 border-t">
+              <h2 className="text-2xl font-bold mb-6">
+                댓글 <span className="text-indigo-600">{comments.length}</span>
+              </h2>
+              <div className="space-y-6">
+                {/* 새 댓글 작성 폼 */}
+                <div className="flex items-start gap-4">
+                  <img
+                    src="https://placehold.co/40x40/E2E8F0/4A5568?text=나"
+                    alt="내 프로필"
+                    className="w-10 h-10 rounded-full"
+                  />
+                  <div className="flex-1">
+                    <textarea
+                      className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                      rows="3"
+                      placeholder="의견을 나눠보세요..."
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          if (newComment.trim() === "") {
+                            toast.error("댓글 내용을 입력해주세요.");
+                            return;
+                          }
+                          const comment = {
+                            id: Date.now(),
+                            author: "나",
+                            avatar:
+                              "https://placehold.co/40x40/E2E8F0/4A5568?text=나",
+                            text: newComment,
+                            time: "방금 전",
+                          };
+                          setComments([comment, ...comments]);
+                          setNewComment("");
+                          toast.success("댓글이 등록되었습니다.");
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={() => {
+                        if (newComment.trim() === "") {
+                          toast.error("댓글 내용을 입력해주세요.");
+                          return;
+                        }
+                        const comment = {
+                          id: Date.now(),
+                          author: "나",
+                          avatar:
+                            "https://placehold.co/40x40/E2E8F0/4A5568?text=나",
+                          text: newComment,
+                          time: "방금 전",
+                        };
+                        setComments([comment, ...comments]);
+                        setNewComment("");
+                        toast.success("댓글이 등록되었습니다.");
+                      }}
+                      className="mt-2 bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors float-right"
+                    >
+                      등록
+                    </button>
+                  </div>
+                </div>
+                {/* 기존 댓글 목록 */}
+                <div className="space-y-6">
+                  {comments.map((comment) => (
+                    <div key={comment.id} className="flex items-start gap-4">
+                      <img
+                        src={comment.avatar}
+                        alt={`${comment.author} 프로필`}
+                        className="w-10 h-10 rounded-full"
+                      />
+                      <div className="flex-1 bg-gray-100 p-4 rounded-lg">
+                        <p className="font-semibold">{comment.author}</p>
+                        <p className="text-gray-700 mt-1">{comment.text}</p>
+                        <p className="text-xs text-gray-500 mt-2">
+                          {comment.time}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          </main>
+
+          {/* 사이드바 섹션 (헤드라인 뉴스, 랭킹 뉴스) */}
+          <aside className="col-span-12 lg:col-span-4 space-y-8">
+            <div className="bg-white p-6 rounded-2xl shadow-lg">
+              <h3 className="text-xl font-bold border-b pb-3 mb-4">
+                헤드라인 뉴스
+              </h3>
+              <ul className="space-y-3">
+                {headlineNews.map((news) => (
+                  <li key={news.id}>
+                    <Link
+                      href={`/news/${news.id}`}
+                      className="hover:text-indigo-600 transition-colors"
+                    >
+                      {news.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="bg-white p-6 rounded-2xl shadow-lg">
+              <h3 className="text-xl font-bold border-b pb-3 mb-4">
+                랭킹 뉴스 (조회수)
+              </h3>
+              <ul className="space-y-3">
+                {rankingNews.map((news, index) => (
+                  <li key={news.id} className="flex items-center">
+                    <span className="text-lg font-bold text-indigo-600 w-6">
+                      {index + 1}
+                    </span>
+                    <Link
+                      href={`/news/${news.id}`}
+                      className="hover:text-indigo-600 transition-colors flex-1"
+                    >
+                      {news.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </aside>
+        </div>
       </div>
-    </div>
-  )
+
+      {/* 요약봇 모달 */}
+      {isSummaryModalOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          onClick={() => setSummaryModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-xl w-full max-w-2xl transform transition-all max-h-[80vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6 border-b flex justify-between items-center">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <Bot className="text-indigo-500" /> AI 요약봇
+              </h2>
+              <button
+                onClick={() => setSummaryModalOpen(false)}
+                className="p-2 hover:bg-gray-100 rounded-full"
+              >
+                <X />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto">
+              <h3 className="font-semibold text-lg mb-3">핵심 요약</h3>
+              <ul className="list-disc list-inside space-y-2 text-gray-700">
+                <li>
+                  정부가 중소기업 지원, 기술 혁신, 내수 활성화를 골자로 하는
+                  새로운 경제 정책을 발표했습니다.
+                </li>
+                <li>
+                  기술 혁신 분야(AI, 바이오, 친환경 에너지)에 대한 집중 투자는
+                  미래 성장 동력 확보를 목표로 합니다.
+                </li>
+                <li>
+                  내수 활성화를 위해 지역 화폐 확대 및 소상공인 지원책을
+                  포함했으나, 재정 건전성 우려도 존재합니다.
+                </li>
+                <li>
+                  전문가들은 정책의 장기적 성공이 구체적인 실행 방안과 글로벌
+                  경제 상황에 달려있다고 분석합니다.
+                </li>
+              </ul>
+            </div>
+            <div className="p-4 bg-gray-50 rounded-b-2xl text-center text-sm text-gray-500">
+              <p>
+                이 요약은 AI가 생성한 내용으로, 일부 부정확한 정보가 포함될 수
+                있습니다.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 공유하기 모달 */}
+      {isShareModalOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          onClick={() => setShareModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-xl w-full max-w-md transform transition-all"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6 border-b flex justify-between items-center">
+              <h2 className="text-xl font-bold">기사 공유하기</h2>
+              <button
+                onClick={() => setShareModalOpen(false)}
+                className="p-2 hover:bg-gray-100 rounded-full"
+              >
+                <X />
+              </button>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-600 mb-4">
+                아래 링크를 복사하거나 SNS로 공유할 수 있습니다.
+              </p>
+              <div className="flex items-center border rounded-lg p-2 bg-gray-50 mb-4">
+                <input
+                  type="text"
+                  value={
+                    typeof window !== "undefined" ? window.location.href : "#"
+                  }
+                  className="flex-1 bg-transparent outline-none text-sm text-gray-700"
+                  readOnly
+                />
+                <button
+                  onClick={() => {
+                    if (newsData) {
+                      const currentUrl = window.location.href;
+                      // document.execCommand('copy') is preferred for clipboard in iframes
+                      const textarea = document.createElement('textarea');
+                      textarea.value = currentUrl;
+                      document.body.appendChild(textarea);
+                      textarea.select();
+                      try {
+                        document.execCommand('copy');
+                        toast.success("URL이 복사되었습니다.");
+                      } catch (err) {
+                        console.error('Failed to copy text:', err);
+                        toast.error("URL 복사에 실패했습니다.");
+                      } finally {
+                        document.body.removeChild(textarea);
+                      }
+                    }
+                  }}
+                  className="bg-indigo-500 text-white px-3 py-1 rounded text-sm font-semibold hover:bg-indigo-600 transition-colors"
+                >
+                  복사
+                </button>
+              </div>
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={() => {
+                    if (newsData) {
+                      const currentUrl = window.location.href;
+                      // For KakaoTalk, usually requires their SDK. Just copying URL for now.
+                      const textarea = document.createElement('textarea');
+                      textarea.value = currentUrl;
+                      document.body.appendChild(textarea);
+                      textarea.select();
+                      try {
+                        document.execCommand('copy');
+                        toast.info("카카오톡 공유는 SDK 연동이 필요합니다. 기사 URL이 복사되었습니다.");
+                      } catch (err) {
+                        console.error('Failed to copy text:', err);
+                        toast.error("URL 복사에 실패했습니다.");
+                      } finally {
+                        document.body.removeChild(textarea);
+                      }
+                    }
+                  }}
+                  className="w-12 h-12 rounded-full flex items-center justify-center bg-[#FEE500] hover:opacity-80 transition-opacity"
+                >
+                  <img
+                    src="/images/Kakaotalk.png"
+                    alt="카카오톡"
+                    className="w-8 h-8"
+                  />
+                </button>
+                <button
+                  onClick={() => {
+                    if (newsData) {
+                      const currentUrl = window.location.href;
+                      const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+                        currentUrl
+                      )}&quote=${encodeURIComponent(newsData.title)}`;
+                      window.open(shareUrl, "_blank", "width=600,height=400");
+                    }
+                  }}
+                  className="w-12 h-12 rounded-full flex items-center justify-center bg-[#1877F2] hover:opacity-80 transition-opacity"
+                >
+                  <img
+                    src="/images/Facebook.png"
+                    alt="페이스북"
+                    className="w-8 h-8"
+                  />
+                </button>
+                <button
+                  onClick={() => {
+                    if (newsData) {
+                      const currentUrl = window.location.href;
+                      const shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(
+                        currentUrl
+                      )}&text=${encodeURIComponent(newsData.title)}`;
+                      window.open(shareUrl, "_blank", "width=600,height=400");
+                    }
+                  }}
+                  className="w-12 h-12 rounded-full flex items-center justify-center bg-gray-200 hover:opacity-80 transition-opacity"
+                >
+                  <img
+                    src="/images/Twitter.png"
+                    alt="트위터"
+                    className="w-8 h-8"
+                  />
+                </button>
+                <button
+                  onClick={() => {
+                    if (newsData) {
+                      const currentUrl = window.location.href;
+                      // For Instagram, usually requires their SDK or manual upload. Just copying URL for now.
+                      const textarea = document.createElement('textarea');
+                      textarea.value = currentUrl;
+                      document.body.appendChild(textarea);
+                      textarea.select();
+                      try {
+                        document.execCommand('copy');
+                        toast.info("인스타그램은 웹에서 직접 공유하기 어렵습니다. 기사 URL이 복사되었습니다.");
+                      } catch (err) {
+                        console.error('Failed to copy text:', err);
+                        toast.error("URL 복사에 실패했습니다.");
+                      } finally {
+                        document.body.removeChild(textarea);
+                      }
+                    }
+                  }}
+                  className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E4405F] hover:opacity-80 transition-opacity"
+                >
+                  <img
+                    src="/images/Instagram.png"
+                    alt="인스타그램"
+                    className="w-8 h-8"
+                  />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }
