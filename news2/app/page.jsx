@@ -117,18 +117,17 @@ export default function MainPage() {
                                                 {/* Category Tabs, Newsletter Subscription, and Real-time Keywords */}
             <div className="mb-2">
               {/* 카테고리 버튼과 뉴스레터 구독 */}
-              <div className="flex flex-col lg:flex-row items-start gap-2 mb-2">
+              <div className="grid grid-cols-12 gap-4 items-stretch mb-2">
                 {/* 왼쪽: 카테고리 버튼과 실시간 키워드 */}
-                <div className="flex flex-col gap-2">
-                  {/* 카테고리 버튼 */}
-                  <div className="lg:w-auto overflow-x-auto flex space-x-1 pb-0">
+                <div className="col-span-12 lg:col-span-8 flex flex-col gap-2 h-full">
+                  <div className="lg:w-full overflow-x-auto flex space-x-3 pb-0">
                     {categories.map((category, index) => (
                       <Button
                         key={category}
                         variant={selectedCategory === category ? "default" : "outline"}
-                        size="sm"
+                        size="default"
                         onClick={() => setSelectedCategory(category)}
-                        className={`whitespace-nowrap hover-lift ${
+                        className={`whitespace-nowrap hover-lift text-base px-4 py-2 ${
                           isLoaded ? 'animate-slide-in' : 'opacity-0'
                         }`}
                         style={{ animationDelay: `${index * 0.1}s` }}
@@ -144,25 +143,33 @@ export default function MainPage() {
                   </div>
                 </div>
 
-                {/* 오른쪽: 뉴스레터 구독 */}
-                <div className="lg:w-80">
-                  <Card className="glass hover-lift animate-slide-in shadow-lg border-0" style={{ animationDelay: '0.3s' }}>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-lg font-bold flex items-center text-gray-800">
-                        <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-2">
-                          <Zap className="h-4 w-4 text-white" />
-                        </div>
-                        뉴스레터 구독
-                      </CardTitle>
-                      <CardDescription className="text-gray-600 text-sm">
-                        매일 아침 엄선된 뉴스를 받아보세요 · <SubscriberCount />
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <SubscribeForm compact={true} />
-                    </CardContent>
-                  </Card>
-                </div>
+
+                   
+
+                {/* 오른쪽: 뉴스레터 구독과 날씨 위젯 */}
+                <div className="col-span-12 lg:col-span-4 flex flex-col gap-4 h-full">
+                  {/* 뉴스레터 구독 */}
+                  
+                    <Card className="glass hover-lift animate-slide-in shadow-lg border-0" style={{ animationDelay: '0.3s' }}>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-lg font-bold flex items-center text-gray-800">
+                          <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-2">
+                            <Zap className="h-4 w-4 text-white" />
+                          </div>
+                          뉴스레터 구독
+                        </CardTitle>
+                        <CardDescription className="text-gray-600 text-sm">
+                          매일 아침 엄선된 뉴스를 받아보세요 · <SubscriberCount />
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <SubscribeForm compact={true} />
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                 
+            
               </div>
             </div>
 
