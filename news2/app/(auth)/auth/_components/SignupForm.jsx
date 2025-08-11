@@ -47,8 +47,7 @@ export default function SignupForm({ onSignupSuccess }) {
     const fetchInterests = async () => {
       try {
         setIsLoadingInterests(true);
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        const response = await fetch(`${apiUrl}/api/users/categories`);
+        const response = await fetch('/api/users/categories');
         if (!response.ok) {
           throw new Error("관심사 목록을 불러오는데 실패했습니다.");
         }
@@ -96,8 +95,7 @@ export default function SignupForm({ onSignupSuccess }) {
     }
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const response = await fetch(`${apiUrl}/api/users/signup`, {
+      const response = await fetch('/api/users/signup', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

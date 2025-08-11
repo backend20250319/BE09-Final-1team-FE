@@ -1,5 +1,7 @@
 // 뉴스 데이터 관리 서비스
 import { newsArticles, NEWS_CATEGORIES } from "./news-data"
+import { safeApiCall, diagnoseCorsIssue } from "./api-utils"
+import { getApiUrl } from "./config"
 
 /**
  * 뉴스 아이템 기본 구조
@@ -57,31 +59,215 @@ class NewsService {
    * 모든 뉴스 기사를 가져옵니다
    */
   async getAllNews(options = {}) {
+    const { page = 1, size = 21 } = options
     const cacheKey = `all-news-${JSON.stringify(options)}`
     const cached = this.getCachedData(cacheKey)
     if (cached) return cached
 
-    // 로컬 데이터 사용
-    const newsItems = newsArticles.map(createNewsItem)
-    this.setCachedData(cacheKey, newsItems)
-    return newsItems
+    try {
+      // CORS 문제 진단 (개발 환경에서만)
+      if (process.env.NODE_ENV === 'development') {
+        await diagnoseCorsIssue()
+      }
+      
+      // 실제 백엔드 API 호출
+      const response = await fetch(getApiUrl(`/api/news?page=${page}&size=${size}`), {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+      
+      const data = await response.json()
+      
+      // 실제 백엔드 응답 구조에 맞게 변환
+      const newsItems = data.content ? data.content.map(item => ({
+        id: item.newsId,
+        title: item.title,
+        summary: item.summary || item.content?.substring(0, 200) + '...',
+        content: item.content,
+        category: item.categoryName,
+        source: item.press,
+        author: item.reporterName,
+        publishedAt: item.publishedAt,
+        updatedAt: item.updatedAt,
+        views: 0, // 실제 백엔드에는 조회수 필드가 없음
+        likes: 0, // 실제 백엔드에는 좋아요 필드가 없음
+        image: item.imageUrl || "/placeholder.svg",
+        tags: [], // 실제 백엔드에는 태그 필드가 없음
+        isPublished: true,
+        isFeatured: false,
+        link: item.link,
+        trusted: item.trusted === 1,
+        dedupState: item.dedupState,
+        dedupStateDescription: item.dedupStateDescription,
+        oidAid: item.oidAid
+      })) : []
+
+      console.log('✅ 변환된 뉴스 아이템:', newsItems.length, '개')
+      
+      // 페이지네이션 정보와 함께 반환
+      const result = {
+        content: newsItems,
+        totalElements: data.totalElements,
+        totalPages: data.totalPages,
+        currentPage: data.number + 1,
+        size: data.size,
+        first: data.first,
+        last: data.last
+      }
+      
+      this.setCachedData(cacheKey, result)
+      return result
+    } catch (error) {
+      console.error('❌ 백엔드 API 실패, 더미 데이터 사용:', error)
+      
+      // 백엔드 실패 시 더미 데이터 사용
+      const startIndex = (page - 1) * size
+      const endIndex = startIndex + size
+      const dummyNewsItems = newsArticles.slice(startIndex, endIndex).map(item => ({
+        id: item.id,
+        title: item.title,
+        summary: item.summary,
+        content: item.content,
+        category: item.category,
+        source: item.source,
+        author: item.author,
+        publishedAt: item.publishedAt,
+        updatedAt: item.publishedAt,
+        views: item.views,
+        likes: item.likes,
+        image: item.image,
+        tags: item.tags,
+        isPublished: true,
+        isFeatured: false
+      }))
+      
+      const result = {
+        content: dummyNewsItems,
+        totalElements: newsArticles.length,
+        totalPages: Math.ceil(newsArticles.length / size),
+        currentPage: page,
+        size: size,
+        first: page === 1,
+        last: page >= Math.ceil(newsArticles.length / size)
+      }
+      
+      console.log('✅ 더미 데이터 로딩 성공:', dummyNewsItems.length, '개')
+      this.setCachedData(cacheKey, result)
+      return result
+    }
   }
 
   /**
    * 카테고리별 뉴스를 가져옵니다
    */
   async getNewsByCategory(category, options = {}) {
+    const { page = 1, size = 21 } = options
     const cacheKey = `news-category-${category}-${JSON.stringify(options)}`
     const cached = this.getCachedData(cacheKey)
     if (cached) return cached
 
-    // 로컬 데이터 사용
-    const filteredNews = newsArticles.filter(item => 
-      category === NEWS_CATEGORIES.ALL || item.category === category
-    ).map(createNewsItem)
-    
-    this.setCachedData(cacheKey, filteredNews)
-    return filteredNews
+    try {
+      // 실제 백엔드 API 호출
+      const categoryParam = category === "전체" ? "?" : `?category=${category}&`
+      const response = await fetch(getApiUrl(`/api/news${categoryParam}page=${page}&size=${size}`), {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+      
+      const data = await response.json()
+      
+      // 실제 백엔드 응답 구조에 맞게 변환
+      const newsItems = data.content ? data.content.map(item => ({
+        id: item.newsId,
+        title: item.title,
+        summary: item.summary || item.content?.substring(0, 200) + '...',
+        content: item.content,
+        category: item.categoryName,
+        source: item.press,
+        author: item.reporterName,
+        publishedAt: item.publishedAt,
+        updatedAt: item.updatedAt,
+        views: 0, // 실제 백엔드에는 조회수 필드가 없음
+        likes: 0, // 실제 백엔드에는 좋아요 필드가 없음
+        image: item.imageUrl || "/placeholder.svg",
+        tags: [], // 실제 백엔드에는 태그 필드가 없음
+        isPublished: true,
+        isFeatured: false,
+        link: item.link,
+        trusted: item.trusted === 1,
+        dedupState: item.dedupState,
+        dedupStateDescription: item.dedupStateDescription,
+        oidAid: item.oidAid
+      })) : []
+
+      // 페이지네이션 정보와 함께 반환
+      const result = {
+        content: newsItems,
+        totalElements: data.totalElements,
+        totalPages: data.totalPages,
+        currentPage: data.number + 1,
+        size: data.size,
+        first: data.first,
+        last: data.last
+      }
+      
+      this.setCachedData(cacheKey, result)
+      return result
+    } catch (error) {
+      console.error('❌ 백엔드 API 실패, 더미 데이터 사용:', error)
+      
+      // 백엔드 실패 시 더미 데이터 사용
+      let filteredArticles = newsArticles
+      if (category !== "전체") {
+        filteredArticles = newsArticles.filter(article => article.category === category)
+      }
+      
+      const startIndex = (page - 1) * size
+      const endIndex = startIndex + size
+      const dummyNewsItems = filteredArticles.slice(startIndex, endIndex).map(item => ({
+        id: item.id,
+        title: item.title,
+        summary: item.summary,
+        content: item.content,
+        category: item.category,
+        source: item.source,
+        author: item.author,
+        publishedAt: item.publishedAt,
+        updatedAt: item.publishedAt,
+        views: item.views,
+        likes: item.likes,
+        image: item.image,
+        tags: item.tags,
+        isPublished: true,
+        isFeatured: false
+      }))
+      
+      const result = {
+        content: dummyNewsItems,
+        totalElements: filteredArticles.length,
+        totalPages: Math.ceil(filteredArticles.length / size),
+        currentPage: page,
+        size: size,
+        first: page === 1,
+        last: page >= Math.ceil(filteredArticles.length / size)
+      }
+      
+      console.log('✅ 더미 데이터 로딩 성공:', dummyNewsItems.length, '개')
+      this.setCachedData(cacheKey, result)
+      return result
+    }
   }
 
   /**
@@ -92,14 +278,49 @@ class NewsService {
     const cached = this.getCachedData(cacheKey)
     if (cached) return cached
 
-    // 로컬 데이터 사용
-    const newsItem = newsArticles.find(item => item.id === Number(id))
-    if (newsItem) {
-      const createdItem = createNewsItem(newsItem)
-      this.setCachedData(cacheKey, createdItem)
-      return createdItem
+    try {
+      // 백엔드 API 호출
+      const item = await safeApiCall(`/api/news/${id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      
+      console.log('🔍 백엔드 응답 원본:', item)
+      
+      // 백엔드 응답 구조에 맞게 변환
+      const newsItem = {
+        id: item.newsId || item.id,
+        title: item.title,
+        summary: item.summary || item.content?.substring(0, 200) + '...',
+        content: item.content,
+        category: item.categoryName || item.category,
+        source: item.press || item.source,
+        author: item.reporterName || item.author,
+        publishedAt: item.publishedAt,
+        updatedAt: item.updatedAt,
+        views: item.viewCount || 0,
+        likes: item.likes || 0,
+        image: item.imageUrl || "/placeholder.svg",
+        tags: item.tags || [],
+        isPublished: true,
+        isFeatured: false,
+        link: item.link,
+        trusted: item.trusted,
+        dedupState: item.dedupState,
+        dedupStateDescription: item.dedupStateDescription,
+        oidAid: item.oidAid
+      }
+      
+      console.log('🔄 변환된 뉴스 아이템:', newsItem)
+
+      this.setCachedData(cacheKey, newsItem)
+      return newsItem
+    } catch (error) {
+      console.error('뉴스 상세 로딩 실패:', error)
+      throw error
     }
-    return null
   }
 
   /**
@@ -110,14 +331,45 @@ class NewsService {
     const cached = this.getCachedData(cacheKey)
     if (cached) return cached
 
-    // 로컬 데이터 사용
-    const searchResults = newsArticles.filter(item => 
-      item.title.toLowerCase().includes(query.toLowerCase()) ||
-      item.summary.toLowerCase().includes(query.toLowerCase())
-    ).map(createNewsItem)
-    
-    this.setCachedData(cacheKey, searchResults)
-    return searchResults
+    try {
+      // 백엔드 API 호출
+      const data = await safeApiCall(`/api/news/search?query=${encodeURIComponent(query)}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      
+      // 백엔드 응답 구조에 맞게 변환
+      const searchResults = data.content ? data.content.map(item => ({
+        id: item.newsId || item.id,
+        title: item.title,
+        summary: item.summary || item.content?.substring(0, 200) + '...',
+        content: item.content,
+        category: item.categoryName || item.category,
+        source: item.press || item.source,
+        author: item.reporterName || item.author,
+        publishedAt: item.publishedAt,
+        updatedAt: item.updatedAt,
+        views: item.viewCount || 0,
+        likes: item.likes || 0,
+        image: item.imageUrl || "/placeholder.svg",
+        tags: item.tags || [],
+        isPublished: true,
+        isFeatured: false,
+        link: item.link,
+        trusted: item.trusted,
+        dedupState: item.dedupState,
+        dedupStateDescription: item.dedupStateDescription,
+        oidAid: item.oidAid
+      })) : []
+
+      this.setCachedData(cacheKey, searchResults)
+      return searchResults
+    } catch (error) {
+      console.error('뉴스 검색 실패:', error)
+      throw error
+    }
   }
 
   /**
@@ -134,17 +386,184 @@ class NewsService {
    * 뉴스 기사 조회수를 증가시킵니다
    */
   async incrementViews(id) {
-    // 로컬에서는 조회수 증가 로직을 구현하지 않음
-    console.log(`조회수 증가: ${id}`)
+    try {
+      // 백엔드 API 호출
+      await safeApiCall(`/api/news/${id}/view`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+    } catch (error) {
+      console.error('조회수 증가 실패:', error)
+    }
   }
 
   /**
    * 뉴스 기사 좋아요를 토글합니다
    */
   async toggleLike(id) {
-    // 로컬에서는 좋아요 토글 로직을 구현하지 않음
-    console.log(`좋아요 토글: ${id}`)
-    return { success: true }
+    try {
+      // 백엔드 API 호출 (좋아요 기능이 구현되어 있다면)
+      const response = await safeApiCall(`/api/news/${id}/like`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      
+      return { success: true, data: response }
+    } catch (error) {
+      console.error('좋아요 토글 실패:', error)
+      return { success: false }
+    }
+  }
+
+  /**
+   * 트렌딩 뉴스를 가져옵니다
+   */
+  async getTrendingNews(options = {}) {
+    const cacheKey = `trending-news-${JSON.stringify(options)}`
+    const cached = this.getCachedData(cacheKey)
+    if (cached) return cached
+
+    try {
+      // 백엔드 API 호출
+      const data = await safeApiCall('/api/news/trending', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      
+      // 백엔드 응답 구조에 맞게 변환
+      const newsItems = data.content ? data.content.map(item => ({
+        id: item.newsId || item.id,
+        title: item.title,
+        summary: item.summary || item.content?.substring(0, 200) + '...',
+        content: item.content,
+        category: item.categoryName || item.category,
+        source: item.press || item.source,
+        author: item.reporterName || item.author,
+        publishedAt: item.publishedAt,
+        updatedAt: item.updatedAt,
+        views: item.viewCount || 0,
+        likes: item.likes || 0,
+        image: item.imageUrl || "/placeholder.svg",
+        tags: item.tags || [],
+        isPublished: true,
+        isFeatured: false,
+        link: item.link,
+        trusted: item.trusted,
+        dedupState: item.dedupState,
+        dedupStateDescription: item.dedupStateDescription,
+        oidAid: item.oidAid
+      })) : []
+
+      this.setCachedData(cacheKey, newsItems)
+      return newsItems
+    } catch (error) {
+      console.error('트렌딩 뉴스 로딩 실패:', error)
+      throw error
+    }
+  }
+
+  /**
+   * 최신 뉴스를 가져옵니다
+   */
+  async getLatestNews(options = {}) {
+    const cacheKey = `latest-news-${JSON.stringify(options)}`
+    const cached = this.getCachedData(cacheKey)
+    if (cached) return cached
+
+    try {
+      // 백엔드 API 호출
+      const data = await safeApiCall('/api/news/latest', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      
+      // 백엔드 응답 구조에 맞게 변환
+      const newsItems = data.content ? data.content.map(item => ({
+        id: item.newsId || item.id,
+        title: item.title,
+        summary: item.summary || item.content?.substring(0, 200) + '...',
+        content: item.content,
+        category: item.categoryName || item.category,
+        source: item.press || item.source,
+        author: item.reporterName || item.author,
+        publishedAt: item.publishedAt,
+        updatedAt: item.updatedAt,
+        views: item.viewCount || 0,
+        likes: item.likes || 0,
+        image: item.imageUrl || "/placeholder.svg",
+        tags: item.tags || [],
+        isPublished: true,
+        isFeatured: false,
+        link: item.link,
+        trusted: item.trusted,
+        dedupState: item.dedupState,
+        dedupStateDescription: item.dedupStateDescription,
+        oidAid: item.oidAid
+      })) : []
+
+      this.setCachedData(cacheKey, newsItems)
+      return newsItems
+    } catch (error) {
+      console.error('최신 뉴스 로딩 실패:', error)
+      throw error
+    }
+  }
+
+  /**
+   * 인기 뉴스를 가져옵니다
+   */
+  async getPopularNews(options = {}) {
+    const cacheKey = `popular-news-${JSON.stringify(options)}`
+    const cached = this.getCachedData(cacheKey)
+    if (cached) return cached
+
+    try {
+      // 백엔드 API 호출
+      const data = await safeApiCall('/api/news/popular', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      
+      // 백엔드 응답 구조에 맞게 변환
+      const newsItems = data.content ? data.content.map(item => ({
+        id: item.newsId || item.id,
+        title: item.title,
+        summary: item.summary || item.content?.substring(0, 200) + '...',
+        content: item.content,
+        category: item.categoryName || item.category,
+        source: item.press || item.source,
+        author: item.reporterName || item.author,
+        publishedAt: item.publishedAt,
+        updatedAt: item.updatedAt,
+        views: item.viewCount || 0,
+        likes: item.likes || 0,
+        image: item.imageUrl || "/placeholder.svg",
+        tags: item.tags || [],
+        isPublished: true,
+        isFeatured: false,
+        link: item.link,
+        trusted: item.trusted,
+        dedupState: item.dedupState,
+        dedupStateDescription: item.dedupStateDescription,
+        oidAid: item.oidAid
+      })) : []
+
+      this.setCachedData(cacheKey, newsItems)
+      return newsItems
+    } catch (error) {
+      console.error('인기 뉴스 로딩 실패:', error)
+      throw error
+    }
   }
 }
 
@@ -157,5 +576,8 @@ export const newsFetchers = {
   getNewsByCategory: (category) => newsService.getNewsByCategory(category),
   getNewsById: (id) => newsService.getNewsById(id),
   searchNews: (query) => newsService.searchNews(query),
-  getRelatedArticles: (currentId, category) => newsService.getRelatedArticles(currentId, category)
+  getRelatedArticles: (currentId, category) => newsService.getRelatedArticles(currentId, category),
+  getTrendingNews: () => newsService.getTrendingNews(),
+  getLatestNews: () => newsService.getLatestNews(),
+  getPopularNews: () => newsService.getPopularNews()
 } 

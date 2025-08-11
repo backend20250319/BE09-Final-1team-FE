@@ -9,6 +9,15 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // API 리라이트 설정 (선택사항)
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8082'}/api/:path*`,
+      },
+    ];
+  },
 }
 
 export default nextConfig

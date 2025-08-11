@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import SearchAutocomplete from "@/components/SearchAutocomplete";
 import {
   Bell,
   Search,
@@ -81,10 +82,9 @@ export default function Header() {
           <div className="flex items-center space-x-4">
             {/* Search */}
             <div className="relative hidden md:block">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70 h-4 w-4" />
-              <Input
+              <SearchAutocomplete 
                 placeholder="뉴스 검색..."
-                className="pl-10 w-64 bg-white/10 border-white/20 text-white placeholder-white/50 focus:bg-white/20 focus:border-white/40 transition-all duration-300"
+                className="w-64"
               />
             </div>
 
@@ -156,10 +156,9 @@ export default function Header() {
             <div className="space-y-2">
               {/* Mobile Search */}
               <div className="relative mb-4">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70 h-4 w-4" />
-                <Input
+                <SearchAutocomplete 
                   placeholder="뉴스 검색..."
-                  className="pl-10 w-full bg-white/10 border-white/20 text-white placeholder-white/50"
+                  className="w-full"
                 />
               </div>
 

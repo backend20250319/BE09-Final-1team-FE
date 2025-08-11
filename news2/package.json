@@ -6,7 +6,11 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
+    "setup:env:local": "node scripts/setup-env.js local",
+    "setup:env:dev": "node scripts/setup-env.js development",
+    "setup:env:prod": "node scripts/setup-env.js production",
+    "setup": "npm install && npm run setup:env:local"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -65,6 +69,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "postcss": "^8.5",
+    "readline-sync": "^1.4.10",
     "tailwindcss": "^3.4.17",
     "typescript": "^5"
   }

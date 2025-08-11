@@ -1,46 +1,40 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { Users } from 'lucide-react'
+import { useState, useEffect } from "react";
 
-export default function SubscriberCount({ initialCount = 15420, onCountUpdate }) {
-  const [count, setCount] = useState(initialCount)
-  const [isUpdating, setIsUpdating] = useState(false)
+export default function SubscriberCount() {
+  const [count, setCount] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // 구독자 수 업데이트 함수
-  const updateCount = (increment = 1) => {
-    setIsUpdating(true)
-    setCount(prev => prev + increment)
-    
-    // 애니메이션 효과를 위한 타이머
-    setTimeout(() => {
-      setIsUpdating(false)
-    }, 1000)
-  }
-
-  // 부모 컴포넌트에서 호출할 수 있도록 함수 노출
   useEffect(() => {
-    if (onCountUpdate) {
-      onCountUpdate(updateCount)
-    }
-  }, [onCountUpdate])
+    const fetchCount = async () => {
+      try {
+        const res = await fetch("/api/subscriber-count");
+        if (res.ok) {
+          const data = await res.json();
+          setCount(data.count);
+        }
+      } catch (error) {
+        console.error("구독자 수 로딩 실패:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const formatNumber = (num) => {
-    if (num >= 10000) {
-      return (num / 10000).toFixed(1) + '만'
-    } else if (num >= 1000) {
-      return (num / 1000).toFixed(1) + '천'
-    }
-    return num.toString()
+    fetchCount();
+    
+    // 60초마다 업데이트
+    const interval = setInterval(fetchCount, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (loading || count === null) {
+    return <span className="text-xs text-gray-500">구독자 수 로딩 중...</span>;
   }
 
   return (
-    <div className={`flex items-center gap-1 text-sm text-gray-500 transition-all duration-300 ${
-      isUpdating ? 'scale-110 text-blue-600' : ''
-    }`}>
-      <Users className="h-4 w-4" />
-      <span className="font-medium">{formatNumber(count)}</span>
-      <span>구독자</span>
-    </div>
-  )
+    <span className="text-xs text-gray-500">
+      {count.toLocaleString()}명이 구독중
+    </span>
+  );
 } 
