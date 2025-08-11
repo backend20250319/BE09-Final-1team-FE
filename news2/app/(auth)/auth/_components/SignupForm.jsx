@@ -22,7 +22,6 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"; // RadioGroup import
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Mail, Lock, User, Heart, AlertCircle } from "lucide-react";
-import Link from "next/link";
 
 export default function SignupForm({ onSignupSuccess }) {
   const router = useRouter();
@@ -83,11 +82,6 @@ export default function SignupForm({ onSignupSuccess }) {
     setError("");
     setSuccess("");
 
-    // if (!termsOk) {
-    //   setError("이용약관 및 개인정보처리방침에 동의해야 합니다.");
-    //   setIsLoading(false);
-    //   return;
-    // }
     // birthYear와 gender 필드가 비어있는지 확인
     if (!birthYear || !gender) {
       setError("출생연도와 성별을 모두 선택해주세요.");

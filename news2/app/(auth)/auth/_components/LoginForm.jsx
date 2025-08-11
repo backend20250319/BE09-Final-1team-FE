@@ -123,22 +123,6 @@ export default function LoginForm() {
             {isLoading ? "로그인 중..." : "로그인"}
           </Button>
         </form>
-
-        <div className="mt-6">
-          <div className="text-center">
-            <p className="text-sm text-gray-600 mb-2">테스트 계정</p>
-            <div className="space-y-2 text-xs text-gray-500">
-              <div className="flex justify-between">
-                <span>관리자:</span>
-                <span>admin@example.com / admin123</span>
-              </div>
-              <div className="flex justify-between">
-                <span>일반 사용자:</span>
-                <span>user@example.com / user1234</span>
-              </div>
-            </div>
-          </div>
-        </div>
       </CardContent>
     </Card>
   );
