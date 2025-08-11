@@ -144,24 +144,32 @@ export default function MainPage() {
                   </div>
                 </div>
 
-                {/* 오른쪽: 뉴스레터 구독 */}
-                <div className="lg:w-80">
-                  <Card className="glass hover-lift animate-slide-in shadow-lg border-0" style={{ animationDelay: '0.3s' }}>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-lg font-bold flex items-center text-gray-800">
-                        <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-2">
-                          <Zap className="h-4 w-4 text-white" />
-                        </div>
-                        뉴스레터 구독
-                      </CardTitle>
-                      <CardDescription className="text-gray-600 text-sm">
-                        매일 아침 엄선된 뉴스를 받아보세요 · <SubscriberCount />
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <SubscribeForm compact={true} />
-                    </CardContent>
-                  </Card>
+                                {/* 오른쪽: 뉴스레터 구독과 날씨 위젯 */}
+                <div className="lg:flex lg:space-x-4">
+                  {/* 뉴스레터 구독 */}
+                  <div className="lg:w-80">
+                    <Card className="glass hover-lift animate-slide-in shadow-lg border-0" style={{ animationDelay: '0.3s' }}>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-lg font-bold flex items-center text-gray-800">
+                          <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-2">
+                            <Zap className="h-4 w-4 text-white" />
+                          </div>
+                          뉴스레터 구독
+                        </CardTitle>
+                        <CardDescription className="text-gray-600 text-sm">
+                          매일 아침 엄선된 뉴스를 받아보세요 · <SubscriberCount />
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <SubscribeForm compact={true} />
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* 날씨 위젯 */}
+                  <div className="lg:w-64 mt-4 lg:mt-0">
+                    <WeatherWidget />
+                  </div>
                 </div>
               </div>
             </div>

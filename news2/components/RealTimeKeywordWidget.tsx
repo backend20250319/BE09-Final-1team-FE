@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { ArrowUp, ArrowDown, Minus, TrendingUp } from "lucide-react"
+import { ArrowUp, ArrowDown, Minus, TrendingUp, X } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
 const seed = ["총선", "가상화폐", "카카오", "환경 보호", "주식 시장", "삼성", "인공지능"]
@@ -135,18 +135,21 @@ export default function RealTimeKeywordWidget({
     <>
       <div
         ref={widgetRef}
-        className="glass-enhanced hover-lift animate-slide-in rounded-xl shadow-md px-4 py-3 shimmer-effect relative"
+        className="glass-enhanced hover-lift animate-slide-in rounded-xl shadow-md px-4 py-3 shimmer-effect relative cursor-pointer hover:shadow-lg transition-all duration-200"
         style={{ width, "--delay": "0.2s" } as React.CSSProperties}
         onMouseEnter={handleWidgetMouseEnter}
         onMouseLeave={handleWidgetMouseLeave}
+        onClick={handleCardClick}
+        title="클릭하여 전체 순위 보기"
       >
         <div className="glass-content">
           {/* 헤더 */}
-          <div className="flex items-center mb-3">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center text-sm font-semibold">
               <TrendingUp className="h-4 w-4 mr-2 text-red-500" />
               실시간 인기 키워드
             </div>
+            <div className="text-xs text-gray-500 opacity-60">클릭하여 전체 보기</div>
           </div>
 
           {/* 한 줄 티커 영역 */}
@@ -156,7 +159,10 @@ export default function RealTimeKeywordWidget({
               key={`${cur.keyword}-${cur.rank}`}
               className="keyword-item-glass flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-500 group cursor-pointer hover:bg-blue-50 hover:border-2 hover:border-blue-200 hover:shadow-lg hover:scale-105"
               style={{ "--delay": "0.3s" } as React.CSSProperties}
-              onClick={() => handleKeywordClick(cur.keyword)}
+              onClick={(e) => {
+                e.stopPropagation()
+                handleKeywordClick(cur.keyword)
+              }}
             >
               <span className="flex items-center gap-2">
                 <span 
@@ -196,7 +202,7 @@ export default function RealTimeKeywordWidget({
       {showFullList && (
         <div 
           ref={cardRef}
-          className="fixed bg-white rounded-xl shadow-2xl border border-gray-200 z-[9999] max-h-64 overflow-y-auto"
+          className="fixed bg-white rounded-xl shadow-2xl border border-gray-200 z-[9999] max-h-64 overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-200"
           style={{
             top: `${cardPosition.top}px`,
             left: `${cardPosition.left}px`,
@@ -207,13 +213,29 @@ export default function RealTimeKeywordWidget({
           onMouseLeave={handleCardMouseLeave}
         >
           <div className="p-3">
-            <div className="text-xs font-semibold text-gray-600 mb-2 px-2">전체 순위</div>
+            <div className="flex items-center justify-between mb-2 px-2">
+              <div className="text-sm font-semibold text-gray-700">전체 순위</div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setShowFullList(false)
+                  setPaused(false)
+                }}
+                className="p-1 hover:bg-gray-100 rounded-full transition-colors duration-200"
+                title="닫기"
+              >
+                <X className="w-4 h-4 text-gray-500" />
+              </button>
+            </div>
             <div className="space-y-1">
               {items.map((item, index) => (
                 <div 
                   key={`${item.keyword}-${item.rank}-${index}`}
                   className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
-                  onClick={() => handleKeywordClick(item.keyword)}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleKeywordClick(item.keyword)
+                  }}
                 >
                   <div className="flex items-center gap-2">
                     <span 
