@@ -7,9 +7,6 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Header from "@/components/header";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
 
 // 분리된 컴포넌트들 import
 import ProfileSidebar from "./_components/ProfileSidebar";
@@ -32,8 +29,6 @@ export default function MyPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* 프로필 사이드바 */}

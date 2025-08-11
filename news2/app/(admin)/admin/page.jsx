@@ -1,23 +1,65 @@
-"use client"
+"use client";
 
-import { Label } from "@/components/ui/label"
+import { Label } from "@/components/ui/label";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
-import { Users, FileText, Mail, Eye, LogOut, Bell, Plus, Edit, Trash2, CheckCircle, XCircle, Save } from "lucide-react"
-import { Switch } from "@/components/ui/switch"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import Header from "@/components/header"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
+import {
+  Users,
+  FileText,
+  Mail,
+  Eye,
+  LogOut,
+  Bell,
+  Plus,
+  Edit,
+  Trash2,
+  CheckCircle,
+  XCircle,
+  Save,
+} from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState("dashboard")
+  const [activeTab, setActiveTab] = useState("dashboard");
 
   // Sample data
   const statsData = [
@@ -28,7 +70,7 @@ export default function AdminDashboard() {
     { name: "금", users: 1600, articles: 55, newsletters: 1100 },
     { name: "토", users: 1200, articles: 42, newsletters: 890 },
     { name: "일", users: 1000, articles: 35, newsletters: 750 },
-  ]
+  ];
 
   const categoryData = [
     { name: "정치", value: 30, color: "#8884d8" },
@@ -36,18 +78,60 @@ export default function AdminDashboard() {
     { name: "IT/과학", value: 20, color: "#ffc658" },
     { name: "사회", value: 15, color: "#ff7300" },
     { name: "기타", value: 10, color: "#00ff00" },
-  ]
+  ];
 
   const recentArticles = [
-    { id: 1, title: "AI 기술의 미래 전망", author: "홍길동", status: "published", views: 1234, date: "2024-01-15" },
-    { id: 2, title: "경제 정책 변화 분석", author: "김철수", status: "draft", views: 0, date: "2024-01-15" },
-    { id: 3, title: "환경 보호 새로운 방안", author: "이영희", status: "published", views: 892, date: "2024-01-14" },
-    { id: 4, title: "스포츠 산업 동향", author: "박민수", status: "review", views: 0, date: "2024-01-14" },
-  ]
+    {
+      id: 1,
+      title: "AI 기술의 미래 전망",
+      author: "홍길동",
+      status: "published",
+      views: 1234,
+      date: "2024-01-15",
+    },
+    {
+      id: 2,
+      title: "경제 정책 변화 분석",
+      author: "김철수",
+      status: "draft",
+      views: 0,
+      date: "2024-01-15",
+    },
+    {
+      id: 3,
+      title: "환경 보호 새로운 방안",
+      author: "이영희",
+      status: "published",
+      views: 892,
+      date: "2024-01-14",
+    },
+    {
+      id: 4,
+      title: "스포츠 산업 동향",
+      author: "박민수",
+      status: "review",
+      views: 0,
+      date: "2024-01-14",
+    },
+  ];
 
   const users = [
-    { id: 1, name: "김사용자", email: "user1@example.com", joinDate: "2024-01-10", status: "active", newsletter: true },
-    { id: 2, name: "이회원", email: "user2@example.com", joinDate: "2024-01-12", status: "active", newsletter: false },
+    {
+      id: 1,
+      name: "김사용자",
+      email: "user1@example.com",
+      joinDate: "2024-01-10",
+      status: "active",
+      newsletter: true,
+    },
+    {
+      id: 2,
+      name: "이회원",
+      email: "user2@example.com",
+      joinDate: "2024-01-12",
+      status: "active",
+      newsletter: false,
+    },
     {
       id: 3,
       name: "박구독자",
@@ -56,13 +140,18 @@ export default function AdminDashboard() {
       status: "inactive",
       newsletter: true,
     },
-    { id: 4, name: "최독자", email: "user4@example.com", joinDate: "2024-01-14", status: "active", newsletter: true },
-  ]
+    {
+      id: 4,
+      name: "최독자",
+      email: "user4@example.com",
+      joinDate: "2024-01-14",
+      status: "active",
+      newsletter: true,
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4">
@@ -78,12 +167,16 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">총 사용자</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    총 사용자
+                  </CardTitle>
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">12,345</div>
-                  <p className="text-xs text-muted-foreground">+12% from last month</p>
+                  <p className="text-xs text-muted-foreground">
+                    +12% from last month
+                  </p>
                 </CardContent>
               </Card>
 
@@ -94,29 +187,39 @@ export default function AdminDashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">1,234</div>
-                  <p className="text-xs text-muted-foreground">+8% from last month</p>
+                  <p className="text-xs text-muted-foreground">
+                    +8% from last month
+                  </p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">뉴스레터 구독자</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    뉴스레터 구독자
+                  </CardTitle>
                   <Mail className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">8,901</div>
-                  <p className="text-xs text-muted-foreground">+15% from last month</p>
+                  <p className="text-xs text-muted-foreground">
+                    +15% from last month
+                  </p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">월간 조회수</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    월간 조회수
+                  </CardTitle>
                   <Eye className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">456K</div>
-                  <p className="text-xs text-muted-foreground">+22% from last month</p>
+                  <p className="text-xs text-muted-foreground">
+                    +22% from last month
+                  </p>
                 </CardContent>
               </Card>
             </div>
@@ -153,7 +256,9 @@ export default function AdminDashboard() {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        label={({ name, percent }) =>
+                          `${name} ${(percent * 100).toFixed(0)}%`
+                        }
                         outerRadius={80}
                         fill="#8884d8"
                         dataKey="value"
@@ -173,7 +278,9 @@ export default function AdminDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle>최근 기사</CardTitle>
-                <CardDescription>최근에 작성된 기사들을 확인하세요</CardDescription>
+                <CardDescription>
+                  최근에 작성된 기사들을 확인하세요
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <Table>
@@ -190,7 +297,9 @@ export default function AdminDashboard() {
                   <TableBody>
                     {recentArticles.map((article) => (
                       <TableRow key={article.id}>
-                        <TableCell className="font-medium">{article.title}</TableCell>
+                        <TableCell className="font-medium">
+                          {article.title}
+                        </TableCell>
                         <TableCell>{article.author}</TableCell>
                         <TableCell>
                           <Badge
@@ -198,11 +307,15 @@ export default function AdminDashboard() {
                               article.status === "published"
                                 ? "default"
                                 : article.status === "draft"
-                                  ? "secondary"
-                                  : "outline"
+                                ? "secondary"
+                                : "outline"
                             }
                           >
-                            {article.status === "published" ? "발행됨" : article.status === "draft" ? "초안" : "검토중"}
+                            {article.status === "published"
+                              ? "발행됨"
+                              : article.status === "draft"
+                              ? "초안"
+                              : "검토중"}
                           </Badge>
                         </TableCell>
                         <TableCell>{article.views.toLocaleString()}</TableCell>
@@ -331,11 +444,17 @@ export default function AdminDashboard() {
                   <TableBody>
                     {users.map((user) => (
                       <TableRow key={user.id}>
-                        <TableCell className="font-medium">{user.name}</TableCell>
+                        <TableCell className="font-medium">
+                          {user.name}
+                        </TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell>{user.joinDate}</TableCell>
                         <TableCell>
-                          <Badge variant={user.status === "active" ? "default" : "secondary"}>
+                          <Badge
+                            variant={
+                              user.status === "active" ? "default" : "secondary"
+                            }
+                          >
                             {user.status === "active" ? "활성" : "비활성"}
                           </Badge>
                         </TableCell>
@@ -369,14 +488,28 @@ export default function AdminDashboard() {
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">뉴스레터 관리</h2>
               <div className="flex space-x-2">
-                <Button onClick={() => window.location.href = '/admin/newsletter/dashboard'}>
+                <Button
+                  onClick={() =>
+                    (window.location.href = "/admin/newsletter/dashboard")
+                  }
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   뉴스레터 대시보드
                 </Button>
-                <Button variant="outline" onClick={() => window.location.href = '/admin/newsletter/template'}>
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    (window.location.href = "/admin/newsletter/template")
+                  }
+                >
                   템플릿 관리
                 </Button>
-                <Button variant="outline" onClick={() => window.location.href = '/admin/newsletter/settings'}>
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    (window.location.href = "/admin/newsletter/settings")
+                  }
+                >
                   설정
                 </Button>
               </div>
@@ -424,7 +557,9 @@ export default function AdminDashboard() {
                   <div className="flex items-center justify-between p-4 border rounded-lg">
                     <div>
                       <h4 className="font-medium">주간 뉴스 요약</h4>
-                      <p className="text-sm text-muted-foreground">매주 월요일 오전 8시 발송</p>
+                      <p className="text-sm text-muted-foreground">
+                        매주 월요일 오전 8시 발송
+                      </p>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Badge>활성</Badge>
@@ -437,7 +572,9 @@ export default function AdminDashboard() {
                   <div className="flex items-center justify-between p-4 border rounded-lg">
                     <div>
                       <h4 className="font-medium">일간 뉴스 브리핑</h4>
-                      <p className="text-sm text-muted-foreground">매일 오전 7시 발송</p>
+                      <p className="text-sm text-muted-foreground">
+                        매일 오전 7시 발송
+                      </p>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Badge>활성</Badge>
@@ -473,7 +610,10 @@ export default function AdminDashboard() {
                   </div>
                   <div>
                     <Label htmlFor="admin-email">관리자 이메일</Label>
-                    <Input id="admin-email" defaultValue="admin@newsphere.com" />
+                    <Input
+                      id="admin-email"
+                      defaultValue="admin@newsphere.com"
+                    />
                   </div>
                   <div>
                     <Label htmlFor="site-url">사이트 URL</Label>
@@ -491,14 +631,18 @@ export default function AdminDashboard() {
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label>2단계 인증</Label>
-                      <p className="text-sm text-gray-500">관리자 계정에 2단계 인증 적용</p>
+                      <p className="text-sm text-gray-500">
+                        관리자 계정에 2단계 인증 적용
+                      </p>
                     </div>
                     <Switch />
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label>세션 타임아웃</Label>
-                      <p className="text-sm text-gray-500">자동 로그아웃 시간 설정</p>
+                      <p className="text-sm text-gray-500">
+                        자동 로그아웃 시간 설정
+                      </p>
                     </div>
                     <Select defaultValue="8">
                       <SelectTrigger className="w-24">
@@ -519,5 +663,5 @@ export default function AdminDashboard() {
         </Tabs>
       </div>
     </div>
-  )
+  );
 }
