@@ -117,18 +117,17 @@ export default function MainPage() {
                                                 {/* Category Tabs, Newsletter Subscription, and Real-time Keywords */}
             <div className="mb-2">
               {/* 카테고리 버튼과 뉴스레터 구독 */}
-              <div className="flex flex-col lg:flex-row items-start gap-2 mb-2">
+              <div className="grid grid-cols-12 gap-4 items-stretch mb-2">
                 {/* 왼쪽: 카테고리 버튼과 실시간 키워드 */}
-                <div className="flex flex-col gap-2">
-                  {/* 카테고리 버튼 */}
-                  <div className="lg:w-auto overflow-x-auto flex space-x-1 pb-0">
+                <div className="col-span-12 lg:col-span-8 flex flex-col gap-2 h-full">
+                  <div className="lg:w-full overflow-x-auto flex space-x-3 pb-0">
                     {categories.map((category, index) => (
                       <Button
                         key={category}
                         variant={selectedCategory === category ? "default" : "outline"}
-                        size="sm"
+                        size="default"
                         onClick={() => setSelectedCategory(category)}
-                        className={`whitespace-nowrap hover-lift ${
+                        className={`whitespace-nowrap hover-lift text-base px-4 py-2 ${
                           isLoaded ? 'animate-slide-in' : 'opacity-0'
                         }`}
                         style={{ animationDelay: `${index * 0.1}s` }}
@@ -144,10 +143,13 @@ export default function MainPage() {
                   </div>
                 </div>
 
-                                {/* 오른쪽: 뉴스레터 구독과 날씨 위젯 */}
-                <div className="lg:flex lg:space-x-4">
+
+                   
+
+                {/* 오른쪽: 뉴스레터 구독과 날씨 위젯 */}
+                <div className="col-span-12 lg:col-span-4 flex flex-col gap-4 h-full">
                   {/* 뉴스레터 구독 */}
-                  <div className="lg:w-80">
+                  
                     <Card className="glass hover-lift animate-slide-in shadow-lg border-0" style={{ animationDelay: '0.3s' }}>
                       <CardHeader className="pb-2">
                         <CardTitle className="text-lg font-bold flex items-center text-gray-800">
@@ -166,11 +168,8 @@ export default function MainPage() {
                     </Card>
                   </div>
 
-                  {/* 날씨 위젯 */}
-                  <div className="lg:w-64 mt-4 lg:mt-0">
-                    <WeatherWidget />
-                  </div>
-                </div>
+                 
+            
               </div>
             </div>
 
