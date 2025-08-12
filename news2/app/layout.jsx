@@ -1,7 +1,7 @@
 import { GeistMono } from 'geist/font/mono'
 import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
-import { ScrapProvider } from '@/contexts/ScrapContext' // 이 부분을 추가
+import { ScrapProvider } from '@/contexts/ScrapContext'
 import Footer from '../components/footer'
 
 export const metadata = {

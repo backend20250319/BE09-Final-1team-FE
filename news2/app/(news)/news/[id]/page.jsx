@@ -20,30 +20,28 @@ import { newsArticles } from "@/lib/news-data";
 import { newsService } from "@/lib/newsService";
 
 
-// ✨ 1. '가가' 모양의 최신 네이버 스타일 아이콘 버튼 컴포넌트
 const NaverFontButtonV2 = ({ onClick }) => {
   return (
     <button
       onClick={onClick}
-      className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 bg-white transition-all duration-200 hover:border-gray-500"
+      className="p-2 hover:bg-gray-100 rounded-full transition-all duration-200"
       aria-label="글자 크기 변경하기"
     >
-      {/* items-baseline으로 크기가 다른 텍스트의 밑단을 맞춰줍니다. */}
-      <div className="flex items-baseline">
-        <span className="text-sm font-bold text-gray-800">가</span>
-        <span className="ml-0.5 text-xs font-bold text-gray-600">가</span>
-      </div>
+      <div className="flex items-baseline"> 
+        <span className="ml-0.5 text-xs font-semibold text-gray-600">가</span>
+      <span className="text-lg font-semibold text-gray-800">가</span>
+      {/* <span className="ml-0.5 text-xs font-bold text-gray-600">가</span> */} </div>
     </button>
   );
 };
 
 
 const fontSizes = [
-  { id: "sm", label: "작게", value: 14 },
-  { id: "base", label: "보통", value: 16 },
-  { id: "lg", label: "크게", value: 18 },
-  { id: "xl", label: "아주크게", value: 20 },
-  { id: "2xl", label: "최대크게", value: 22 },
+  { id: "sm", label: "아주 작게", value: 14 },
+  { id: "base", label: "작게", value: 16 },
+  { id: "lg", label: "보통", value: 18 },
+  { id: "xl", label: "크게", value: 20 },
+  { id: "2xl", label: "아주 크게", value: 22 },
 ];
 
 const FontSizeSelector = ({ currentValue, onSelect, onClose }) => {
@@ -349,7 +347,6 @@ export default function NewsPage() {
               </div>
               <div className="flex items-center gap-2">
                 
-                {/* ✨ 2. 글자 크기 버튼을 '가가' 모양의 최종 버전으로 교체 */}
                 <div className="relative">
                   <NaverFontButtonV2 onClick={() => setFontSizeSelectorOpen((prev) => !prev)} />
                   {isFontSizeSelectorOpen && (
