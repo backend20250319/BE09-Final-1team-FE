@@ -2,6 +2,7 @@
 import { newsArticles, NEWS_CATEGORIES } from "./news-data";
 import { safeApiCall, diagnoseCorsIssue } from "./api-utils";
 import { getApiUrl } from "./config";
+import { getAuthHeaders } from "./auth";
 
 /**
  * 뉴스 아이템 기본 구조
@@ -286,6 +287,7 @@ class NewsService {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
+          ...getAuthHeaders(),
         },
       });
 
@@ -401,6 +403,7 @@ class NewsService {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...getAuthHeaders(),
         },
       });
     } catch (error) {
@@ -418,6 +421,7 @@ class NewsService {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...getAuthHeaders(),
         },
       });
 
