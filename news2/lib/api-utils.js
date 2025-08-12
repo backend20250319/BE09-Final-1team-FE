@@ -125,7 +125,19 @@ export async function safeApiCall(endpoint, options = {}) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
-    const data = await response.json();
+    // 응답 본문이 있고 JSON인 경우만 파싱
+    const contentType = response.headers.get("content-type");
+    const hasJsonContent =
+      contentType && contentType.includes("application/json");
+    const hasContent = response.status !== 204 && response.status !== 205;
+
+    let data = null;
+    if (hasContent && hasJsonContent) {
+      data = await response.json();
+    } else if (hasContent) {
+      data = await response.text();
+    }
+
     console.log("✅ API 호출 성공:", endpoint);
     return data;
   } catch (error) {

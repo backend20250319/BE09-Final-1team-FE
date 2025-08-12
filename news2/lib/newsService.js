@@ -1,6 +1,7 @@
 // 뉴스 데이터 관리 서비스
 import { newsArticles, NEWS_CATEGORIES } from "./news-data";
 import { safeApiCall, diagnoseCorsIssue } from "./api-utils";
+import { authenticatedFetch, isAuthenticated } from "./auth";
 import { getApiUrl } from "./config";
 
 /**
@@ -405,6 +406,35 @@ class NewsService {
       });
     } catch (error) {
       console.error("조회수 증가 실패:", error);
+    }
+  }
+
+  /**
+   * 사용자의 뉴스 읽음 기록을 추가합니다 (인증 필요)
+   */
+  async addReadHistory(newsId) {
+    if (!isAuthenticated()) {
+      return;
+    }
+    try {
+      console.log("🔒 인증된 사용자, 읽음 기록 추가 시도:", newsId);
+      // 인증된 사용자만 호출
+      const response = await authenticatedFetch(
+        `/api/users/mypage/history/${newsId}`,
+        {
+          method: "POST",
+        }
+      );
+      if (response.ok) {
+        console.log("🔒 읽음 기록 추가 성공:", newsId);
+      } else {
+        const responseBody = await response.text(); // 일단 텍스트로 받음
+        console.warn(
+          `🔒 읽음 기록 추가 실패, 상태 : ${response.status}, 응답: ${responseBody}`
+        );
+      }
+    } catch (error) {
+      console.error("🔒 읽음 기록 추가 중 오류 발생:", error);
     }
   }
 
