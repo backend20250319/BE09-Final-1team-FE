@@ -267,22 +267,22 @@ export default function MainPage() {
                   className="block"
                 >
                 <Card
-                className={`min-h-[420px] max-h-[420px] flex flex-col justify-between glass hover-lift animate-slide-in cursor-pointer transition-all duration-300 hover:shadow-lg ${
+                className={`min-h-[500px] max-h-[500px] flex flex-col justify-between glass hover-lift animate-slide-in cursor-pointer transition-all duration-300 hover:shadow-lg ${
                   isLoaded ? 'opacity-100' : 'opacity-0'
                 }`}
                 style={{ animationDelay: `${(index + 1) * 0.2}s` }}
               >
                    {/* 이미지 영역 */}
-                  <div className="h-60 w-full relative">
+                  <div className="h-72 w-full relative">
                     <img
                       src={news.image || "/placeholder.svg"}
                       alt={news.title}
-                      className="w-full h-60 object-cover rounded-lg"
+                      className="w-full h-72 object-cover rounded-lg"
                     />
                   </div>
                   
                   {/* 텍스트 영역 */}
-                  <div className="flex flex-col justify-between flex-1 px-4 py-3">
+                  <div className="flex flex-col justify-between flex-1 px-4 py-3 min-h-0">
                     {/* 카테고리 뱃지 */}
                     <div className="flex justify-between items-start mb-3">
                       <Badge className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full shadow">
@@ -300,17 +300,16 @@ export default function MainPage() {
                     </div>
 
                     {/* 제목 */}
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold mb-2 hover:text-blue-600 transition-colors line-clamp-2">
+                    <div className="flex-1 mb-3 min-h-0">
+                      <h3 className="text-lg font-semibold hover:text-blue-600 transition-colors line-clamp-2 leading-relaxed">
                         <TextWithTooltips text={news.title} />
                       </h3>
-                     
                     </div>
 
                     {/* 하단 출처 + 버튼 */}
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-sm text-gray-500">{news.source}</span>
-                      <div className="flex items-center space-x-4">
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                      <span className="text-sm text-gray-500 font-medium truncate mr-2">{news.source}</span>
+                      <div className="flex items-center space-x-2 flex-shrink-0">
                         <span className="text-sm text-gray-500 flex items-center">
                           <Eye className="h-4 w-4 mr-1" />
                           {news.views.toLocaleString()}
@@ -318,7 +317,7 @@ export default function MainPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="hover-glow"
+                          className="hover-glow p-1"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <Share2 className="h-4 w-4" />
@@ -326,7 +325,7 @@ export default function MainPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="hover-glow"
+                          className="hover-glow p-1"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <Bookmark className="h-4 w-4" />
