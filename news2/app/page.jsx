@@ -273,17 +273,12 @@ export default function MainPage() {
                 style={{ animationDelay: `${(index + 1) * 0.2}s` }}
               >
                    {/* 이미지 영역 */}
-                  <div className="h-40 w-full relative">
+                  <div className="h-60 w-full relative">
                     <img
                       src={news.image || "/placeholder.svg"}
                       alt={news.title}
-                      className="w-full h-full object-cover rounded-t-lg"
+                      className="w-full h-60 object-cover rounded-lg"
                     />
-                    <div className="absolute top-2 left-2">
-                      <Badge className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full shadow">
-                        {news.category}
-                      </Badge>
-                    </div>
                   </div>
                   
                   {/* 텍스트 영역 */}
@@ -304,18 +299,16 @@ export default function MainPage() {
                       </span>
                     </div>
 
-                    {/* 제목과 요약 */}
+                    {/* 제목 */}
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold mb-2 hover:text-blue-600 transition-colors line-clamp-2">
                         <TextWithTooltips text={news.title} />
                       </h3>
-                      <p className="text-gray-600 text-sm line-clamp-3 flex-1">
-                        <TextWithTooltips text={news.summary} />
-                      </p>
+                     
                     </div>
 
                     {/* 하단 출처 + 버튼 */}
-                    <div className="flex items-center justify-between mt-4">
+                    <div className="flex items-center justify-between mt-2">
                       <span className="text-sm text-gray-500">{news.source}</span>
                       <div className="flex items-center space-x-4">
                         <span className="text-sm text-gray-500 flex items-center">
