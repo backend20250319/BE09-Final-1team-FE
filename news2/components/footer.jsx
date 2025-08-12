@@ -4,6 +4,8 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Zap } from "lucide-react"
+import SubscribeForm from "@/components/SubscribeForm"
+import SubscriberCount from "@/components/SubscriberCount"
 
 export default function Footer() {
   return (
@@ -40,14 +42,20 @@ export default function Footer() {
                 </ul>
               </div>
               <div>
-                <h3 className="font-semibold mb-4">뉴스레터 구독</h3>
-                <form className="flex flex-col space-y-2">
-                  <Input type="email" placeholder="이메일 주소" className="bg-gray-800 border-gray-700 text-white" />
-                  <Button type="submit" className="gradient-bg hover:shadow-lg transition-all duration-300 flex items-center justify-center">
-                    <Zap className="w-4 h-4 mr-2" />
-                    구독하기
-                  </Button>
-                </form>
+
+                <h3 className="font-semibold mb-4 flex items-center">
+                  <div className="w-5 h-5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-2">
+                    <Zap className="h-3 w-3 text-white" />
+                  </div>
+                  뉴스레터 구독
+                </h3>
+                <p className="text-gray-400 text-sm mb-3">
+                  매일 아침 엄선된 뉴스를 받아보세요
+                </p>
+                <div className="mb-2">
+                  <SubscriberCount darkTheme={true} />
+                </div>
+                <SubscribeForm compact={true} darkTheme={true} />
               </div>
             </div>
           </div>
