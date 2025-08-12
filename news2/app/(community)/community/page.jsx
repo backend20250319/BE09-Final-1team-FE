@@ -23,6 +23,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { TextWithTooltips } from "@/components/tooltip";
+import Header from "@/components/header";
 
 export default function CommunityPage() {
   const [selectedCategory, setSelectedCategory] = useState("전체");
@@ -99,6 +100,7 @@ export default function CommunityPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
+      <Header />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Main Content */}
