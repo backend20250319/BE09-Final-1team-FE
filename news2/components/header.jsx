@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,12 +15,20 @@ import {
   Share2,
   Clock,
   Eye,
+  LogOut,
+  Shield,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { getUserRole, logout } from "@/lib/auth";
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [userRole, setUserRole] = useState(null);
   const pathname = usePathname();
+
+  useEffect(() => {
+    setUserRole(getUserRole());
+  }, []);
 
   const navigation = [
     { name: "홈", href: "/" },
@@ -37,7 +45,7 @@ export default function Header() {
   };
 
   return (
-    <header className="responsive-gradient glass w-full fixed top-0 left-0 right-0 z-[1000]">
+    <header className="sticky top-0 z-50 responsive-gradient glass">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo and Navigation */}
@@ -92,15 +100,42 @@ export default function Header() {
                   3
                 </Badge>
               </Button>
-              <Link href="/auth" className="relative">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-white hover:bg-white/20 hover-glow"
-                >
-                  <User className="h-5 w-5" />
-                </Button>
-              </Link>
+
+              {userRole ? (
+                <div className="flex items-center space-x-2">
+                  {userRole === "admin" && (
+                    <Link href="/admin">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-white hover:bg-white/20 hover-glow"
+                        title="관리자 페이지"
+                      >
+                        <Shield className="h-5 w-5" />
+                      </Button>
+                    </Link>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-white hover:bg-white/20 hover-glow"
+                    onClick={logout}
+                    title="로그아웃"
+                  >
+                    <LogOut className="h-5 w-5" />
+                  </Button>
+                </div>
+              ) : (
+                <Link href="/auth" className="relative">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-white hover:bg-white/20 hover-glow"
+                  >
+                    <User className="h-5 w-5" />
+                  </Button>
+                </Link>
+              )}
 
               {/* Mobile Menu Button */}
               <Button
