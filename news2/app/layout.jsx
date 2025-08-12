@@ -1,19 +1,20 @@
-import { GeistMono } from 'geist/font/mono'
-import './globals.css'
-import { ThemeProvider } from '@/components/theme-provider'
+import { GeistMono } from "geist/font/mono";
+import "./globals.css";
+
+import { ThemeProvider } from "@/components/theme-provider";
+import Footer from "@/components/footer";
 
 export const metadata = {
-  title: 'NewSPhere - 최신 뉴스와 정보',
-  description: '실시간 뉴스, 커뮤니티, 뉴스레터를 제공하는 종합 뉴스 플랫폼',
-  keywords: '뉴스, 커뮤니티, 뉴스레터, 실시간뉴스',
-  authors: [{ name: 'New NormalLists' }],
-}
+  title: "NewSPhere - 최신 뉴스와 정보",
+  description: "실시간 뉴스, 커뮤니티, 뉴스레터를 제공하는 종합 뉴스 플랫폼",
+  keywords: "뉴스, 커뮤니티, 뉴스레터, 실시간뉴스",
+  authors: [{ name: "New NormalLists" }],
+};
 
 export const viewport = {
-  width: 'device-width',
+  width: "device-width",
   initialScale: 1,
-}
-
+};
 
 export default function RootLayout({ children }) {
   return (
@@ -34,8 +35,9 @@ html {
           disableTransitionOnChange
         >
           {children}
+          <Footer />
         </ThemeProvider>
       </body>
     </html>
-  )
+  );
 }
