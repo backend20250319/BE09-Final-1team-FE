@@ -214,7 +214,7 @@ export default function RealTimeKeywordWidget({
           onMouseLeave={handleCardMouseLeave}
         >
           <div className="p-3">
-            <div className="flex items-center justify-between mb-2 px-2">
+            <div className="flex items-center justify-between mb-2 px-6">
               <div className="text-sm font-semibold text-gray-700">전체 순위</div>
               <button
                 onClick={(e) => {
