@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 import Header from "@/components/header";
 import { useScrap } from "@/contexts/ScrapContext";
@@ -9,19 +9,111 @@ import Link from "next/link";
 import {
   Bookmark,
   Bot,
-  Minus,
-  Plus,
   Share,
-  Flag,
   X,
   User,
-  Eye,
   Clock,
   Siren,
 } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import { newsArticles } from "@/lib/news-data";
 import { newsService } from "@/lib/newsService";
+
+
+// ✨ 1. '가가' 모양의 최신 네이버 스타일 아이콘 버튼 컴포넌트
+const NaverFontButtonV2 = ({ onClick }) => {
+  return (
+    <button
+      onClick={onClick}
+      className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 bg-white transition-all duration-200 hover:border-gray-500"
+      aria-label="글자 크기 변경하기"
+    >
+      {/* items-baseline으로 크기가 다른 텍스트의 밑단을 맞춰줍니다. */}
+      <div className="flex items-baseline">
+        <span className="text-sm font-bold text-gray-800">가</span>
+        <span className="ml-0.5 text-xs font-bold text-gray-600">가</span>
+      </div>
+    </button>
+  );
+};
+
+
+const fontSizes = [
+  { id: "sm", label: "작게", value: 14 },
+  { id: "base", label: "보통", value: 16 },
+  { id: "lg", label: "크게", value: 18 },
+  { id: "xl", label: "아주크게", value: 20 },
+  { id: "2xl", label: "최대크게", value: 22 },
+];
+
+const FontSizeSelector = ({ currentValue, onSelect, onClose }) => {
+  const selectorRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (selectorRef.current && !selectorRef.current.contains(event.target)) {
+        onClose();
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [selectorRef, onClose]);
+  
+  return (
+    <div
+      ref={selectorRef}
+      className="absolute bottom-full left-1/2 z-20 mb-2 w-80 -translate-x-1/2 transform"
+    >
+      <div className="relative rounded-xl bg-white p-6 shadow-lg ring-1 ring-black ring-opacity-5">
+        <div className="absolute -bottom-2 left-1/2 h-4 w-4 -translate-x-1/2 rotate-45 bg-white"></div>
+        <div className="relative flex flex-col items-center">
+          <div className="relative flex w-full items-center justify-between">
+            <div className="absolute left-0 top-1/2 w-full -translate-y-1/2">
+              <div className="mx-auto h-0.5 w-[calc(100%-2rem)] bg-gray-200"></div>
+            </div>
+            {fontSizes.map((sizeOption) => {
+              const isSelected = currentValue === sizeOption.value;
+              return (
+                <button
+                  key={sizeOption.id}
+                  onClick={() => {
+                    onSelect(sizeOption.value);
+                    onClose();
+                  }}
+                  className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full border transition-all duration-200 ${
+                    isSelected
+                      ? "border-indigo-500 bg-indigo-500 text-white"
+                      : "border-gray-300 bg-white text-gray-700 hover:border-indigo-400"
+                  }`}
+                >
+                  가
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-3 flex w-full justify-between px-1">
+            {fontSizes.map((sizeOption) => {
+              const isSelected = currentValue === sizeOption.value;
+              return (
+                <div
+                  key={sizeOption.id}
+                  className={`w-10 text-center text-xs font-medium text-gray-500 whitespace-nowrap ${
+                    isSelected && "font-bold text-indigo-500"
+                  }`}
+                >
+                  {sizeOption.label}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 
 export default function NewsPage() {
   const params = useParams();
@@ -30,7 +122,10 @@ export default function NewsPage() {
   const [newsData, setNewsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
   const [fontSize, setFontSize] = useState(18);
+  const [isFontSizeSelectorOpen, setFontSizeSelectorOpen] = useState(false);
+
   const [isSummaryModalOpen, setSummaryModalOpen] = useState(false);
   const [isShareModalOpen, setShareModalOpen] = useState(false);
   const [comments, setComments] = useState([
@@ -52,15 +147,6 @@ export default function NewsPage() {
   const [newComment, setNewComment] = useState("");
   const [readingProgress, setReadingProgress] = useState(0);
 
-  // 폰트 크기 변경 핸들러
-  const handleFontSizeChange = (amount) => {
-    const newSize = fontSize + amount;
-    if (newSize >= 14 && newSize <= 24) {
-      setFontSize(newSize);
-    }
-  };
-
-  // 백엔드 카테고리명을 프론트엔드용으로 변환
   const backendToFrontendCategory = {
     POLITICS: "정치",
     ECONOMY: "경제",
@@ -70,7 +156,6 @@ export default function NewsPage() {
     IT_SCIENCE: "IT/과학",
   };
 
-  // 뉴스 데이터 로딩 및 스크롤 이벤트 리스너 설정
   useEffect(() => {
     const loadNewsData = async () => {
       try {
@@ -87,29 +172,34 @@ export default function NewsPage() {
         const convertedCategory =
           backendToFrontendCategory[rawCategory] || rawCategory;
 
-        // 뉴스 데이터를 프론트엔드 포맷에 맞게 변환
         const transformedData = {
           category: convertedCategory,
-          date: new Date(data.publishedAt || data.createdAt).toLocaleDateString(
-            "ko-KR"
-          ),
+          date: data.publishedAt
+            ? new Date(data.publishedAt).toLocaleString("ko-KR", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            : "-",
           title: data.title,
           reporter: {
             name: data.reporter || data.author || "크롤링 시스템",
             email: "system@newsphere.com",
             avatar: "https://placehold.co/40x40/E2E8F0/4A5568?text=기자",
           },
-          content: data.content || "상세 내용은 원본 링크를 확인해주세요.", // HTML 문자열로 가정
+          content: data.content || "상세 내용은 원본 링크를 확인해주세요.",
           url: "#",
           views: data.views || 0,
           source: data.press || data.source || "크롤링 뉴스",
-          sourceLogo: "/placeholder-logo.png", // 실제 로고 URL로 대체 필요
+          sourceLogo: "/placeholder-logo.png",
           tags: data.tags || [convertedCategory],
           newsId: data.newsId || data.id,
-          publishedAt: data.publishet,
+          publishedAt: data.publishedAt,
           dedupState: data.dedupState,
           dedupStateDescription: data.dedupStateDescription,
-          imageUrl: data.image, // 백엔드에서 `data.image` 필드로 이미지 URL을 받아옴
+          imageUrl: data.image,
         };
         setNewsData(transformedData);
       } catch (err) {
@@ -124,7 +214,6 @@ export default function NewsPage() {
       loadNewsData();
     }
 
-    // 스크롤 진행률 계산
     const handleScroll = () => {
       const totalHeight =
         document.documentElement.scrollHeight -
@@ -135,11 +224,9 @@ export default function NewsPage() {
     };
 
     window.addEventListener("scroll", handleScroll);
-    // 컴포넌트 언마운트 시 이벤트 리스너 제거
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [articleId]); // articleId가 변경될 때마다 다시 로드
+  }, [articleId]);
 
-  // 로딩 중일 때 UI
   if (loading) {
     return (
       <>
@@ -153,7 +240,6 @@ export default function NewsPage() {
     );
   }
 
-  // 오류 발생 시 또는 뉴스 데이터가 없을 때 UI
   if (error || !newsData) {
     return (
       <>
@@ -180,7 +266,6 @@ export default function NewsPage() {
     );
   }
 
-  // 관련 뉴스, 헤드라인 뉴스, 랭킹 뉴스 필터링 (임시 데이터 사용)
   const relatedNews = newsArticles
     .filter(
       (news) =>
@@ -197,10 +282,8 @@ export default function NewsPage() {
   return (
     <>
       <Header />
-      {/* 토스트 알림 컴포넌트 */}
       <Toaster richColors position="bottom-right" />
-      
-      {/* 읽기 진행률 바 */}
+
       <div
         className="fixed top-16 left-0 h-2 z-[60] transition-all duration-100 ease-out shadow-sm"
         style={{
@@ -212,53 +295,35 @@ export default function NewsPage() {
 
       <div className="container mx-auto max-w-screen-xl p-4 lg:p-8 mt-0">
         <div className="grid grid-cols-12 gap-8">
-          {/* 메인 기사 컨텐츠 섹션 */}
           <main className="col-span-12 lg:col-span-8 bg-white p-6 sm:p-8 rounded-2xl shadow-lg">
             <header className="pb-6">
-              {/* 출처, 카테고리 정보 */}
               <div className="flex items-center space-x-2 mb-4">
-                {newsData.sourceLogo && (
-                  <img
-                    src={newsData.sourceLogo}
-                    alt={`${newsData.source} 로고`}
-                    className="h-6 w-6 rounded-full"
-                  />
-                )}
-                <span className="font-semibold text-gray-700">
+                <span className="text-lg font-bold text-gray-700">
                   {newsData.source}
                 </span>
                 <span className="text-gray-400">•</span>
-                <span className="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                <span className="bg-indigo-100 text-indigo-700 text-sm font-bold px-2 py-0.5 rounded-full">
                   {newsData.category}
                 </span>
               </div>
-
-              {/* 기사 제목 */}
               <h1 className="text-3xl md:text-4xl font-bold leading-tight mb-4">
                 {newsData.title}
               </h1>
-
-              {/* 기자 이름, 날짜, 조회수 정보 */}
               <div className="flex justify-between items-center text-gray-600 text-sm">
                 <p className="flex items-center">
                   <User className="w-4 h-4 mr-1.5" />
                   {newsData.reporter.name} 기자
                 </p>
                 <div className="flex items-center space-x-4">
-                  <span className="flex items-center">
+                  <span className="flex items-center text-sm mr-2 text-black">
                     <Clock className="h-4 w-4 mr-1" />
                     {newsData.date}
-                  </span>
-                  <span className="flex items-center">
-                    <Eye className="h-4 w-4 mr-1" />
-                    {newsData.views?.toLocaleString() || 0}
                   </span>
                 </div>
               </div>
             </header>
 
-            {/* 기능 버튼 섹션 (스크랩, 요약봇, 폰트 크기, 공유, 신고) */}
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-4 mb-6">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => {
@@ -272,87 +337,62 @@ export default function NewsPage() {
                 </button>
                 <button
                   onClick={() => setSummaryModalOpen(true)}
-                  className="flex items-center gap-1.5 bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-2 rounded-lg transition-colors text-sm font-semibold"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors text-sm font-semibold text-white"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, rgba(102, 126, 234, 1) 0%, rgba(118, 75, 162, 1) 50%, rgba(245, 87, 108, 1) 100%)",
+                  }}
                 >
                   <Bot size={18} />
                   <span>요약봇</span>
                 </button>
               </div>
               <div className="flex items-center gap-2">
-                <div className="flex items-center border rounded-lg p-1">
-                  <button
-                    onClick={() => handleFontSizeChange(-2)}
-                    className="p-1 hover:bg-gray-100 rounded-md"
-                  >
-                    <Minus className="w-5 h-5" />
-                  </button>
-                  <span className="px-2 text-sm font-medium">가</span>
-                  <button
-                    onClick={() => handleFontSizeChange(2)}
-                    className="p-1 hover:bg-gray-100 rounded-md"
-                  >
-                    <Plus className="w-5 h-5" />
-                  </button>
+                
+                {/* ✨ 2. 글자 크기 버튼을 '가가' 모양의 최종 버전으로 교체 */}
+                <div className="relative">
+                  <NaverFontButtonV2 onClick={() => setFontSizeSelectorOpen((prev) => !prev)} />
+                  {isFontSizeSelectorOpen && (
+                    <FontSizeSelector
+                      currentValue={fontSize}
+                      onSelect={setFontSize}
+                      onClose={() => setFontSizeSelectorOpen(false)}
+                    />
+                  )}
                 </div>
+
                 <button
                   onClick={() => setShareModalOpen(true)}
-                  className="p-2 hover:bg-gray-100 rounded-full hover:shadow-md"
+                  className="p-2 hover:bg-gray-100 rounded-full hover:shadow-md transition-all duration-200"
                 >
-                  <Share className="w-5 h-5" />
+                  <Share className="w-5 h-5 text-gray-600" />
                 </button>
                 <button
                   onClick={() => toast.info("기사가 신고되었습니다.")}
-                  className="p-2 hover:bg-gray-100 rounded-full"
+                  className="p-2 hover:bg-gray-100 rounded-full transition-all duration-200"
                 >
                   <Siren className="w-6 h-6 text-red-500" />
                 </button>
               </div>
             </div>
 
-            {/* 이미지 (기능 버튼 섹션 바로 아래에 위치) */}
             {newsData.imageUrl && (
-                <div className="my-6">
-                  <img
-                    src={newsData.imageUrl}
-                    alt={newsData.title}
-                    className="w-full max-h-[400px] object-cover rounded-xl mx-auto"
-                  />
-                </div>
-              )}
+              <div className="my-6">
+                <img
+                  src={newsData.imageUrl}
+                  alt={newsData.title}
+                  className="w-full max-h-[400px] object-cover rounded-xl mx-auto"
+                />
+              </div>
+            )}
 
-            {/* 기사 본문 */}
             <article
               className="prose prose-lg max-w-none text-lg leading-relaxed text-gray-800"
               style={{ fontSize: `${fontSize}px` }}
             >
-              {/* newsData.content가 HTML 문자열로 온다고 가정하고 dangerouslySetInnerHTML 사용 */}
               <div dangerouslySetInnerHTML={{ __html: newsData.content }} />
-
-              {/* 기존의 content 맵핑 로직 (백엔드에서 파싱된 JSON 배열을 받을 때 사용)
-              {newsData.content.map((item, index) => {
-                if (item.type === "paragraph") {
-                  return <p key={index}>{item.text}</p>;
-                }
-                if (item.type === "image") {
-                  return (
-                    <figure key={index} className="my-8">
-                      <img
-                        src={item.src}
-                        alt={item.alt}
-                        className="rounded-xl mx-auto"
-                      />
-                      <figcaption className="text-center text-sm text-gray-500 mt-2">
-                        {item.caption}
-                      </figcaption>
-                    </figure>
-                  );
-                }
-                return null;
-              })}
-              */}
             </article>
 
-            {/* 관련 키워드 섹션 */}
             {newsData.tags && newsData.tags.length > 0 && (
               <div className="mt-8 pt-6 border-t border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-800 mb-3">
@@ -371,7 +411,6 @@ export default function NewsPage() {
               </div>
             )}
 
-            {/* 함께 보면 좋은 뉴스 섹션 */}
             <section className="mt-12 pt-8 border-t">
               <h2 className="text-2xl font-bold mb-6">함께 보면 좋은 뉴스</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -394,13 +433,12 @@ export default function NewsPage() {
               </div>
             </section>
 
-            {/* 댓글 섹션 */}
             <section className="mt-12 pt-8 border-t">
               <h2 className="text-2xl font-bold mb-6">
-                댓글 <span className="text-indigo-600">{comments.length}</span>
+                댓글{" "}
+                <span className="text-indigo-600">{comments.length}</span>
               </h2>
               <div className="space-y-6">
-                {/* 새 댓글 작성 폼 */}
                 <div className="flex items-start gap-4">
                   <img
                     src="https://placehold.co/40x40/E2E8F0/4A5568?text=나"
@@ -459,7 +497,6 @@ export default function NewsPage() {
                     </button>
                   </div>
                 </div>
-                {/* 기존 댓글 목록 */}
                 <div className="space-y-6">
                   {comments.map((comment) => (
                     <div key={comment.id} className="flex items-start gap-4">
@@ -482,9 +519,8 @@ export default function NewsPage() {
             </section>
           </main>
 
-          {/* 사이드바 섹션 (헤드라인 뉴스, 랭킹 뉴스) */}
           <aside className="col-span-12 lg:col-span-4 space-y-8">
-            <div className="bg-white p-6 rounded-2xl shadow-lg">
+            <div className="bg-white p-6 rounded-2xl shadow-lg border">
               <h3 className="text-xl font-bold border-b pb-3 mb-4">
                 헤드라인 뉴스
               </h3>
@@ -501,9 +537,9 @@ export default function NewsPage() {
                 ))}
               </ul>
             </div>
-            <div className="bg-white p-6 rounded-2xl shadow-lg">
+            <div className="bg-white p-6 rounded-2xl shadow-lg border">
               <h3 className="text-xl font-bold border-b pb-3 mb-4">
-                랭킹 뉴스 (조회수)
+                랭킹 뉴스
               </h3>
               <ul className="space-y-3">
                 {rankingNews.map((news, index) => (
@@ -525,7 +561,6 @@ export default function NewsPage() {
         </div>
       </div>
 
-      {/* 요약봇 모달 */}
       {isSummaryModalOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
@@ -577,7 +612,6 @@ export default function NewsPage() {
         </div>
       )}
 
-      {/* 공유하기 모달 */}
       {isShareModalOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
@@ -613,16 +647,15 @@ export default function NewsPage() {
                   onClick={() => {
                     if (newsData) {
                       const currentUrl = window.location.href;
-                      // document.execCommand('copy') is preferred for clipboard in iframes
-                      const textarea = document.createElement('textarea');
+                      const textarea = document.createElement("textarea");
                       textarea.value = currentUrl;
                       document.body.appendChild(textarea);
                       textarea.select();
                       try {
-                        document.execCommand('copy');
+                        document.execCommand("copy");
                         toast.success("URL이 복사되었습니다.");
                       } catch (err) {
-                        console.error('Failed to copy text:', err);
+                        console.error("Failed to copy text:", err);
                         toast.error("URL 복사에 실패했습니다.");
                       } finally {
                         document.body.removeChild(textarea);
@@ -639,16 +672,17 @@ export default function NewsPage() {
                   onClick={() => {
                     if (newsData) {
                       const currentUrl = window.location.href;
-                      // For KakaoTalk, usually requires their SDK. Just copying URL for now.
-                      const textarea = document.createElement('textarea');
+                      const textarea = document.createElement("textarea");
                       textarea.value = currentUrl;
                       document.body.appendChild(textarea);
                       textarea.select();
                       try {
-                        document.execCommand('copy');
-                        toast.info("카카오톡 공유는 SDK 연동이 필요합니다. 기사 URL이 복사되었습니다.");
+                        document.execCommand("copy");
+                        toast.info(
+                          "카카오톡 공유는 SDK 연동이 필요합니다. 기사 URL이 복사되었습니다."
+                        );
                       } catch (err) {
-                        console.error('Failed to copy text:', err);
+                        console.error("Failed to copy text:", err);
                         toast.error("URL 복사에 실패했습니다.");
                       } finally {
                         document.body.removeChild(textarea);
@@ -703,16 +737,17 @@ export default function NewsPage() {
                   onClick={() => {
                     if (newsData) {
                       const currentUrl = window.location.href;
-                      // For Instagram, usually requires their SDK or manual upload. Just copying URL for now.
-                      const textarea = document.createElement('textarea');
+                      const textarea = document.createElement("textarea");
                       textarea.value = currentUrl;
                       document.body.appendChild(textarea);
                       textarea.select();
                       try {
-                        document.execCommand('copy');
-                        toast.info("인스타그램은 웹에서 직접 공유하기 어렵습니다. 기사 URL이 복사되었습니다.");
+                        document.execCommand("copy");
+                        toast.info(
+                          "인스타그램은 웹에서 직접 공유하기 어렵습니다. 기사 URL이 복사되었습니다."
+                        );
                       } catch (err) {
-                        console.error('Failed to copy text:', err);
+                        console.error("Failed to copy text:", err);
                         toast.error("URL 복사에 실패했습니다.");
                       } finally {
                         document.body.removeChild(textarea);
