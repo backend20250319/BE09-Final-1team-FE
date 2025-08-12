@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="d45f7f00-7177-4736-b0b7-ed98e5b912ff" name="변경" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/BE09-Final-1team-FE.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/git_toolbox_prj.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/material_theme_project_new.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/material_theme_project_new.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/news2/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/.idea/git_toolbox_prj.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/.idea/misc.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/.idea/modules.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/.idea/news2.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(auth)/auth/_components/LoginFormWithLogic.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(auth)/auth/_components/LoginForm.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(auth)/auth/_components/SignupForm.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(auth)/auth/_components/SignupForm.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(auth)/auth/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(auth)/auth/page.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(newsletter)/newsletter/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(newsletter)/newsletter/page.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(user)/mypage/_components/InterestsTab.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(user)/mypage/_components/ProfileTab.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(user)/mypage/_components/ProfileTab.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(user)/mypage/_components/SettingsTab.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(user)/mypage/_components/SettingsTab.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(user)/mypage/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(user)/mypage/page.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(user)/user/newsletter/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(user)/user/newsletter/page.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/(user)/user/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/(user)/user/page.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/app/page.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/app/page.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/components/SubscribeForm.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/news2/components/SubscribeForm.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/lib/auth.js" beforeDir="false" afterPath="$PROJECT_DIR$/news2/lib/auth.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/news2/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/news2/package-lock.json" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "changjunpark13"
+  }
+}]]></component>
+  <component name="GithubProjectSettings">
+    <option name="branchProtectionPatterns">
+      <list>
+        <option value="main" />
+      </list>
+    </option>
+  </component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/backend20250319/BE09-Final-1team-FE.git",
+    "accountId": "2aeec0c1-65b9-465c-89e4-48e90fdf76b2"
+  }
+}]]></component>
+  <component name="KubernetesApiPersistence"><![CDATA[{}]]></component>
+  <component name="KubernetesApiProvider"><![CDATA[{
+  "isMigrated": true
+}]]></component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 0
+}]]></component>
+  <component name="ProjectId" id="30xAGdaHSNZCMhMpV4WygRP0dxx" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "feature/changjun 병합 중에 #24개",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-9823dce3aa75-fbdcb00ec9e3-intellij.indexing.shared.core-IU-251.26094.121" />
+        <option value="bundled-js-predefined-d6986cc7102b-b26f3e71634d-JavaScript-IU-251.26094.121" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>

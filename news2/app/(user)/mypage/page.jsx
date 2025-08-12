@@ -9,7 +9,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Header from "@/components/header";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 
 // 분리된 컴포넌트들 import
 import ProfileSidebar from "./_components/ProfileSidebar";
@@ -19,59 +19,67 @@ import HistoryTab from "./_components/HistoryTab";
 import SettingsTab from "./_components/SettingsTab";
 
 export default function MyPage() {
-  const searchParams =  useSearchParams();
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("profile");
 
   useEffect(() => {
     // URL 파라미터에서 탭 정보 확인
     const tab = searchParams.get("tab");
-    if (tab && ["profile", "interests", "scraps", "history", "settings"].includes(tab)) {
+    if (
+      tab &&
+      ["profile", "interests", "scraps", "history", "settings"].includes(tab)
+    ) {
       setActiveTab(tab);
     }
   }, [searchParams]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
       <Header />
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            {/* 프로필 사이드바 */}
+            <div className="lg:col-span-1">
+              <ProfileSidebar />
+            </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* 프로필 사이드바 */}
-          <div className="lg:col-span-1">
-            <ProfileSidebar />
-          </div>
+            {/* 메인 콘텐츠 영역 */}
+            <div className="lg:col-span-3">
+              <Tabs
+                value={activeTab}
+                onValueChange={setActiveTab}
+                className="w-full"
+              >
+                {/* 탭 메뉴 */}
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger value="profile">프로필</TabsTrigger>
+                  <TabsTrigger value="scraps">스크랩</TabsTrigger>
+                  <TabsTrigger value="history">읽기 기록</TabsTrigger>
+                  <TabsTrigger value="settings">설정</TabsTrigger>
+                </TabsList>
 
-          {/* 메인 콘텐츠 영역 */}
-          <div className="lg:col-span-3">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              {/* 탭 메뉴 */}
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="profile">프로필</TabsTrigger>
-                <TabsTrigger value="scraps">스크랩</TabsTrigger>
-                <TabsTrigger value="history">읽기 기록</TabsTrigger>
-                <TabsTrigger value="settings">설정</TabsTrigger>
-              </TabsList>
+                {/* 각 탭별 컨텐츠 */}
+                <TabsContent value="profile">
+                  <ProfileTab />
+                </TabsContent>
 
-              {/* 각 탭별 컨텐츠 */}
-              <TabsContent value="profile">
-                <ProfileTab />
-              </TabsContent>
+                <TabsContent value="scraps">
+                  <ScrapsTab />
+                </TabsContent>
 
-              <TabsContent value="scraps">
-                <ScrapsTab />
-              </TabsContent>
+                <TabsContent value="history">
+                  <HistoryTab />
+                </TabsContent>
 
-              <TabsContent value="history">
-                <HistoryTab />
-              </TabsContent>
-
-              <TabsContent value="settings">
-                <SettingsTab />
-              </TabsContent>
-            </Tabs>
+                <TabsContent value="settings">
+                  <SettingsTab />
+                </TabsContent>
+              </Tabs>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

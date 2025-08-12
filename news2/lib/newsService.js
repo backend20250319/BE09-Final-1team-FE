@@ -398,14 +398,20 @@ class NewsService {
   async incrementViews(id) {
     try {
       // 백엔드 API 호출
-      await safeApiCall(`/api/news/${id}/view`, {
+      const response = await safeApiCall(`/api/news/${id}/view`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
       });
+      
+      // 응답이 null이거나 빈 응답인 경우도 성공으로 처리
+      if (response === null) {
+        console.log("✅ 조회수 증가 성공 (빈 응답)");
+      }
     } catch (error) {
       console.error("조회수 증가 실패:", error);
+      // 조회수 증가 실패는 사용자 경험에 영향을 주지 않도록 조용히 처리
     }
   }
 
