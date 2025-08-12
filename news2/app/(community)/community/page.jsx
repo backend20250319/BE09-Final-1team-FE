@@ -23,6 +23,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { TextWithTooltips } from "@/components/tooltip";
+import Header from "@/components/header";
 
 export default function CommunityPage() {
   const [selectedCategory, setSelectedCategory] = useState("전체");
