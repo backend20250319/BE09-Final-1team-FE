@@ -206,8 +206,9 @@ export default function RealTimeKeywordWidget({
           style={{
             top: `${cardPosition.top}px`,
             left: `${cardPosition.left}px`,
-            width: typeof width === 'number' ? `${width}px` : width,
-            minWidth: '250px'
+            width: typeof width === 'number' ? `${Math.min(width * 0.8, 220)}px` : width === '100%' ? '220px' : '220px',
+            minWidth: '200px',
+            maxWidth: '220px'
           }}
           onMouseEnter={handleCardMouseEnter}
           onMouseLeave={handleCardMouseLeave}
