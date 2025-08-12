@@ -21,8 +21,11 @@ import {
   Share2,
   CheckCircle
 } from "lucide-react"
+<<<<<<< HEAD
+=======
 import Header from "@/components/header"
 import { useToast } from "@/hooks/use-toast"
+>>>>>>> develop
 
 export default function UserNewsletter() {
   const [activeTab, setActiveTab] = useState("subscriptions")
@@ -161,7 +164,6 @@ export default function UserNewsletter() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

@@ -1,8 +1,9 @@
-import { GeistMono } from "geist/font/mono";
-import "./globals.css";
+import { GeistMono } from 'geist/font/mono'
+import './globals.css'
+import { ThemeProvider } from '@/components/theme-provider'
+import { ScrapProvider } from '@/contexts/ScrapContext' // 이 부분을 추가
+import Footer from '../components/footer'
 
-import { ThemeProvider } from "@/components/theme-provider";
-import Footer from "@/components/footer";
 
 export const metadata = {
   title: "NewSPhere - 최신 뉴스와 정보",
@@ -34,9 +35,12 @@ html {
           enableSystem
           disableTransitionOnChange
         >
-          {children}
-          <Footer />
+
+          <ScrapProvider>
+            {children}            
+          </ScrapProvider>
         </ThemeProvider>
+        <Footer />
       </body>
     </html>
   );

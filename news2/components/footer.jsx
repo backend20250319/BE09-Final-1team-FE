@@ -42,6 +42,7 @@ export default function Footer() {
                 </ul>
               </div>
               <div>
+
                 <h3 className="font-semibold mb-4 flex items-center">
                   <div className="w-5 h-5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-2">
                     <Zap className="h-3 w-3 text-white" />

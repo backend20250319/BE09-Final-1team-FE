@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Mail, Clock, Users, Star, TrendingUp, Bell, Zap, Filter, CheckCircle, AlertCircle, ArrowRight, User } from "lucide-react"
-import Header from "@/components/header"
 import { TextWithTooltips } from "@/components/tooltip"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
@@ -213,7 +212,6 @@ export default function NewsletterPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
-      <Header />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
