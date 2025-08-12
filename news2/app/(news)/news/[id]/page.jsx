@@ -16,9 +16,7 @@ import {
   Siren,
 } from "lucide-react";
 import { Toaster, toast } from "sonner";
-import { newsArticles } from "@/lib/news-data";
 import { newsService } from "@/lib/newsService";
-
 
 const NaverFontButtonV2 = ({ onClick }) => {
   return (
@@ -264,19 +262,6 @@ export default function NewsPage() {
     );
   }
 
-  const relatedNews = newsArticles
-    .filter(
-      (news) =>
-        news.category === newsData.category && news.title !== newsData.title
-    )
-    .slice(0, 3);
-  const headlineNews = newsArticles
-    .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt))
-    .slice(0, 5);
-  const rankingNews = newsArticles
-    .sort((a, b) => b.views - a.views)
-    .slice(0, 5);
-
   return (
     <>
       <Header />
@@ -411,22 +396,6 @@ export default function NewsPage() {
             <section className="mt-12 pt-8 border-t">
               <h2 className="text-2xl font-bold mb-6">함께 보면 좋은 뉴스</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {relatedNews.map((news) => (
-                  <Link
-                    href={`/news/${news.id}`}
-                    key={news.id}
-                    className="block group"
-                  >
-                    <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <p className="text-indigo-600 font-semibold text-sm mb-1">
-                        {news.category}
-                      </p>
-                      <h4 className="font-bold group-hover:text-indigo-700">
-                        {news.title}
-                      </h4>
-                    </div>
-                  </Link>
-                ))}
               </div>
             </section>
 
@@ -522,16 +491,6 @@ export default function NewsPage() {
                 헤드라인 뉴스
               </h3>
               <ul className="space-y-3">
-                {headlineNews.map((news) => (
-                  <li key={news.id}>
-                    <Link
-                      href={`/news/${news.id}`}
-                      className="hover:text-indigo-600 transition-colors"
-                    >
-                      {news.title}
-                    </Link>
-                  </li>
-                ))}
               </ul>
             </div>
             <div className="bg-white p-6 rounded-2xl shadow-lg border">
@@ -539,19 +498,6 @@ export default function NewsPage() {
                 랭킹 뉴스
               </h3>
               <ul className="space-y-3">
-                {rankingNews.map((news, index) => (
-                  <li key={news.id} className="flex items-center">
-                    <span className="text-lg font-bold text-indigo-600 w-6">
-                      {index + 1}
-                    </span>
-                    <Link
-                      href={`/news/${news.id}`}
-                      className="hover:text-indigo-600 transition-colors flex-1"
-                    >
-                      {news.title}
-                    </Link>
-                  </li>
-                ))}
               </ul>
             </div>
           </aside>
