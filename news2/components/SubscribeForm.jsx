@@ -11,7 +11,7 @@ const validateEmail = (email) => {
   return emailRegex.test(email);
 };
 
-export default function SubscribeForm({ compact = false }) {
+export default function SubscribeForm({ compact = false, darkTheme = false }) {
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -62,7 +62,11 @@ export default function SubscribeForm({ compact = false }) {
         placeholder="이메일 주소를 입력하세요"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        className={`${compact ? 'h-10 text-sm' : 'h-12 text-base'} flex-1 px-4 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 bg-white/90 backdrop-blur-sm`}
+        className={`${compact ? 'h-10 text-sm' : 'h-12 text-base'} flex-1 px-4 border-2 rounded-lg focus:ring-2 transition-all duration-200 ${
+          darkTheme 
+            ? 'border-gray-700 bg-gray-800 text-white focus:border-blue-500 focus:ring-blue-500/20' 
+            : 'border-gray-200 bg-white/90 backdrop-blur-sm focus:border-blue-500 focus:ring-blue-200'
+        }`}
         disabled={loading}
       />
       <Button 

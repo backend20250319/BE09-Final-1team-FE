@@ -12,8 +12,7 @@ import Header from "@/components/header"
 import { TextWithTooltips } from "@/components/tooltip"
 import WeatherWidget from "@/components/WeatherWidget"
 import { newsService } from "@/lib/newsService"
-import SubscribeForm from "@/components/SubscribeForm"
-import SubscriberCount from "@/components/SubscriberCount"
+
 import { getUserRole } from "@/lib/auth"
 import RealTimeKeywordWidget from "@/components/RealTimeKeywordWidget"
 
@@ -71,7 +70,7 @@ export default function MainPage() {
     }
   }, [selectedCategory, isLoaded])
 
-  const categories = ["전체", "POLITICS", "ECONOMY", "SOCIETY", "CULTURE", "IT_SCIENCE", "INTERNATIONAL"]
+  const categories = ["전체", "POLITICS", "ECONOMY", "SOCIETY", "LIFE", "INTERNATIONAL", "IT_SCIENCE", "VEHICLE", "TRAVEL_FOOD", "ART"]
   
   // 카테고리 표시명 매핑
   const categoryDisplayNames = {
@@ -79,9 +78,12 @@ export default function MainPage() {
     "POLITICS": "정치",
     "ECONOMY": "경제", 
     "SOCIETY": "사회",
-    "CULTURE": "문화",
+    "LIFE": "생활",
+    "INTERNATIONAL": "세계",
     "IT_SCIENCE": "IT/과학",
-    "INTERNATIONAL": "세계"
+    "VEHICLE": "자동차/교통",
+    "TRAVEL_FOOD": "여행/음식",
+    "ART": "예술",
   }
   const [newsItems, setNewsItems] = useState([])
   const [loading, setLoading] = useState(true)
@@ -114,7 +116,7 @@ export default function MainPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-3">
-                                                {/* Category Tabs, Newsletter Subscription, and Real-time Keywords */}
+          {/* Category Tabs, Newsletter Subscription, and Real-time Keywords */}
             <div className="mb-2">
               {/* 카테고리 버튼과 뉴스레터 구독 */}
               <div className="grid grid-cols-12 gap-4 items-stretch mb-2">
@@ -143,32 +145,6 @@ export default function MainPage() {
                   </div>
                 </div>
 
-
-                   
-
-                {/* 오른쪽: 뉴스레터 구독과 날씨 위젯 */}
-                <div className="col-span-12 lg:col-span-4 flex flex-col gap-4 h-full">
-                  {/* 뉴스레터 구독 */}
-                  
-                    <Card className="glass hover-lift animate-slide-in shadow-lg border-0" style={{ animationDelay: '0.3s' }}>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-lg font-bold flex items-center text-gray-800">
-                          <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-2">
-                            <Zap className="h-4 w-4 text-white" />
-                          </div>
-                          뉴스레터 구독
-                        </CardTitle>
-                        <CardDescription className="text-gray-600 text-sm">
-                          매일 아침 엄선된 뉴스를 받아보세요 · <SubscriberCount />
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="pt-0">
-                        <SubscribeForm compact={true} />
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                 
             
               </div>
             </div>
@@ -267,27 +243,22 @@ export default function MainPage() {
                   className="block"
                 >
                 <Card
-                className={`min-h-[420px] max-h-[420px] flex flex-col justify-between glass hover-lift animate-slide-in cursor-pointer transition-all duration-300 hover:shadow-lg ${
+                className={`min-h-[500px] max-h-[500px] flex flex-col justify-between glass hover-lift animate-slide-in cursor-pointer transition-all duration-300 hover:shadow-lg ${
                   isLoaded ? 'opacity-100' : 'opacity-0'
                 }`}
                 style={{ animationDelay: `${(index + 1) * 0.2}s` }}
               >
                    {/* 이미지 영역 */}
-                  <div className="h-40 w-full relative">
+                  <div className="h-72 w-full relative">
                     <img
                       src={news.image || "/placeholder.svg"}
                       alt={news.title}
-                      className="w-full h-full object-cover rounded-t-lg"
+                      className="w-full h-72 object-cover rounded-lg"
                     />
-                    <div className="absolute top-2 left-2">
-                      <Badge className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full shadow">
-                        {news.category}
-                      </Badge>
-                    </div>
                   </div>
                   
                   {/* 텍스트 영역 */}
-                  <div className="flex flex-col justify-between flex-1 px-4 py-3">
+                  <div className="flex flex-col justify-between flex-1 px-4 py-3 min-h-0">
                     {/* 카테고리 뱃지 */}
                     <div className="flex justify-between items-start mb-3">
                       <Badge className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full shadow">
@@ -304,20 +275,17 @@ export default function MainPage() {
                       </span>
                     </div>
 
-                    {/* 제목과 요약 */}
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold mb-2 hover:text-blue-600 transition-colors line-clamp-2">
+                    {/* 제목 */}
+                    <div className="flex-1 mb-3 min-h-0">
+                      <h3 className="text-lg font-semibold hover:text-blue-600 transition-colors line-clamp-2 leading-relaxed">
                         <TextWithTooltips text={news.title} />
                       </h3>
-                      <p className="text-gray-600 text-sm line-clamp-3 flex-1">
-                        <TextWithTooltips text={news.summary} />
-                      </p>
                     </div>
 
                     {/* 하단 출처 + 버튼 */}
-                    <div className="flex items-center justify-between mt-4">
-                      <span className="text-sm text-gray-500">{news.source}</span>
-                      <div className="flex items-center space-x-4">
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                      <span className="text-sm text-gray-500 font-medium truncate mr-2">{news.source}</span>
+                      <div className="flex items-center space-x-2 flex-shrink-0">
                         <span className="text-sm text-gray-500 flex items-center">
                           <Eye className="h-4 w-4 mr-1" />
                           {news.views.toLocaleString()}
@@ -325,7 +293,7 @@ export default function MainPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="hover-glow"
+                          className="hover-glow p-1"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <Share2 className="h-4 w-4" />
@@ -333,7 +301,7 @@ export default function MainPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="hover-glow"
+                          className="hover-glow p-1"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <Bookmark className="h-4 w-4" />
