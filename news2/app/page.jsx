@@ -24,13 +24,19 @@ export default function MainPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [totalElements, setTotalElements] = useState(0)
 
+  // 초기 로딩 및 페이지/카테고리 변경 시 뉴스 데이터 가져오기
   useEffect(() => {
     const fetchNews = async () => {
-      console.log('🔄 뉴스 데이터 로딩 시작...')
+      console.log('🔄 뉴스 데이터 로딩 시작...', { selectedCategory, currentPage })
+      setLoading(true)
       try {
-        const data = await newsService.getAllNews({ page: currentPage, size: 21 })
-        console.log('✅ 뉴스 데이터 로딩 성공:', data.content?.length || 0, '개')
-        console.log('📰 첫 번째 뉴스:', data.content?.[0])
+        let data
+        if (selectedCategory === "전체") {
+          data = await newsService.getAllNews({ page: currentPage, size: 21 })
+        } else {
+          data = await newsService.getNewsByCategory(selectedCategory, { page: currentPage, size: 21 })
+        }
+        console.log('✅ 뉴스 데이터 로딩 성공:', selectedCategory, data.content?.length || 0, '개')
         setNewsItems(data.content || [])
         setTotalPages(data.totalPages || 1)
         setTotalElements(data.totalElements || 0)
@@ -44,29 +50,12 @@ export default function MainPage() {
 
     fetchNews()
     setUserRole(getUserRole())
-  }, [currentPage])
+  }, [currentPage, selectedCategory])
 
-  // 카테고리 변경 시 백엔드 API 호출
+  // 카테고리 변경 시 첫 페이지로 리셋
   useEffect(() => {
-    const fetchNewsByCategory = async () => {
-      console.log('🔄 카테고리별 뉴스 로딩 시작:', selectedCategory)
-      setLoading(true)
-      setCurrentPage(1) // 카테고리 변경 시 첫 페이지로 리셋
-      try {
-        const data = await newsService.getNewsByCategory(selectedCategory, { page: 1, size: 21 })
-        console.log('✅ 카테고리별 뉴스 로딩 성공:', selectedCategory, data.content?.length || 0, '개')
-        setNewsItems(data.content || [])
-        setTotalPages(data.totalPages || 1)
-        setTotalElements(data.totalElements || 0)
-      } catch (error) {
-        console.error('❌ 카테고리별 뉴스 로딩 실패:', selectedCategory, error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
     if (isLoaded) {
-      fetchNewsByCategory()
+      setCurrentPage(1)
     }
   }, [selectedCategory, isLoaded])
 
