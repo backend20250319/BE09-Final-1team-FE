@@ -21,11 +21,8 @@ import {
   Share2,
   CheckCircle
 } from "lucide-react"
-<<<<<<< HEAD
-=======
 import Header from "@/components/header"
 import { useToast } from "@/hooks/use-toast"
->>>>>>> develop
 
 export default function UserNewsletter() {
   const [activeTab, setActiveTab] = useState("subscriptions")
