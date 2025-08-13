@@ -8,8 +8,60 @@ import { useScrap } from "@/contexts/ScrapContext";
 import Link from "next/link";
 import { Bookmark, Bot, Share, X, User, Clock, Siren } from "lucide-react";
 import { Toaster, toast } from "sonner";
-import { newsArticles } from "@/lib/news-data";
 import { newsService } from "@/lib/newsService";
+
+// 더미 데이터 생성 함수
+const generateDummyNews = () => {
+  const categories = ["POLITICS", "ECONOMY", "SOCIETY", "LIFE", "INTERNATIONAL", "IT_SCIENCE", "VEHICLE", "TRAVEL_FOOD", "ART"]
+  const sources = ["조선일보", "중앙일보", "동아일보", "한겨레", "경향신문", "한국일보", "서울신문", "매일경제", "한국경제", "이데일리"]
+  const titles = [
+    "정부, 새로운 경제 정책 발표... 시장 반응 주목",
+    "IT 업계 혁신 기술 도입으로 산업 구조 변화 예상",
+    "국제 무역 협정 체결로 경제 성장 기대감 고조",
+    "사회 복지 정책 개선안 발표, 시민들 반응 엇갈려",
+    "기후 변화 대응을 위한 글로벌 협력 강화",
+    "자동차 산업 전기차 시장 점유율 급상승",
+    "여행업계 회복세, 해외 관광객 증가세 지속",
+    "문화 예술계 디지털 전환 가속화",
+    "교육 시스템 개혁안 발표, 학부모들 관심 집중",
+    "의료 기술 발전으로 치료 효과 향상",
+    "부동산 시장 안정화 정책 효과 나타나",
+    "금융권 디지털 혁신 가속화",
+    "스포츠계 새로운 스타 탄생",
+    "환경 보호 운동 확산",
+    "과학 기술 연구 성과 발표",
+    "문화 유산 보존 활동 강화",
+    "국제 관계 개선 노력 지속",
+    "사회 문제 해결을 위한 민관 협력",
+    "생활 문화 변화 추세",
+    "미래 산업 육성 정책 발표"
+  ]
+  
+  const dummyNews = []
+  
+  for (let i = 1; i <= 50; i++) {
+    const category = categories[Math.floor(Math.random() * categories.length)]
+    const source = sources[Math.floor(Math.random() * sources.length)]
+    const title = titles[Math.floor(Math.random() * titles.length)]
+    const views = Math.floor(Math.random() * 10000) + 100
+    const publishedAt = new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000) // 최근 30일 내
+    
+    dummyNews.push({
+      id: i,
+      title: `${title} - ${i}번째 뉴스`,
+      content: `이것은 ${category} 카테고리의 ${i}번째 뉴스 기사입니다. 다양한 정보와 분석을 제공합니다.`,
+      category: category,
+      source: source,
+      image: `/placeholder.svg?height=300&width=500&text=${encodeURIComponent(category)}`,
+      publishedAt: publishedAt.toISOString(),
+      views: views,
+      url: `https://example.com/news/${i}`
+    })
+  }
+  
+  return dummyNews
+}
+
 
 // ✨ 1. '가가' 모양의 최신 네이버 스타일 아이콘 버튼 컴포넌트
 const NaverFontButtonV2 = ({ onClick }) => {
@@ -259,6 +311,7 @@ export default function NewsPage() {
     );
   }
 
+  const newsArticles = generateDummyNews();
   const relatedNews = newsArticles
     .filter(
       (news) =>

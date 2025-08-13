@@ -1,8 +1,21 @@
 // 뉴스 데이터 관리 서비스
-import { newsArticles, NEWS_CATEGORIES } from "./news-data";
 import { safeApiCall, diagnoseCorsIssue } from "./api-utils";
 import { authenticatedFetch, isAuthenticated } from "./auth";
 import { getApiUrl } from "./config";
+
+// 뉴스 카테고리 상수
+export const NEWS_CATEGORIES = {
+  ALL: "전체",
+  POLITICS: "정치",
+  ECONOMY: "경제",
+  SOCIETY: "사회",
+  CULTURE: "문화",
+  WORLD: "국제",
+  SPORTS: "스포츠",
+  TECHNOLOGY: "기술",
+  ENTERTAINMENT: "연예",
+  HEALTH: "건강",
+};
 
 /**
  * 뉴스 아이템 기본 구조
@@ -121,44 +134,8 @@ class NewsService {
       this.setCachedData(cacheKey, result);
       return result;
     } catch (error) {
-      console.error("❌ 백엔드 API 실패, 더미 데이터 사용:", error);
-
-      // 백엔드 실패 시 더미 데이터 사용
-      const startIndex = (page - 1) * size;
-      const endIndex = startIndex + size;
-      const dummyNewsItems = newsArticles
-        .slice(startIndex, endIndex)
-        .map((item) => ({
-          id: item.id,
-          title: item.title,
-          summary: item.summary,
-          content: item.content,
-          category: item.category,
-          source: item.source,
-          author: item.author,
-          publishedAt: item.publishedAt,
-          updatedAt: item.publishedAt,
-          views: item.views,
-          likes: item.likes,
-          image: item.image,
-          tags: item.tags,
-          isPublished: true,
-          isFeatured: false,
-        }));
-
-      const result = {
-        content: dummyNewsItems,
-        totalElements: newsArticles.length,
-        totalPages: Math.ceil(newsArticles.length / size),
-        currentPage: page,
-        size: size,
-        first: page === 1,
-        last: page >= Math.ceil(newsArticles.length / size),
-      };
-
-      console.log("✅ 더미 데이터 로딩 성공:", dummyNewsItems.length, "개");
-      this.setCachedData(cacheKey, result);
-      return result;
+      console.error("❌ 백엔드 API 실패:", error);
+      throw error;
     }
   }
 
@@ -225,51 +202,8 @@ class NewsService {
       this.setCachedData(cacheKey, result);
       return result;
     } catch (error) {
-      console.error("❌ 백엔드 API 실패, 더미 데이터 사용:", error);
-
-      // 백엔드 실패 시 더미 데이터 사용
-      let filteredArticles = newsArticles;
-      if (category !== "전체") {
-        filteredArticles = newsArticles.filter(
-          (article) => article.category === category
-        );
-      }
-
-      const startIndex = (page - 1) * size;
-      const endIndex = startIndex + size;
-      const dummyNewsItems = filteredArticles
-        .slice(startIndex, endIndex)
-        .map((item) => ({
-          id: item.id,
-          title: item.title,
-          summary: item.summary,
-          content: item.content,
-          category: item.category,
-          source: item.source,
-          author: item.author,
-          publishedAt: item.publishedAt,
-          updatedAt: item.publishedAt,
-          views: item.views,
-          likes: item.likes,
-          image: item.image,
-          tags: item.tags,
-          isPublished: true,
-          isFeatured: false,
-        }));
-
-      const result = {
-        content: dummyNewsItems,
-        totalElements: filteredArticles.length,
-        totalPages: Math.ceil(filteredArticles.length / size),
-        currentPage: page,
-        size: size,
-        first: page === 1,
-        last: page >= Math.ceil(filteredArticles.length / size),
-      };
-
-      console.log("✅ 더미 데이터 로딩 성공:", dummyNewsItems.length, "개");
-      this.setCachedData(cacheKey, result);
-      return result;
+      console.error("❌ 백엔드 API 실패:", error);
+      throw error;
     }
   }
 
@@ -384,12 +318,54 @@ class NewsService {
    * 관련 뉴스 기사를 가져옵니다
    */
   async getRelatedArticles(currentId, category, limit = 3) {
-    return newsArticles
-      .filter(
-        (article) => article.id !== currentId && article.category === category
-      )
-      .slice(0, limit)
-      .map(createNewsItem);
+    const cacheKey = `related-${currentId}-${category}-${limit}`;
+    const cached = this.getCachedData(cacheKey);
+    if (cached) return cached;
+
+    try {
+      // 백엔드 API 호출
+      const data = await safeApiCall(
+        `/api/news/related?currentId=${currentId}&category=${encodeURIComponent(category)}&limit=${limit}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      // 백엔드 응답 구조에 맞게 변환
+      const relatedItems = data.content
+        ? data.content.map((item) => ({
+            id: item.newsId || item.id,
+            title: item.title,
+            summary: item.summary || item.content?.substring(0, 200) + "...",
+            content: item.content,
+            category: item.categoryName || item.category,
+            source: item.press || item.source,
+            author: item.reporterName || item.author,
+            publishedAt: item.publishedAt,
+            updatedAt: item.updatedAt,
+            views: item.viewCount || 0,
+            likes: item.likes || 0,
+            image: item.imageUrl || "/placeholder.svg",
+            tags: item.tags || [],
+            isPublished: true,
+            isFeatured: false,
+            link: item.link,
+            trusted: item.trusted,
+            dedupState: item.dedupState,
+            dedupStateDescription: item.dedupStateDescription,
+            oidAid: item.oidAid,
+          }))
+        : [];
+
+      this.setCachedData(cacheKey, relatedItems);
+      return relatedItems;
+    } catch (error) {
+      console.error("관련 뉴스 로딩 실패:", error);
+      return [];
+    }
   }
 
   /**
