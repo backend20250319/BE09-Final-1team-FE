@@ -14,7 +14,6 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { newsService } from "@/lib/newsService";
-import { getApiUrl } from "@/lib/config";
 import { apiConfig } from "@/lib/api-utils";
 import { authenticatedFetch } from "@/lib/auth";
 
@@ -31,7 +30,7 @@ export default function HistoryTab() {
 
       // 1. 읽기 기록 가져오기 (뉴스 ID와 날짜) - authenticatedFetch 사용
       const historyResponse = await authenticatedFetch(
-        getApiUrl("/api/users/mypage/history/index"),
+        "/api/users/mypage/history/index",
         {
           method: "GET",
           headers: {
@@ -56,77 +55,95 @@ export default function HistoryTab() {
 
       const historyData = await historyResponse.json();
 
+      // 데이터 구조 검증
+      if (
+        !historyData ||
+        !historyData.data ||
+        !Array.isArray(historyData.data.content)
+      ) {
+        console.warn("예상과 다른 데이터 구조:", historyData);
+        setReadingHistory([]);
+        return;
+      }
+
+      // 빈 배열인 경우 처리
+      if (historyData.data.content.length === 0) {
+        setReadingHistory([]);
+        return;
+      }
+
       // 2. 각 뉴스 ID에 대해 뉴스 상세 정보 가져오기 (토큰 불필요)
-      // API 응답은 data.content 배열 형태
-      const enrichedHistory = await Promise.all(
-        historyData.data.content.map(async (item) => {
-          try {
-            console.log(`뉴스 ${item.newsId} 정보를 가져오는 중...`);
-            const newsUrl = getApiUrl(`/api/news/${item.newsId}`);
-            console.log(`뉴스 API URL: ${newsUrl}`);
+      // Promise.all 대신 Promise.allSettled 사용하여 일부 실패해도 계속 진행
+      const historyPromises = historyData.data.content.map(async (item) => {
+        try {
+          // 데이터 유효성 검사
+          if (!item || !item.newsId) {
+            console.warn("유효하지 않은 히스토리 아이템:", item);
+            return null;
+          }
 
-            const newsResponse = await fetch(newsUrl, {
-              method: "GET",
-              headers: {
-                ...apiConfig.headers,
-              },
-              mode: apiConfig.mode,
-              credentials: apiConfig.credentials,
-            });
+          console.log(`뉴스 ${item.newsId} 정보를 가져오는 중...`);
+          // Next.js rewrites를 활용하여 CORS 문제 해결
+          const newsUrl = `/api/news/${item.newsId}`;
+          console.log(`뉴스 API URL: ${newsUrl}`);
 
+          // 타임아웃 설정 (10초)
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+          const newsResponse = await fetch(newsUrl, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            signal: controller.signal,
+          });
+
+          clearTimeout(timeoutId);
+
+          console.log(
+            `뉴스 ${item.newsId} 응답 상태:`,
+            newsResponse.status,
+            newsResponse.statusText
+          );
+
+          if (newsResponse.ok) {
+            const newsData = await newsResponse.json();
+            console.log(`뉴스 ${item.newsId} 데이터:`, newsData);
+            return {
+              id: item.newsId,
+              title: newsData.title || "제목 없음",
+              category: newsData.categoryName || "분류 없음",
+              readAt: new Date(item.updatedAt).toLocaleString("ko-KR", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+              readTime: "읽음", // readTime 필드가 없으므로 기본값
+            };
+          } else {
             console.log(
-              `뉴스 ${item.newsId} 응답 상태:`,
+              `뉴스 ${item.newsId} 가져오기 실패:`,
               newsResponse.status,
               newsResponse.statusText
             );
 
-            if (newsResponse.ok) {
-              const newsData = await newsResponse.json();
-              console.log(`뉴스 ${item.newsId} 데이터:`, newsData);
-              return {
-                id: item.newsId,
-                title: newsData.data?.title || "제목 없음",
-                category: newsData.data?.category || "분류 없음",
-                readAt: new Date(item.updatedAt).toLocaleString("ko-KR", {
-                  year: "numeric",
-                  month: "2-digit",
-                  day: "2-digit",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }),
-                readTime: "읽음", // readTime 필드가 없으므로 기본값
-              };
-            } else {
-              console.log(
-                `뉴스 ${item.newsId} 가져오기 실패:`,
-                newsResponse.status,
-                newsResponse.statusText
-              );
-              const errorText = await newsResponse.text();
-              console.log(`뉴스 ${item.newsId} 에러 응답:`, errorText);
-              // 뉴스 정보를 가져올 수 없는 경우 기본값 사용
-              return {
-                id: item.newsId,
-                title: "삭제된 뉴스",
-                category: "알 수 없음",
-                readAt: new Date(item.updatedAt).toLocaleString("ko-KR", {
-                  year: "numeric",
-                  month: "2-digit",
-                  day: "2-digit",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }),
-                readTime: "읽음",
-              };
+            // 응답 텍스트 읽기 시도
+            let errorText = "알 수 없는 오류";
+            try {
+              errorText = await newsResponse.text();
+            } catch (e) {
+              console.warn("에러 응답 텍스트를 읽을 수 없음:", e);
             }
-          } catch (newsError) {
-            console.error(
-              `뉴스 ${item.newsId} 정보를 가져오는데 실패:`,
-              newsError
-            );
+
+            console.log(`뉴스 ${item.newsId} 에러 응답:`, errorText);
+
+            // 뉴스 정보를 가져올 수 없는 경우 기본값 사용
             return {
               id: item.newsId,
-              title: "정보를 불러올 수 없음",
+              title: "삭제된 뉴스",
               category: "알 수 없음",
               readAt: new Date(item.updatedAt).toLocaleString("ko-KR", {
                 year: "numeric",
@@ -138,13 +155,60 @@ export default function HistoryTab() {
               readTime: "읽음",
             };
           }
-        })
-      );
+        } catch (newsError) {
+          console.error(
+            `뉴스 ${item.newsId} 정보를 가져오는데 실패:`,
+            newsError
+          );
+
+          // AbortError는 타임아웃으로 간주
+          const errorTitle =
+            newsError.name === "AbortError"
+              ? "요청 시간 초과"
+              : "정보를 불러올 수 없음";
+
+          return {
+            id: item.newsId,
+            title: errorTitle,
+            category: "알 수 없음",
+            readAt: new Date(item.updatedAt).toLocaleString("ko-KR", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            readTime: "읽음",
+          };
+        }
+      });
+
+      // Promise.allSettled를 사용하여 모든 결과를 기다림
+      const results = await Promise.allSettled(historyPromises);
+
+      // 성공한 결과만 필터링
+      const enrichedHistory = results
+        .filter((result) => result.status === "fulfilled")
+        .map((result) => result.value)
+        .filter((item) => item !== null && item !== undefined);
 
       setReadingHistory(enrichedHistory);
     } catch (error) {
       console.error("읽기 기록을 가져오는데 실패했습니다:", error);
-      setError(error.message);
+
+      // 네트워크 에러 vs API 에러 구분
+      if (error.name === "TypeError" && error.message.includes("fetch")) {
+        setError(
+          "네트워크 연결을 확인해주세요. 서버와의 연결에 문제가 있습니다."
+        );
+      } else if (
+        error.message.includes("인증") ||
+        error.message.includes("로그인")
+      ) {
+        setError("로그인이 필요합니다. 다시 로그인해주세요.");
+      } else {
+        setError(error.message || "읽기 기록을 불러오는데 실패했습니다.");
+      }
     } finally {
       setIsLoading(false);
     }
