@@ -19,11 +19,8 @@ import {
   Bell,
   Settings
 } from "lucide-react"
-<<<<<<< HEAD
-=======
 import Header from "@/components/header"
 import Link from "next/link"
->>>>>>> develop
 
 export default function UserDashboard() {
   const [activeTab, setActiveTab] = useState("overview")
