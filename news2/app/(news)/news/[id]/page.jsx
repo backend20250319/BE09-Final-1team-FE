@@ -6,15 +6,7 @@ import Header from "@/components/header";
 import { useScrap } from "@/contexts/ScrapContext";
 
 import Link from "next/link";
-import {
-  Bookmark,
-  Bot,
-  Share,
-  X,
-  User,
-  Clock,
-  Siren,
-} from "lucide-react";
+import { Bookmark, Bot, Share, X, User, Clock, Siren } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import { newsService } from "@/lib/newsService";
 
@@ -88,7 +80,6 @@ const NaverFontButtonV2 = ({ onClick }) => {
   );
 };
 
-
 const fontSizes = [
   { id: "sm", label: "작게", value: 14 },
   { id: "base", label: "보통", value: 16 },
@@ -111,7 +102,7 @@ const FontSizeSelector = ({ currentValue, onSelect, onClose }) => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [selectorRef, onClose]);
-  
+
   return (
     <div
       ref={selectorRef}
@@ -165,7 +156,6 @@ const FontSizeSelector = ({ currentValue, onSelect, onClose }) => {
   );
 };
 
-
 export default function NewsPage() {
   const params = useParams();
   const articleId = params?.id;
@@ -173,7 +163,7 @@ export default function NewsPage() {
   const [newsData, setNewsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   const [fontSize, setFontSize] = useState(18);
   const [isFontSizeSelectorOpen, setFontSizeSelectorOpen] = useState(false);
 
@@ -253,6 +243,10 @@ export default function NewsPage() {
           imageUrl: data.image,
         };
         setNewsData(transformedData);
+
+        // 뉴스 데이터 로딩 성공 시 읽음 기록 및 조회수 증가
+        await newsService.addReadHistory(articleId);
+        await newsService.incrementViews(articleId);
       } catch (err) {
         setError(err.message);
         setNewsData(null);
@@ -400,10 +394,11 @@ export default function NewsPage() {
                 </button>
               </div>
               <div className="flex items-center gap-2">
-                
                 {/* ✨ 2. 글자 크기 버튼을 '가가' 모양의 최종 버전으로 교체 */}
                 <div className="relative">
-                  <NaverFontButtonV2 onClick={() => setFontSizeSelectorOpen((prev) => !prev)} />
+                  <NaverFontButtonV2
+                    onClick={() => setFontSizeSelectorOpen((prev) => !prev)}
+                  />
                   {isFontSizeSelectorOpen && (
                     <FontSizeSelector
                       currentValue={fontSize}
@@ -487,8 +482,7 @@ export default function NewsPage() {
 
             <section className="mt-12 pt-8 border-t">
               <h2 className="text-2xl font-bold mb-6">
-                댓글{" "}
-                <span className="text-indigo-600">{comments.length}</span>
+                댓글 <span className="text-indigo-600">{comments.length}</span>
               </h2>
               <div className="space-y-6">
                 <div className="flex items-start gap-4">
