@@ -61,16 +61,16 @@ export default function NewsletterDashboard() {
     }
   }, [])
 
-  // 카테고리별 읽기 통계
+  // 카테고리별 읽기 통계 (백엔드 Category enum과 일치)
   const categoryStats = [
     { name: "경제", reads: 45, percentage: 28.8 },
     { name: "IT/과학", reads: 38, percentage: 24.4 },
     { name: "정치", reads: 32, percentage: 20.5 },
     { name: "사회", reads: 25, percentage: 16.0 },
-    { name: "스포츠", reads: 16, percentage: 10.3 }
+    { name: "생활", reads: 16, percentage: 10.3 }
   ]
 
-  // 인기 콘텐츠
+  // 인기 콘텐츠 (백엔드 Category enum과 일치)
   const popularContent = [
     {
       title: "한국은행 기준금리 동결 결정",

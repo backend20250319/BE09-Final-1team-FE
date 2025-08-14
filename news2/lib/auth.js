@@ -167,7 +167,7 @@ export async function login(email, password) {
       body: JSON.stringify({ email, password }),
     });
 
-    const data = await response.json();
+    const data = await response.json().catch(() => ({}));
 
     if (response.ok && data.success) {
       // JWT 토큰 저장 (data 객체 안에 있음)

@@ -11,13 +11,13 @@ import { Label } from "@/components/ui/label"
 import Header from "@/components/header"
 import { TextWithTooltips } from "@/components/tooltip"
 import WeatherWidget from "@/components/WeatherWidget"
-import { newsService } from "@/lib/newsService"
+
 
 import { getUserRole } from "@/lib/auth"
 import RealTimeKeywordWidget from "@/components/RealTimeKeywordWidget"
 
-// 더미 데이터 생성 함수
-const generateDummyNews = () => {
+// 임시 더미 데이터 생성 함수 (API 실패 시 사용)
+const generateFallbackNews = () => {
   const categories = ["POLITICS", "ECONOMY", "SOCIETY", "LIFE", "INTERNATIONAL", "IT_SCIENCE", "VEHICLE", "TRAVEL_FOOD", "ART"]
   const sources = ["조선일보", "중앙일보", "동아일보", "한겨레", "경향신문", "한국일보", "서울신문", "매일경제", "한국경제", "이데일리"]
   const titles = [
@@ -30,29 +30,19 @@ const generateDummyNews = () => {
     "여행업계 회복세, 해외 관광객 증가세 지속",
     "문화 예술계 디지털 전환 가속화",
     "교육 시스템 개혁안 발표, 학부모들 관심 집중",
-    "의료 기술 발전으로 치료 효과 향상",
-    "부동산 시장 안정화 정책 효과 나타나",
-    "금융권 디지털 혁신 가속화",
-    "스포츠계 새로운 스타 탄생",
-    "환경 보호 운동 확산",
-    "과학 기술 연구 성과 발표",
-    "문화 유산 보존 활동 강화",
-    "국제 관계 개선 노력 지속",
-    "사회 문제 해결을 위한 민관 협력",
-    "생활 문화 변화 추세",
-    "미래 산업 육성 정책 발표"
+    "의료 기술 발전으로 치료 효과 향상"
   ]
   
-  const dummyNews = []
+  const fallbackNews = []
   
-  for (let i = 1; i <= 200; i++) {
+  for (let i = 1; i <= 50; i++) {
     const category = categories[Math.floor(Math.random() * categories.length)]
     const source = sources[Math.floor(Math.random() * sources.length)]
     const title = titles[Math.floor(Math.random() * titles.length)]
     const views = Math.floor(Math.random() * 10000) + 100
-    const publishedAt = new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000) // 최근 30일 내
+    const publishedAt = new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
     
-    dummyNews.push({
+    fallbackNews.push({
       id: i,
       title: `${title} - ${i}번째 뉴스`,
       content: `이것은 ${category} 카테고리의 ${i}번째 뉴스 기사입니다. 다양한 정보와 분석을 제공합니다.`,
@@ -65,7 +55,7 @@ const generateDummyNews = () => {
     })
   }
   
-  return dummyNews
+  return fallbackNews
 }
 
 export default function MainPage() {
@@ -77,51 +67,43 @@ export default function MainPage() {
   const [totalElements, setTotalElements] = useState(0)
   const [newsItems, setNewsItems] = useState([])
   const [loading, setLoading] = useState(true)
-  const [dummyNewsData] = useState(generateDummyNews())
+  const [fallbackData] = useState(generateFallbackNews())
 
   // 페이지당 아이템 수
   const itemsPerPage = 21
 
   // 카테고리별 필터링 및 페이지네이션
   useEffect(() => {
-    const fetchNews = async () => {
-      console.log('🔄 뉴스 데이터 로딩 시작...', { selectedCategory, currentPage })
+    const fetchNews = () => {
+      console.log('🔄 더미 뉴스 데이터 로딩...', { selectedCategory, currentPage })
       setLoading(true)
       
-      try {
-        // 더미 데이터에서 카테고리별 필터링
-        let filteredData = dummyNewsData
-        if (selectedCategory !== "전체") {
-          filteredData = dummyNewsData.filter(news => news.category === selectedCategory)
-        }
-        
-        // 총 아이템 수와 페이지 수 계산
-        const totalItems = filteredData.length
-        const totalPagesCount = Math.ceil(totalItems / itemsPerPage)
-        
-        // 현재 페이지에 해당하는 데이터 추출
-        const startIndex = (currentPage - 1) * itemsPerPage
-        const endIndex = startIndex + itemsPerPage
-        const currentPageData = filteredData.slice(startIndex, endIndex)
-        
-        console.log('✅ 뉴스 데이터 로딩 성공:', selectedCategory, currentPageData.length, '개')
-        setNewsItems(currentPageData)
-        setTotalPages(totalPagesCount)
-        setTotalElements(totalItems)
-      } catch (error) {
-        console.error('❌ 뉴스 데이터 로딩 실패:', error)
-        setNewsItems([])
-        setTotalPages(1)
-        setTotalElements(0)
-      } finally {
-        setLoading(false)
-        setIsLoaded(true)
+      // 더미 데이터 사용
+      let filteredData = fallbackData
+      if (selectedCategory !== "전체") {
+        filteredData = fallbackData.filter(news => news.category === selectedCategory)
       }
+      
+      // 총 아이템 수와 페이지 수 계산
+      const totalItems = filteredData.length
+      const totalPagesCount = Math.ceil(totalItems / itemsPerPage)
+      
+      // 현재 페이지에 해당하는 데이터 추출
+      const startIndex = (currentPage - 1) * itemsPerPage
+      const endIndex = startIndex + itemsPerPage
+      const currentPageData = filteredData.slice(startIndex, endIndex)
+      
+      console.log('✅ 더미 뉴스 데이터 로딩 성공:', currentPageData.length, '개')
+      setNewsItems(currentPageData)
+      setTotalPages(totalPagesCount)
+      setTotalElements(totalItems)
+      setLoading(false)
+      setIsLoaded(true)
     }
 
     fetchNews()
     setUserRole(getUserRole())
-  }, [currentPage, selectedCategory, dummyNewsData])
+  }, [currentPage, selectedCategory, fallbackData])
 
   // 카테고리 변경 시 첫 페이지로 리셋
   useEffect(() => {
@@ -130,15 +112,15 @@ export default function MainPage() {
     }
   }, [selectedCategory, isLoaded])
 
-  const categories = ["전체", "POLITICS", "ECONOMY", "SOCIETY", "LIFE", "INTERNATIONAL", "IT_SCIENCE", "VEHICLE", "TRAVEL_FOOD", "ART"]
+  const categories = ["전체", "POLITICS", "ECONOMY", "SOCIETY", "CULTURE", "INTERNATIONAL", "IT_SCIENCE", "VEHICLE", "TRAVEL_FOOD", "ART"]
   
-  // 카테고리 표시명 매핑
+  // 카테고리 표시명 매핑 (백엔드 Category enum과 일치)
   const categoryDisplayNames = {
     "전체": "전체",
     "POLITICS": "정치",
     "ECONOMY": "경제", 
     "SOCIETY": "사회",
-    "LIFE": "생활",
+    "CULTURE": "생활",
     "INTERNATIONAL": "세계",
     "IT_SCIENCE": "IT/과학",
     "VEHICLE": "자동차/교통",

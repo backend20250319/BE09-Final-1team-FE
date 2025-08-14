@@ -15,10 +15,9 @@ export default function useSummary(newsId) {
 
         try {
             const res = await fetch(`/api/news/${newsId}/summary`,);
-            const data = await res.text();
+            const data = await res.json().catch(() => ({}));
             setSummary(data.summary_text);
         } catch (err) {
-            const text = await err?.response?.text?.();
             setError("요약 실패: " + err.message);
         } finally {
             setLoading(false);

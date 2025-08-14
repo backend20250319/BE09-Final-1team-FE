@@ -69,7 +69,7 @@ export default function ApiTestPage() {
       const result = {
         status: response.status,
         ok: response.ok,
-        data: response.ok ? await response.json() : await response.text(),
+        data: response.ok ? await response.json().catch(() => ({})) : await response.text(),
         timestamp: new Date().toISOString()
       }
 

@@ -38,9 +38,12 @@ export default function CommunityPage() {
     "정치",
     "경제",
     "사회",
+    "생활",
+    "세계",
     "IT/과학",
-    "스포츠",
-    "문화",
+    "자동차/교통",
+    "여행/음식",
+    "예술",
   ];
 
   const discussions = [
