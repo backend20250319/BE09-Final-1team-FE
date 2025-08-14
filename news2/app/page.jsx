@@ -16,21 +16,13 @@ import WeatherWidget from "@/components/WeatherWidget"
 import { getUserRole } from "@/lib/auth"
 import RealTimeKeywordWidget from "@/components/RealTimeKeywordWidget"
 
-// 임시 더미 데이터 생성 함수 (API 실패 시 사용)
+// 더미 데이터 생성 함수
 const generateFallbackNews = () => {
-  const categories = ["POLITICS", "ECONOMY", "SOCIETY", "LIFE", "INTERNATIONAL", "IT_SCIENCE", "VEHICLE", "TRAVEL_FOOD", "ART"]
-  const sources = ["조선일보", "중앙일보", "동아일보", "한겨레", "경향신문", "한국일보", "서울신문", "매일경제", "한국경제", "이데일리"]
+  const categories = ["POLITICS", "ECONOMY", "SOCIETY", "CULTURE", "INTERNATIONAL", "IT_SCIENCE", "VEHICLE", "TRAVEL_FOOD", "ART"]
+  const sources = ["연합뉴스", "뉴시스", "매일경제", "한국일보", "중앙일보", "동아일보", "조선일보", "경향신문", "한겨레", "서울신문"]
   const titles = [
-    "정부, 새로운 경제 정책 발표... 시장 반응 주목",
-    "IT 업계 혁신 기술 도입으로 산업 구조 변화 예상",
-    "국제 무역 협정 체결로 경제 성장 기대감 고조",
-    "사회 복지 정책 개선안 발표, 시민들 반응 엇갈려",
-    "기후 변화 대응을 위한 글로벌 협력 강화",
-    "자동차 산업 전기차 시장 점유율 급상승",
-    "여행업계 회복세, 해외 관광객 증가세 지속",
-    "문화 예술계 디지털 전환 가속화",
-    "교육 시스템 개혁안 발표, 학부모들 관심 집중",
-    "의료 기술 발전으로 치료 효과 향상"
+    "정치 개혁안 발표", "경제 성장률 전망", "사회 이슈 분석", "문화 행사 소개", "국제 관계 현황",
+    "기술 발전 동향", "교통 정책 변화", "여행 정보 제공", "예술 전시회 개최"
   ]
   
   const fallbackNews = []
@@ -57,6 +49,8 @@ const generateFallbackNews = () => {
   
   return fallbackNews
 }
+
+
 
 export default function MainPage() {
   const [selectedCategory, setSelectedCategory] = useState("전체")

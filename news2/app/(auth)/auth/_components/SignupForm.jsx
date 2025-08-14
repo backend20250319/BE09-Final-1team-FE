@@ -24,6 +24,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Mail, Lock, User, Heart, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { 
+  CategoriesResponseSchema, 
+  SignupRequestSchema, 
+  SignupResponseSchema,
+  NewsletterSubscriptionSchema,
+  NewsletterSubscriptionResponseSchema
+} from "@/lib/schemas";
 
 export default function SignupForm({ onSignupSuccess }) {
   const router = useRouter();
@@ -53,20 +60,29 @@ export default function SignupForm({ onSignupSuccess }) {
         setIsLoadingInterests(true);
         const res = await fetch("/api/users/categories");
         if (!res.ok) throw new Error("failed");
-        const json = await res.json();
-        setInterests(json.data);
+        
+        const json = await res.json().catch(() => ({}));
+        
+        // zod 스키마 검증
+        try {
+          const parsed = CategoriesResponseSchema.parse(json);
+          setInterests(parsed.data);
+        } catch (validationError) {
+          console.error("카테고리 API 응답 스키마 불일치:", validationError);
+          throw new Error("카테고리 데이터 형식이 올바르지 않습니다");
+        }
       } catch {
-        // 폴백: 하드코드 목록
+        // 폴백: 하드코드 목록 (백엔드 Category enum과 1:1 매칭)
         setInterests([
-          { id: "politics", icon: "🏛️", categoryName: "정치" },
-          { id: "economy", icon: "💰", categoryName: "경제" },
-          { id: "society", icon: "👥", categoryName: "사회" },
-          { id: "culture", icon: "🎭", categoryName: "생활" },
-          { id: "international", icon: "🌍", categoryName: "세계" },
-          { id: "it_science", icon: "💻", categoryName: "IT/과학" },
-          { id: "vehicle", icon: "🚗", categoryName: "자동차/교통" },
-          { id: "travel_food", icon: "🧳", categoryName: "여행/음식" },
-          { id: "art", icon: "🎨", categoryName: "예술" },
+          { id: "POLITICS", icon: "🏛️", categoryName: "정치" },
+          { id: "ECONOMY", icon: "💰", categoryName: "경제" },
+          { id: "SOCIETY", icon: "👥", categoryName: "사회" },
+          { id: "CULTURE", icon: "🎭", categoryName: "생활" },
+          { id: "INTERNATIONAL", icon: "🌍", categoryName: "세계" },
+          { id: "IT_SCIENCE", icon: "💻", categoryName: "IT/과학" },
+          { id: "VEHICLE", icon: "🚗", categoryName: "자동차/교통" },
+          { id: "TRAVEL_FOOD", icon: "🧳", categoryName: "여행/음식" },
+          { id: "ART", icon: "🎨", categoryName: "예술" },
         ]);
       } finally {
         setIsLoadingInterests(false);
@@ -76,17 +92,10 @@ export default function SignupForm({ onSignupSuccess }) {
   }, []);
 
   // --- 핸들러 ---
-  const toggleInterest = (interestId) => {
-    const key = String(interestId); // interestId를 문자열로 변환
-    setSelectedInterests((prev) => {
-      if (prev.includes(key)) {
-        return prev.filter((id) => id !== key);
-      }
-      if (prev.length < 3) {
-        return [...prev, key];
-      }
-      return prev;
-    });
+  const toggleInterest = (id) => {
+    const n = Number(id);
+    if(Number.isNaN(n)) return;
+    setSelectedInterests((prev) => prev.includes(n) ? prev.filter(x => x !== n) : (prev.length < 3 ? [...prev, n] : prev));
   };
 
   const handleSubmit = async (e) => {
@@ -110,22 +119,27 @@ export default function SignupForm({ onSignupSuccess }) {
     setIsLoading(true);
 
     try {
-      const interests = selectedInterests.map((id) => {
-        const n = Number(id);
-        return Number.isNaN(n) ? null : n;
-      });
+      // zod 스키마로 요청 데이터 검증
+      const requestData = {
+        name,
+        email,
+        password,
+        birthYear: parseInt(birthYear, 10),
+        gender,
+        hobbies: selectedInterests,
+      };
+
+      try {
+        SignupRequestSchema.parse(requestData);
+      } catch (validationError) {
+        const errorMessage = validationError.errors?.[0]?.message || "입력 데이터 형식이 올바르지 않습니다";
+        return setError(errorMessage);
+      }
 
       const response = await fetch('/api/users/signup', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          email,
-          password,
-          birthYear: parseInt(birthYear, 10), // 숫자로 변환하여 전송
-          gender, // 성별 추가
-          hobbies: selectedInterests,
-        }),
+        body: JSON.stringify(requestData),
       });
 
       if (!response.ok) {
@@ -133,14 +147,42 @@ export default function SignupForm({ onSignupSuccess }) {
         throw new Error(errorData.message || `회원가입 중 오류가 발생했습니다. (${response.status})`);
       }
 
+      // 응답 스키마 검증 (선택사항)
+      try {
+        const responseData = await response.json().catch(() => ({}));
+        SignupResponseSchema.parse(responseData);
+      } catch (validationError) {
+        console.warn("회원가입 응답 스키마 불일치:", validationError);
+        // 응답 검증 실패해도 성공으로 처리 (선택사항)
+      }
+
       // 2) (선택) 뉴스레터 구독
       if (newsletter && email) {
         try {
-          await fetch("/api/subscribe", {
+          // 뉴스레터 구독 요청 데이터 검증
+          const subscriptionData = { email };
+          try {
+            NewsletterSubscriptionSchema.parse(subscriptionData);
+          } catch (validationError) {
+            console.warn("뉴스레터 구독 요청 데이터 검증 실패:", validationError);
+            // 검증 실패해도 구독 시도는 계속
+          }
+
+          const subscriptionResponse = await fetch("/api/subscribe", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email }),
+            body: JSON.stringify(subscriptionData),
           });
+
+          if (subscriptionResponse.ok) {
+            // 응답 스키마 검증 (선택사항)
+            try {
+              const responseData = await subscriptionResponse.json().catch(() => ({}));
+              NewsletterSubscriptionResponseSchema.parse(responseData);
+            } catch (validationError) {
+              console.warn("뉴스레터 구독 응답 스키마 불일치:", validationError);
+            }
+          }
         } catch {
           // 구독 실패해도 가입 자체는 성공으로 진행
         }

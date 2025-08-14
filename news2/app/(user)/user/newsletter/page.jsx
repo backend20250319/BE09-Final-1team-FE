@@ -149,31 +149,6 @@ export default function UserNewsletter() {
 
     fetchData()
   }, [])
-    {
-      id: 1,
-      subject: "[주간 IT 뉴스] AI 기술의 미래 전망",
-      sender: "주간 IT 뉴스",
-      receivedAt: "2024-01-15 08:00",
-      isRead: false,
-      hasAttachment: false
-    },
-    {
-      id: 2,
-      subject: "[일간 경제 브리핑] 경제 정책 변화 분석",
-      sender: "일간 경제 브리핑",
-      receivedAt: "2024-01-15 07:00",
-      isRead: true,
-      hasAttachment: true
-    },
-    {
-      id: 3,
-      subject: "[주간 IT 뉴스] 새로운 프로그래밍 언어 동향",
-      sender: "주간 IT 뉴스",
-      receivedAt: "2024-01-14 08:00",
-      isRead: false,
-      hasAttachment: false
-    }
-  ]
 
   // 구독 처리 함수
   const handleSubscribe = (newsletterId) => {
