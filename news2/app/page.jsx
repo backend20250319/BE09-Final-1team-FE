@@ -10,9 +10,6 @@ import Link from "next/link"
 import { Label } from "@/components/ui/label"
 import Header from "@/components/header"
 import { TextWithTooltips } from "@/components/tooltip"
-import WeatherWidget from "@/components/WeatherWidget"
-
-
 import { getUserRole } from "@/lib/auth"
 import RealTimeKeywordWidget from "@/components/RealTimeKeywordWidget"
 
@@ -125,23 +122,7 @@ export default function MainPage() {
   // 백엔드 API에서 이미 필터링된 데이터를 사용하므로 그대로 반환
   const filteredNewsItems = newsItems
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-        <Header />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-            <div className="h-64 bg-gray-200 rounded mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded mb-2"></div>
-            <div className="h-4 bg-gray-200 rounded mb-2"></div>
-            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <Header />
