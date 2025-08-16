@@ -46,6 +46,28 @@ export const SignupResponseSchema = z.object({
   }).optional()
 });
 
+// 로그인 요청 스키마
+export const LoginRequestSchema = z.object({
+  email: z.string().email("올바른 이메일 형식이 아닙니다"),
+  password: z.string().min(1, "비밀번호를 입력해주세요")
+});
+
+// 로그인 응답 스키마
+export const LoginResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string().optional(),
+  data: z.object({
+    accessToken: z.string().optional(),
+    refreshToken: z.string().optional(),
+    user: z.object({
+      id: z.number(),
+      email: z.string(),
+      name: z.string(),
+      role: z.enum(["USER", "ADMIN"]).optional()
+    }).optional()
+  }).optional()
+});
+
 // 뉴스레터 구독 요청 스키마
 export const NewsletterSubscriptionSchema = z.object({
   email: z.string().email("올바른 이메일 형식이 아닙니다")
@@ -55,4 +77,116 @@ export const NewsletterSubscriptionSchema = z.object({
 export const NewsletterSubscriptionResponseSchema = z.object({
   success: z.boolean(),
   message: z.string().optional()
+});
+
+// 뉴스 아이템 스키마
+export const NewsItemSchema = z.object({
+  newsId: z.string(),
+  title: z.string(),
+  content: z.string().optional(),
+  category: z.string(),
+  source: z.string().optional(),
+  sourceLogo: z.string().optional(),
+  url: z.string().optional(),
+  imageUrl: z.string().optional(),
+  publishedAt: z.string().optional(),
+  views: z.number().optional(),
+  tags: z.array(z.string()).optional(),
+  reporter: z.object({
+    name: z.string(),
+    email: z.string().optional(),
+    avatar: z.string().optional()
+  }).optional(),
+  dedupState: z.string().optional(),
+  dedupStateDescription: z.string().optional()
+});
+
+// 뉴스 목록 응답 스키마
+export const NewsListResponseSchema = z.object({
+  success: z.boolean().optional(),
+  data: z.object({
+    content: z.array(NewsItemSchema),
+    totalElements: z.number(),
+    totalPages: z.number(),
+    currentPage: z.number(),
+    size: z.number(),
+    first: z.boolean(),
+    last: z.boolean()
+  }).optional()
+});
+
+// 사용자 프로필 스키마
+export const UserProfileSchema = z.object({
+  id: z.number(),
+  email: z.string(),
+  name: z.string(),
+  birthYear: z.number().optional(),
+  gender: z.enum(["MALE", "FEMALE"]).optional(),
+  hobbies: z.array(CategoryId).optional(),
+  role: z.enum(["USER", "ADMIN"]).optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional()
+});
+
+// 사용자 프로필 응답 스키마
+export const UserProfileResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string().optional(),
+  data: UserProfileSchema.optional()
+});
+
+// 에러 응답 스키마
+export const ErrorResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+  error: z.string().optional(),
+  status: z.number().optional()
+});
+
+// 날씨 데이터 스키마
+export const WeatherDataSchema = z.object({
+  temperature: z.number(),
+  condition: z.string(),
+  humidity: z.number().optional(),
+  windSpeed: z.number().optional(),
+  city: z.string()
+});
+
+// 날씨 응답 스키마
+export const WeatherResponseSchema = z.object({
+  success: z.boolean(),
+  data: WeatherDataSchema.optional(),
+  message: z.string().optional()
+});
+
+// AI 요약 응답 스키마
+export const AiSummaryResponseSchema = z.object({
+  success: z.boolean(),
+  summary_text: z.string(),
+  message: z.string().optional()
+});
+
+// 검색 제안 스키마
+export const SearchSuggestionSchema = z.object({
+  keyword: z.string(),
+  count: z.number().optional()
+});
+
+// 검색 제안 응답 스키마
+export const SearchSuggestionsResponseSchema = z.object({
+  content: z.array(SearchSuggestionSchema),
+  totalElements: z.number().optional()
+});
+
+// 트렌딩 키워드 스키마
+export const TrendingKeywordSchema = z.object({
+  keyword: z.string(),
+  rank: z.number(),
+  diff: z.number()
+});
+
+// 트렌딩 키워드 응답 스키마
+export const TrendingKeywordsResponseSchema = z.object({
+  keywords: z.array(TrendingKeywordSchema),
+  period: z.string().optional()
 });

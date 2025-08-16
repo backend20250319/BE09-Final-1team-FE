@@ -386,7 +386,7 @@ export default function NewsletterDashboard() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-medium text-gray-900">{content.views.toLocaleString()}</p>
+                        <p className="text-sm font-medium text-gray-900">{content.views?.toLocaleString() || "0"}</p>
                         <p className="text-xs text-gray-500">조회수</p>
                       </div>
                     </div>

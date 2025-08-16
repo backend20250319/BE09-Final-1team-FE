@@ -158,41 +158,19 @@ export default function NewsPage() {
   };
 
   useEffect(() => {
-    const loadNewsData = () => {
+    const loadNewsData = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        // 더미 데이터 사용
-        const fallbackData = {
-          category: "일반",
-          date: new Date().toLocaleString("ko-KR", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          title: `더미 뉴스 제목 - ${articleId}`,
-          reporter: {
-            name: "크롤링 시스템",
-            email: "system@newsphere.com",
-            avatar: "https://placehold.co/40x40/E2E8F0/4A5568?text=기자",
-          },
-          content: "이것은 더미 뉴스 내용입니다. 실제 뉴스 데이터를 불러올 수 없어 임시로 표시됩니다. 다양한 정보와 분석을 제공하는 뉴스 기사입니다. 이 뉴스는 정치, 경제, 사회 등 다양한 분야의 최신 동향을 다루고 있습니다.",
-          url: "#",
-          views: Math.floor(Math.random() * 10000) + 100,
-          source: "더미 뉴스",
-          sourceLogo: "/placeholder-logo.png",
-          tags: ["일반"],
-          newsId: articleId,
-          publishedAt: new Date().toISOString(),
-          dedupState: "NORMAL",
-          dedupStateDescription: "정상",
-          imageUrl: "/placeholder.svg",
-        };
+        // 실제 API 호출
+        const response = await fetch(`/api/news/${articleId}`);
+        if (!response.ok) {
+          throw new Error('뉴스를 찾을 수 없습니다.');
+        }
         
-        setNewsData(fallbackData);
+        const data = await response.json();
+        setNewsData(data);
         setError(null);
       } catch (err) {
         console.error('❌ 뉴스 상세 데이터 로딩 실패:', err);
@@ -259,61 +237,10 @@ export default function NewsPage() {
     );
   }
 
-  // 임시 더미 데이터 생성 (API 실패 시 사용)
-  const generateFallbackNews = () => {
-    const categories = ["POLITICS", "ECONOMY", "SOCIETY", "LIFE", "INTERNATIONAL", "IT_SCIENCE", "VEHICLE", "TRAVEL_FOOD", "ART"]
-    const sources = ["조선일보", "중앙일보", "동아일보", "한겨레", "경향신문", "한국일보", "서울신문", "매일경제", "한국경제", "이데일리"]
-    const titles = [
-      "정부, 새로운 경제 정책 발표... 시장 반응 주목",
-      "IT 업계 혁신 기술 도입으로 산업 구조 변화 예상",
-      "국제 무역 협정 체결로 경제 성장 기대감 고조",
-      "사회 복지 정책 개선안 발표, 시민들 반응 엇갈려",
-      "기후 변화 대응을 위한 글로벌 협력 강화",
-      "자동차 산업 전기차 시장 점유율 급상승",
-      "여행업계 회복세, 해외 관광객 증가세 지속",
-      "문화 예술계 디지털 전환 가속화",
-      "교육 시스템 개혁안 발표, 학부모들 관심 집중",
-      "의료 기술 발전으로 치료 효과 향상"
-    ]
-    
-    const fallbackNews = []
-    
-    for (let i = 1; i <= 20; i++) {
-      const category = categories[Math.floor(Math.random() * categories.length)]
-      const source = sources[Math.floor(Math.random() * sources.length)]
-      const title = titles[Math.floor(Math.random() * titles.length)]
-      const views = Math.floor(Math.random() * 10000) + 100
-      const publishedAt = new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
-      
-      fallbackNews.push({
-        id: i,
-        title: `${title} - ${i}번째 뉴스`,
-        content: `이것은 ${category} 카테고리의 ${i}번째 뉴스 기사입니다. 다양한 정보와 분석을 제공합니다.`,
-        category: category,
-        source: source,
-        image: `/placeholder.svg?height=300&width=500&text=${encodeURIComponent(category)}`,
-        publishedAt: publishedAt.toISOString(),
-        views: views,
-        url: `https://example.com/news/${i}`
-      })
-    }
-    
-    return fallbackNews
-  }
-
-  const newsArticles = generateFallbackNews();
-  const relatedNews = newsArticles
-    .filter(
-      (news) =>
-        news.category === newsData.category && news.title !== newsData.title
-    )
-    .slice(0, 3);
-  const headlineNews = newsArticles
-    .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt))
-    .slice(0, 5);
-  const rankingNews = newsArticles
-    .sort((a, b) => b.views - a.views)
-    .slice(0, 5);
+  // 관련 뉴스 데이터 (실제 API에서 가져올 예정)
+  const [relatedNews, setRelatedNews] = useState([]);
+  const [headlineNews, setHeadlineNews] = useState([]);
+  const [rankingNews, setRankingNews] = useState([]);
 
   return (
     <>

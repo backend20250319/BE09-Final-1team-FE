@@ -57,81 +57,32 @@ export default function NewsletterDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchDashboardData = () => {
+    const fetchDashboardData = async () => {
       setLoading(true)
       
-      // 더미 데이터 사용
-      const fallbackStats = [
-        { name: "월", subscribers: 8900, sent: 8900, opened: 6230, clicked: 890 },
-        { name: "화", subscribers: 9200, sent: 9200, opened: 6440, clicked: 920 },
-        { name: "수", subscribers: 8500, sent: 8500, opened: 5950, clicked: 850 },
-        { name: "목", subscribers: 9800, sent: 9800, opened: 6860, clicked: 980 },
-        { name: "금", subscribers: 11000, sent: 11000, opened: 7700, clicked: 1100 },
-        { name: "토", subscribers: 8900, sent: 8900, opened: 6230, clicked: 890 },
-        { name: "일", subscribers: 7500, sent: 7500, opened: 5250, clicked: 750 },
-      ]
-      
-      const fallbackNewsletters = [
-        { 
-          id: 1, 
-          name: "주간 IT 뉴스", 
-          subscribers: 8900, 
-          openRate: 68.5, 
-          clickRate: 12.8,
-          lastSent: "2024-01-15",
-          status: "active"
-        },
-        { 
-          id: 2, 
-          name: "일간 경제 브리핑", 
-          subscribers: 6500, 
-          openRate: 72.1, 
-          clickRate: 15.3,
-          lastSent: "2024-01-15",
-          status: "active"
-        },
-        { 
-          id: 3, 
-          name: "월간 환경 리포트", 
-          subscribers: 3200, 
-          openRate: 65.2, 
-          clickRate: 8.9,
-          lastSent: "2024-01-01",
-          status: "inactive"
-        },
-      ]
-      
-      const fallbackCampaigns = [
-        { 
-          id: 1, 
-          name: "AI 기술 동향", 
-          sent: 8900, 
-          opened: 6230, 
-          clicked: 890,
-          date: "2024-01-15"
-        },
-        { 
-          id: 2, 
-          name: "경제 정책 분석", 
-          sent: 9200, 
-          opened: 6440, 
-          clicked: 920,
-          date: "2024-01-14"
-        },
-        { 
-          id: 3, 
-          name: "환경 보호 이슈", 
-          sent: 8500, 
-          opened: 5950, 
-          clicked: 850,
-          date: "2024-01-13"
-        },
-      ]
-      
-      setStatsData(fallbackStats)
-      setNewsletters(fallbackNewsletters)
-      setRecentCampaigns(fallbackCampaigns)
-      setLoading(false)
+      try {
+        // 실제 API 호출로 변경
+        const [statsResponse, newslettersResponse, campaignsResponse] = await Promise.all([
+          fetch('/api/admin/dashboard/stats'),
+          fetch('/api/admin/newsletters'),
+          fetch('/api/admin/campaigns')
+        ])
+        
+        const statsData = await statsResponse.json()
+        const newslettersData = await newslettersResponse.json()
+        const campaignsData = await campaignsResponse.json()
+        
+        setStatsData(statsData || [])
+        setNewsletters(newslettersData || [])
+        setRecentCampaigns(campaignsData || [])
+      } catch (error) {
+        console.error('❌ 대시보드 데이터 로딩 실패:', error)
+        setStatsData([])
+        setNewsletters([])
+        setRecentCampaigns([])
+      } finally {
+        setLoading(false)
+      }
     }
 
     fetchDashboardData()

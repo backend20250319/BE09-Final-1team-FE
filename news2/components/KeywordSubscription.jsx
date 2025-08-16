@@ -14,6 +14,8 @@ import {
   Clock
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { useMultiLoading } from "@/hooks/useLoading"
+import { CenterLoading } from "@/components/ui/loading"
 
 export default function KeywordSubscription({ 
   userId, 
@@ -22,8 +24,12 @@ export default function KeywordSubscription({
 }) {
   const [keyword, setKeyword] = useState("")
   const [subscriptions, setSubscriptions] = useState([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [isSubscribing, setIsSubscribing] = useState(false)
+  const { 
+    loadingStates,
+    startLoading,
+    stopLoading,
+    isLoading
+  } = useMultiLoading()
   const { toast } = useToast()
 
   // 구독 목록 로드
@@ -34,7 +40,7 @@ export default function KeywordSubscription({
   }, [userId, email])
 
   const loadSubscriptions = async () => {
-    setIsLoading(true)
+    startLoading('list')
     try {
       const params = new URLSearchParams()
       if (userId) params.append('userId', userId)
@@ -53,7 +59,7 @@ export default function KeywordSubscription({
         variant: "destructive"
       })
     } finally {
-      setIsLoading(false)
+      stopLoading('list')
     }
   }
 
@@ -68,7 +74,7 @@ export default function KeywordSubscription({
       return
     }
 
-    setIsSubscribing(true)
+    startLoading('subscribe')
     try {
       const response = await fetch('/api/subscribe/keywords', {
         method: 'POST',
@@ -106,7 +112,7 @@ export default function KeywordSubscription({
         variant: "destructive"
       })
     } finally {
-      setIsSubscribing(false)
+      stopLoading('subscribe')
     }
   }
 
@@ -172,10 +178,10 @@ export default function KeywordSubscription({
           />
           <Button 
             onClick={handleSubscribe}
-            disabled={isSubscribing || !keyword.trim()}
+            disabled={isLoading('subscribe') || !keyword.trim()}
             className="flex items-center gap-1"
           >
-            {isSubscribing ? (
+            {isLoading('subscribe') ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
             ) : (
               <Plus className="w-4 h-4" />
@@ -191,11 +197,8 @@ export default function KeywordSubscription({
             구독 중인 키워드 ({subscriptions.length})
           </h4>
           
-          {isLoading ? (
-            <div className="text-center py-4">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="text-sm text-gray-500 mt-2">로딩 중...</p>
-            </div>
+          {isLoading('list') ? (
+            <CenterLoading text="구독 목록을 불러오는 중..." />
           ) : subscriptions.length > 0 ? (
             <div className="space-y-2">
               {subscriptions.map((subscription) => (

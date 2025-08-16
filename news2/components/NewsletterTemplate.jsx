@@ -30,58 +30,25 @@ export default function NewsletterTemplate({
   const [bookmarked, setBookmarked] = useState(false)
   const [updateCountFunction, setUpdateCountFunction] = useState(null)
 
-  // 기본 뉴스레터 데이터
-  const defaultNewsletter = {
-    id: 1,
-    title: "매일 경제 뉴스",
-    description: "주요 경제 뉴스와 시장 동향을 매일 아침에 받아보세요",
-    category: "경제",
-    author: "김경제",
+  const newsletterData = newsletter || {
+    id: 0,
+    title: "뉴스레터 제목",
+    description: "뉴스레터 설명",
+    category: "일반",
+    author: "작성자",
     authorAvatar: "/placeholder-user.jpg",
-    date: "2024년 1월 15일",
-    time: "오전 9:00",
-    subscribers: 15420,
-    views: 8920,
-    content: [
-      {
-        type: "header",
-        title: "오늘의 주요 경제 뉴스",
-        subtitle: "2024년 1월 15일 경제 동향 요약"
-      },
-      {
-        type: "article",
-        title: "한국은행, 기준금리 동결 결정",
-        summary: "한국은행이 기준금리를 현재 수준으로 동결하기로 결정했습니다. 인플레이션 압력과 경제 성장률을 종합적으로 고려한 결정으로 분석됩니다.",
-        image: "/placeholder.jpg",
-        readTime: "3분",
-        category: "금융"
-      },
-      {
-        type: "article",
-        title: "반도체 수출 회복세 지속",
-        summary: "반도체 수출이 전년 대비 15% 증가하며 회복세를 보이고 있습니다. AI 수요 증가와 메모리 가격 상승이 주요 요인으로 꼽힙니다.",
-        image: "/placeholder.jpg",
-        readTime: "2분",
-        category: "산업"
-      },
-      {
-        type: "article",
-        title: "원-달러 환율 변동성 확대",
-        summary: "원-달러 환율이 1,300원 선에서 변동성을 보이고 있습니다. 미국 연방준비제도(Fed)의 통화정책 기조와 국내 경제 지표가 영향을 미치고 있습니다.",
-        image: "/placeholder.jpg",
-        readTime: "4분",
-        category: "환율"
-      }
-    ],
-    tags: ["경제", "투자", "시장동향", "금융"],
+    date: new Date().toLocaleDateString("ko-KR"),
+    time: new Date().toLocaleTimeString("ko-KR", { hour: '2-digit', minute: '2-digit' }),
+    subscribers: 0,
+    views: 0,
+    content: [],
+    tags: [],
     footer: {
       unsubscribe: "구독 해지",
       preferences: "설정 변경",
       contact: "문의하기"
     }
   }
-
-  const newsletterData = newsletter || defaultNewsletter
 
   const formatNumber = (num) => {
     if (num >= 10000) {

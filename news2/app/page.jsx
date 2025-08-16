@@ -13,39 +13,7 @@ import { TextWithTooltips } from "@/components/tooltip"
 import { getUserRole } from "@/lib/auth"
 import RealTimeKeywordWidget from "@/components/RealTimeKeywordWidget"
 
-// 더미 데이터 생성 함수
-const generateFallbackNews = () => {
-  const categories = ["POLITICS", "ECONOMY", "SOCIETY", "CULTURE", "INTERNATIONAL", "IT_SCIENCE", "VEHICLE", "TRAVEL_FOOD", "ART"]
-  const sources = ["연합뉴스", "뉴시스", "매일경제", "한국일보", "중앙일보", "동아일보", "조선일보", "경향신문", "한겨레", "서울신문"]
-  const titles = [
-    "정치 개혁안 발표", "경제 성장률 전망", "사회 이슈 분석", "문화 행사 소개", "국제 관계 현황",
-    "기술 발전 동향", "교통 정책 변화", "여행 정보 제공", "예술 전시회 개최"
-  ]
-  
-  const fallbackNews = []
-  
-  for (let i = 1; i <= 50; i++) {
-    const category = categories[Math.floor(Math.random() * categories.length)]
-    const source = sources[Math.floor(Math.random() * sources.length)]
-    const title = titles[Math.floor(Math.random() * titles.length)]
-    const views = Math.floor(Math.random() * 10000) + 100
-    const publishedAt = new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
-    
-    fallbackNews.push({
-      id: i,
-      title: `${title} - ${i}번째 뉴스`,
-      content: `이것은 ${category} 카테고리의 ${i}번째 뉴스 기사입니다. 다양한 정보와 분석을 제공합니다.`,
-      category: category,
-      source: source,
-      image: `/placeholder.svg?height=300&width=500&text=${encodeURIComponent(category)}`,
-      publishedAt: publishedAt.toISOString(),
-      views: views,
-      url: `https://example.com/news/${i}`
-    })
-  }
-  
-  return fallbackNews
-}
+
 
 
 
@@ -58,43 +26,86 @@ export default function MainPage() {
   const [totalElements, setTotalElements] = useState(0)
   const [newsItems, setNewsItems] = useState([])
   const [loading, setLoading] = useState(true)
-  const [fallbackData] = useState(generateFallbackNews())
 
   // 페이지당 아이템 수
   const itemsPerPage = 21
 
   // 카테고리별 필터링 및 페이지네이션
   useEffect(() => {
-    const fetchNews = () => {
-      console.log('🔄 더미 뉴스 데이터 로딩...', { selectedCategory, currentPage })
+    const fetchNews = async () => {
+      console.log('🔄 뉴스 데이터 로딩...', { selectedCategory, currentPage })
       setLoading(true)
       
-      // 더미 데이터 사용
-      let filteredData = fallbackData
-      if (selectedCategory !== "전체") {
-        filteredData = fallbackData.filter(news => news.category === selectedCategory)
+      try {
+        // 백엔드 API 호출
+        // Next.js API 라우트를 통해 프록시 사용
+        const categoryParam = selectedCategory === "전체" ? "" : `&category=${selectedCategory}`
+        const response = await fetch(`/api/news?page=${currentPage - 1}&size=${itemsPerPage}${categoryParam}`)
+        const data = await response.json()
+        
+        console.log('📰 뉴스 데이터:', data.content)
+        // 백엔드 API 응답 구조에 맞게 데이터 매핑
+        const mappedNews = (data.content || []).map(news => ({
+          id: news.newsId,
+          title: news.title,
+          content: news.content,
+          source: news.press,
+          publishedAt: news.publishedAt,
+          category: news.categoryName,
+          image: news.imageUrl,
+          views: news.viewCount || 0
+        }))
+        
+        console.log('📰 매핑된 뉴스 데이터:', mappedNews)
+        
+        setNewsItems(mappedNews)
+        setTotalPages(data.totalPages || 1)
+        setTotalElements(data.totalElements || 0)
+        setLoading(false)
+        setIsLoaded(true)
+      } catch (error) {
+        console.error('❌ 뉴스 데이터 로딩 실패:', error)
+        console.error('❌ 오류 상세:', {
+          message: error.message,
+          stack: error.stack,
+          url: `/api/news?page=${currentPage - 1}&size=${itemsPerPage}&category=${selectedCategory}`
+        })
+        
+        // 임시 더미 데이터 사용
+        const dummyData = [
+          {
+            id: 1,
+            title: "테스트 뉴스 제목 1",
+            content: "테스트 뉴스 내용입니다.",
+            source: "테스트 언론사",
+            publishedAt: "2025-01-01T00:00:00",
+            category: "POLITICS",
+            image: "/placeholder.jpg",
+            views: 1234
+          },
+          {
+            id: 2,
+            title: "테스트 뉴스 제목 2",
+            content: "테스트 뉴스 내용입니다.",
+            source: "테스트 언론사",
+            publishedAt: "2025-01-01T00:00:00",
+            category: "ECONOMY",
+            image: "/placeholder.jpg",
+            views: 5678
+          }
+        ]
+        
+        setNewsItems(dummyData)
+        setTotalPages(1)
+        setTotalElements(2)
+        setLoading(false)
+        setIsLoaded(true)
       }
-      
-      // 총 아이템 수와 페이지 수 계산
-      const totalItems = filteredData.length
-      const totalPagesCount = Math.ceil(totalItems / itemsPerPage)
-      
-      // 현재 페이지에 해당하는 데이터 추출
-      const startIndex = (currentPage - 1) * itemsPerPage
-      const endIndex = startIndex + itemsPerPage
-      const currentPageData = filteredData.slice(startIndex, endIndex)
-      
-      console.log('✅ 더미 뉴스 데이터 로딩 성공:', currentPageData.length, '개')
-      setNewsItems(currentPageData)
-      setTotalPages(totalPagesCount)
-      setTotalElements(totalItems)
-      setLoading(false)
-      setIsLoaded(true)
     }
 
     fetchNews()
     setUserRole(getUserRole())
-  }, [currentPage, selectedCategory, fallbackData])
+  }, [currentPage, selectedCategory])
 
   // 카테고리 변경 시 첫 페이지로 리셋
   useEffect(() => {
@@ -140,7 +151,7 @@ export default function MainPage() {
                   <div className="lg:w-full overflow-x-auto flex space-x-3 pb-0">
                     {categories.map((category, index) => (
                       <Button
-                        key={category}
+                        key={`category-${category}-${index}`}
                         variant={selectedCategory === category ? "default" : "outline"}
                         size="default"
                         onClick={() => setSelectedCategory(category)}
@@ -170,9 +181,12 @@ export default function MainPage() {
               <Card className="relative overflow-hidden glass hover-lift animate-slide-in h-[560px] rounded-xl">
                 {/* 이미지 영역 */}
                 <img
-                  src="/placeholder.svg?height=300&width=500"
+                  src="/placeholder.jpg"
                   alt="Featured news"
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.src = "/placeholder.jpg"
+                  }}
                 />
 
                 {/* 텍스트 오버레이 */}
@@ -212,14 +226,17 @@ export default function MainPage() {
               {/* Side News List */}
               {filteredNewsItems.slice(0, 4).map((item, index) => (
                 <Card 
-                  key={item.id} 
+                  key={`sidebar-news-${item.id || index}-${index}`} 
                   className="flex items-center gap-4 p-4 glass hover-lift rounded-xl h-[130px] transition animate-slide-in"
                   style={{ animationDelay: `${0.3 + index * 0.1}s` }}
                 >
                   <img
-                    src={item.image || "/placeholder.svg"}
+                    src={item.image || "/placeholder.jpg"}
                     alt={item.title}
                     className="w-24 h-24 object-cover rounded-lg flex-shrink-0"
+                    onError={(e) => {
+                      e.target.src = "/placeholder.jpg"
+                    }}
                   />
                   <div className="flex-1 min-w-0">
                     <p className="text-base font-semibold line-clamp-2 text-gray-800 mb-2">
@@ -252,7 +269,7 @@ export default function MainPage() {
             
               {filteredNewsItems.map((news, index) => (
                 <Link 
-                  key={news.id} 
+                  key={`main-news-${news.id || index}-${index}`} 
                   href={`/news/${news.id}`} 
                   prefetch={false}
                   className="block"
@@ -266,9 +283,12 @@ export default function MainPage() {
                    {/* 이미지 영역 */}
                   <div className="h-72 w-full relative">
                     <img
-                      src={news.image || "/placeholder.svg"}
+                      src={news.image || "/placeholder.jpg"}
                       alt={news.title}
                       className="w-full h-72 object-cover rounded-lg"
+                      onError={(e) => {
+                        e.target.src = "/placeholder.jpg"
+                      }}
                     />
                   </div>
                   
@@ -303,7 +323,7 @@ export default function MainPage() {
                       <div className="flex items-center space-x-2 flex-shrink-0">
                         <span className="text-sm text-gray-500 flex items-center">
                           <Eye className="h-4 w-4 mr-1" />
-                          {news.views.toLocaleString()}
+                          {news.views?.toLocaleString() || "0"}
                         </span>
                         <Button
                           variant="ghost"
@@ -340,7 +360,7 @@ export default function MainPage() {
                       {currentPage} / {totalPages} 페이지
                     </p>
                     <p className="text-base text-gray-600 mt-2">
-                      총 {totalElements.toLocaleString()}개의 뉴스
+                      총 {totalElements?.toLocaleString() || "0"}개의 뉴스
                     </p>
                   </div>
                 </Card>
@@ -388,7 +408,7 @@ export default function MainPage() {
                         
                         return (
                           <Button
-                            key={pageNum}
+                            key={`pagination-${pageNum}-${i}`}
                             variant={currentPage === pageNum ? "default" : "ghost"}
                             size="sm"
                             onClick={() => setCurrentPage(pageNum)}
