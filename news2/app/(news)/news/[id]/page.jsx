@@ -147,6 +147,11 @@ export default function NewsPage() {
   ]);
   const [newComment, setNewComment] = useState("");
   const [readingProgress, setReadingProgress] = useState(0);
+  
+  // 관련 뉴스 데이터 (실제 API에서 가져올 예정)
+  const [relatedNews, setRelatedNews] = useState([]);
+  const [headlineNews, setHeadlineNews] = useState([]);
+  const [rankingNews, setRankingNews] = useState([]);
 
   const backendToFrontendCategory = {
     POLITICS: "정치",
@@ -237,11 +242,6 @@ export default function NewsPage() {
     );
   }
 
-  // 관련 뉴스 데이터 (실제 API에서 가져올 예정)
-  const [relatedNews, setRelatedNews] = useState([]);
-  const [headlineNews, setHeadlineNews] = useState([]);
-  const [rankingNews, setRankingNews] = useState([]);
-
   return (
     <>
       <Header />
@@ -262,25 +262,25 @@ export default function NewsPage() {
             <header className="pb-6">
               <div className="flex items-center space-x-2 mb-4">
                 <span className="text-lg font-bold text-gray-700">
-                  {newsData.source}
+                  {newsData.source || '알 수 없음'}
                 </span>
                 <span className="text-gray-400">•</span>
                 <span className="bg-indigo-100 text-indigo-700 text-sm font-bold px-2 py-0.5 rounded-full">
-                  {newsData.category}
+                  {newsData.category || '일반'}
                 </span>
               </div>
               <h1 className="text-3xl md:text-4xl font-bold leading-tight mb-4">
-                {newsData.title}
+                {newsData.title || '제목 없음'}
               </h1>
               <div className="flex justify-between items-center text-gray-600 text-sm">
                 <p className="flex items-center">
                   <User className="w-4 h-4 mr-1.5" />
-                  {newsData.reporter.name} 기자
+                  {newsData.reporter?.name || '알 수 없음'} 기자
                 </p>
                 <div className="flex items-center space-x-4">
                   <span className="flex items-center text-sm mr-2 text-black">
                     <Clock className="h-4 w-4 mr-1" />
-                    {newsData.date}
+                    {newsData.date || '날짜 없음'}
                   </span>
                 </div>
               </div>
@@ -343,7 +343,7 @@ export default function NewsPage() {
               <div className="my-6">
                 <img
                   src={newsData.imageUrl}
-                  alt={newsData.title}
+                  alt={newsData.title || '뉴스 이미지'}
                   className="w-full max-h-[400px] object-cover rounded-xl mx-auto"
                 />
               </div>
@@ -353,7 +353,7 @@ export default function NewsPage() {
               className="prose prose-lg max-w-none text-lg leading-relaxed text-gray-800"
               style={{ fontSize: `${fontSize}px` }}
             >
-              <div dangerouslySetInnerHTML={{ __html: newsData.content }} />
+              <div dangerouslySetInnerHTML={{ __html: newsData.content || '내용이 없습니다.' }} />
             </article>
 
             {newsData.tags && newsData.tags.length > 0 && (

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { ThemeProvider } from "@/components/theme-provider"
+import { ScrapProvider } from "@/contexts/ScrapContext"
 
 export function Providers({ children }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -26,7 +27,9 @@ export function Providers({ children }) {
         enableSystem
         disableTransitionOnChange
       >
-        {children}
+        <ScrapProvider>
+          {children}
+        </ScrapProvider>
       </ThemeProvider>
       {/* 개발 환경에서만 React Query DevTools 표시 */}
       {process.env.NODE_ENV === 'development' && <ReactQueryDevtools initialIsOpen={false} />}
