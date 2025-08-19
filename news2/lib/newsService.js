@@ -224,8 +224,6 @@ class NewsService {
         },
       });
 
-      console.log("🔍 백엔드 응답 원본:", item);
-
       // 백엔드 응답 구조에 맞게 변환
       const newsItem = {
         id: item.newsId || item.id,
@@ -250,11 +248,14 @@ class NewsService {
         oidAid: item.oidAid,
       };
 
-      console.log("🔄 변환된 뉴스 아이템:", newsItem);
-
       this.setCachedData(cacheKey, newsItem);
       return newsItem;
     } catch (error) {
+      // ★★★★★ [수정] 403 에러는 우리가 의도한 '핸들링된' 에러이므로, 콘솔에 에러를 찍지 않습니다. ★★★★★
+      if (error.status === 403) {
+        throw error; // 그냥 조용히 에러를 다시 던져서, UI 컴포넌트가 처리하도록 합니다.
+      }
+      // 그 외의 다른 모든 에러(500, 네트워크 등)는 개발자가 인지해야 하므로 콘솔에 에러를 표시합니다.
       console.error("뉴스 상세 로딩 실패:", error);
       throw error;
     }

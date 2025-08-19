@@ -112,27 +112,22 @@ export async function safeApiCall(endpoint, options = {}) {
   }
 
   try {
-    console.log("🔄 API 호출:", url);
-
     const response = await fetch(url, {
       ...apiConfig,
       ...options,
     });
 
-    console.log("📡 응답 상태:", response.status, response.statusText);
-
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
+      error.status = response.status;
+      throw error;
     }
 
-    // 응답 본문이 비어있는지 확인
     const text = await response.text();
     if (!text || text.trim() === '') {
-      console.log("✅ API 호출 성공 (빈 응답):", endpoint);
       return null;
     }
 
-    // JSON 파싱 시도
     let data;
     try {
       data = JSON.parse(text);
@@ -142,11 +137,13 @@ export async function safeApiCall(endpoint, options = {}) {
       throw new Error(`Invalid JSON response: ${parseError.message}`);
     }
 
-    console.log("✅ API 호출 성공:", endpoint);
     return data;
   } catch (error) {
+    if (error.status === 403) {
+      throw error;
+    }
+
     console.error("❌ API 호출 실패:", endpoint, error);
-    // 네트워크 오류나 기타 예외 상황에 대한 추가 정보 제공
     if (error.name === 'TypeError' && error.message.includes('fetch')) {
       console.error("🌐 네트워크 연결 문제 가능성");
     }
