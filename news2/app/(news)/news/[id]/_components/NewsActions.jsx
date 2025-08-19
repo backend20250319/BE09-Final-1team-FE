@@ -18,11 +18,9 @@ const NewsActions = ({ newsData, onSummaryOpen, onShareOpen, isFontSizeSelectorO
   const handleAction = async (actionType) => {
     setIsLoading(prev => ({ ...prev, [actionType]: true }));
 
-    // ★★★★★ 로컬 스토리지에서 토큰을 가져옵니다. ('accessToken'이 아닐 경우 이 부분만 수정해주세요) ★★★★★
     const authToken = localStorage.getItem('accessToken');
 
     if (!authToken) {
-      // 사용자에게 선택권을 주는 확인 팝업을 띄웁니다.
       if (window.confirm("로그인이 필요한 서비스입니다. 로그인 페이지로 이동하시겠습니까?")) {
         router.push("/auth");
       }
@@ -47,15 +45,12 @@ const NewsActions = ({ newsData, onSummaryOpen, onShareOpen, isFontSizeSelectorO
           toast.success("기사가 정상적으로 신고되었습니다.");
         }
       } else {
-        // 서버로부터 받은 에러 응답을 JSON으로 파싱합니다.
-        // 만약 응답이 JSON이 아닐 경우를 대비해 .catch()를 추가합니다.
         const errorData = await response.json().catch(() => ({ message: "서버 응답을 파싱할 수 없습니다." }));
 
         if (response.status === 401) {
           toast.error("세션이 만료되었습니다. 다시 로그인해주세요.");
           router.push("/auth");
         } else if (response.status === 403) {
-          // 403 Forbidden 에러는 비공개 처리된 기사로 간주하고 안내 메시지를 보여줍니다.
           toast.error("이 기사는 관리자에 의해 비공개 처리되었습니다.");
         } else {
           toast.error(errorData.message || "요청 처리 중 오류가 발생했습니다.");
