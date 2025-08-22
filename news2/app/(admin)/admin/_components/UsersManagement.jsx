@@ -45,7 +45,7 @@ export default function UsersManagement() {
   /** 백엔드 엔드포인트 (환경변수로 주입) */
   const listUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/users/admin`;
   const meUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/users/mypage`;
-  const deleteUrl = (id) => `${process.env.NEXT_PUBLIC_API_URL}/api/users/admin/${id}`; // <- 규약에 맞게 필요시 수정
+  const deleteUrl = (id) => `${process.env.NEXT_PUBLIC_API_URL}/api/users/internal/admin/${id}`; // <- 규약에 맞게 필요시 수정
 
   /** 내 정보 조회(목록에서 자기 자신 제외를 위해 필요) */
   const fetchMe = useCallback(async () => {
