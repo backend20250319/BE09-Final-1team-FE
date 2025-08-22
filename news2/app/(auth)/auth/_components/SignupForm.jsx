@@ -93,9 +93,11 @@ export default function SignupForm({ onSignupSuccess }) {
 
   // --- 핸들러 ---
   const toggleInterest = (id) => {
-    const n = Number(id);
-    if(Number.isNaN(n)) return;
-    setSelectedInterests((prev) => prev.includes(n) ? prev.filter(x => x !== n) : (prev.length < 3 ? [...prev, n] : prev));
+    setSelectedInterests((prev) => 
+      prev.includes(id) 
+        ? prev.filter(x => x !== id) 
+        : (prev.length < 3 ? [...prev, id] : prev)
+    );
   };
 
   const handleSubmit = async (e) => {
@@ -132,8 +134,11 @@ export default function SignupForm({ onSignupSuccess }) {
       try {
         SignupRequestSchema.parse(requestData);
       } catch (validationError) {
+        console.error('스키마 검증 에러:', validationError);
         const errorMessage = validationError.errors?.[0]?.message || "입력 데이터 형식이 올바르지 않습니다";
-        return setError(errorMessage);
+        setError(errorMessage);
+        setIsLoading(false);
+        return;
       }
 
       const response = await fetch('/api/users/signup', {
@@ -144,7 +149,8 @@ export default function SignupForm({ onSignupSuccess }) {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `회원가입 중 오류가 발생했습니다. (${response.status})`);
+        console.error('회원가입 에러:', errorData);
+        throw new Error(errorData.message || errorData.error || `회원가입 중 오류가 발생했습니다. (${response.status})`);
       }
 
       // 응답 스키마 검증 (선택사항)
@@ -188,11 +194,9 @@ export default function SignupForm({ onSignupSuccess }) {
         }
       }
 
-      setSuccess("회원가입이 완료되었습니다!");
+      setSuccess("회원가입이 완료되었습니다! 로그인 화면으로 이동합니다.");
       setTimeout(() => {
-        if (newsletter) {
-          router.push("/newsletter/dashboard");
-        } else if (onSignupSuccess) {
+        if (onSignupSuccess) {
           onSignupSuccess();
         } else {
           router.push("/auth");

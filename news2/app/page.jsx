@@ -40,7 +40,7 @@ export default function MainPage() {
         // 백엔드 API 호출
         // Next.js API 라우트를 통해 프록시 사용
         const categoryParam = selectedCategory === "전체" ? "" : `&category=${selectedCategory}`
-        const response = await fetch(`/api/news?page=${currentPage - 1}&size=${itemsPerPage}${categoryParam}`)
+        const response = await fetch(`/api/news?page=${currentPage}&size=${itemsPerPage}${categoryParam}`)
         const data = await response.json()
         
         console.log('📰 뉴스 데이터:', data.content)
