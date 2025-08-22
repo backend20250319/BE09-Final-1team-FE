@@ -101,6 +101,21 @@
     "Segoe UI", sans-serif;
 }
 
+/* 나눔고딕 사용 */
+.gothic-text {
+  font-family: var(--font-nanum-gothic);
+}
+
+/* 나눔명조 사용 */
+.myeongjo-text {
+  font-family: var(--font-nanum-myeongjo);
+}
+
+/* 나눔손글씨펜 사용 */
+.brush-text {
+  font-family: var(--font-nanum-brush);
+}
+
 /* 로고용 Protest Riot 폰트 사용 */
 .font-logo {
   font-family: "Protest Riot", "NoonnuBasicGothic", cursive, sans-serif;
