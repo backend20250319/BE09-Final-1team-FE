@@ -9,13 +9,22 @@ export default function SubscriberCount({ darkTheme = false }) {
   useEffect(() => {
     const fetchCount = async () => {
       try {
-        const res = await fetch("/api/subscriber-count");
+        const res = await fetch("/api/subscriber-count", {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
         if (res.ok) {
           const data = await res.json();
           setCount(data.count);
+        } else {
+          console.warn("구독자 수 API 응답 오류:", res.status);
+          setCount(15420); // 기본값 설정
         }
       } catch (error) {
         console.error("구독자 수 로딩 실패:", error);
+        setCount(15420); // 기본값 설정
       } finally {
         setLoading(false);
       }
