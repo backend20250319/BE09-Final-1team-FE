@@ -119,6 +119,9 @@ const FontSizeSelector = ({ currentValue, onSelect, onClose }) => {
 export default function NewsPage() {
   const params = useParams();
   const articleId = params?.id;
+  
+  console.log('🔍 뉴스 상세 페이지 파라미터:', { params, articleId });
+  
   const { addScrap } = useScrap();
   const [newsData, setNewsData] = useState(null);
   const [loading, setLoading] = useState(true);
