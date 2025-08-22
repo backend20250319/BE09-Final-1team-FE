@@ -6,15 +6,7 @@ import Header from "@/components/header";
 import { useScrap } from "@/contexts/ScrapContext";
 
 import Link from "next/link";
-import {
-  Bookmark,
-  Bot,
-  Share,
-  X,
-  User,
-  Clock,
-  Siren,
-} from "lucide-react";
+import { Bookmark, Bot, Share, X, User, Clock, Siren } from "lucide-react";
 import { Toaster, toast } from "sonner";
 
 
@@ -38,7 +30,6 @@ const NaverFontButtonV2 = ({ onClick }) => {
   );
 };
 
-
 const fontSizes = [
   { id: "sm", label: "작게", value: 14 },
   { id: "base", label: "보통", value: 16 },
@@ -61,7 +52,7 @@ const FontSizeSelector = ({ currentValue, onSelect, onClose }) => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [selectorRef, onClose]);
-  
+
   return (
     <div
       ref={selectorRef}
@@ -115,7 +106,6 @@ const FontSizeSelector = ({ currentValue, onSelect, onClose }) => {
   );
 };
 
-
 export default function NewsPage() {
   const params = useParams();
   const articleId = params?.id;
@@ -123,7 +113,7 @@ export default function NewsPage() {
   const [newsData, setNewsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   const [fontSize, setFontSize] = useState(18);
   const [isFontSizeSelectorOpen, setFontSizeSelectorOpen] = useState(false);
 
@@ -167,6 +157,7 @@ export default function NewsPage() {
       try {
         setLoading(true);
         setError(null);
+
         
         // 실제 API 호출
         const response = await fetch(`/api/news/${articleId}`);
@@ -177,6 +168,53 @@ export default function NewsPage() {
         const data = await response.json();
         setNewsData(data);
         setError(null);
+
+        const data = await newsService.getNewsById(articleId);
+        if (!data) throw new Error("뉴스를 찾을 수 없습니다.");
+
+        const rawCategory =
+          data.category ||
+          data.categoryName ||
+          data.categoryDescription ||
+          "일반";
+        const convertedCategory =
+          backendToFrontendCategory[rawCategory] || rawCategory;
+
+        const transformedData = {
+          category: convertedCategory,
+          date: data.publishedAt
+            ? new Date(data.publishedAt).toLocaleString("ko-KR", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            : "-",
+          title: data.title,
+          reporter: {
+            name: data.reporter || data.author || "크롤링 시스템",
+            email: "system@newsphere.com",
+            avatar: "https://placehold.co/40x40/E2E8F0/4A5568?text=기자",
+          },
+          content: data.content || "상세 내용은 원본 링크를 확인해주세요.",
+          url: "#",
+          views: data.views || 0,
+          source: data.press || data.source || "크롤링 뉴스",
+          sourceLogo: "/placeholder-logo.png",
+          tags: data.tags || [convertedCategory],
+          newsId: data.newsId || data.id,
+          publishedAt: data.publishedAt,
+          dedupState: data.dedupState,
+          dedupStateDescription: data.dedupStateDescription,
+          imageUrl: data.image,
+        };
+        setNewsData(transformedData);
+
+        // 뉴스 데이터 로딩 성공 시 읽음 기록 및 조회수 증가
+        await newsService.addReadHistory(articleId);
+        await newsService.incrementViews(articleId);
+
       } catch (err) {
         console.error('❌ 뉴스 상세 데이터 로딩 실패:', err);
         setError("뉴스를 불러올 수 없습니다.");
@@ -317,10 +355,11 @@ export default function NewsPage() {
                 </button>
               </div>
               <div className="flex items-center gap-2">
-                
                 {/* ✨ 2. 글자 크기 버튼을 '가가' 모양의 최종 버전으로 교체 */}
                 <div className="relative">
-                  <NaverFontButtonV2 onClick={() => setFontSizeSelectorOpen((prev) => !prev)} />
+                  <NaverFontButtonV2
+                    onClick={() => setFontSizeSelectorOpen((prev) => !prev)}
+                  />
                   {isFontSizeSelectorOpen && (
                     <FontSizeSelector
                       currentValue={fontSize}
@@ -407,8 +446,7 @@ export default function NewsPage() {
 
             <section className="mt-12 pt-8 border-t">
               <h2 className="text-2xl font-bold mb-6">
-                댓글{" "}
-                <span className="text-indigo-600">{comments.length}</span>
+                댓글 <span className="text-indigo-600">{comments.length}</span>
               </h2>
               <div className="space-y-6">
                 <div className="flex items-start gap-4">
