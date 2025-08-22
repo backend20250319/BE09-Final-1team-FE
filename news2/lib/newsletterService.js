@@ -1,5 +1,5 @@
 import { NewsletterContent } from './types/newsletter'
-import { newsletterContentService } from './services/NewsletterContentService'
+import NewsletterContentService from '@/lib/services/NewsletterContentService'
 
 // 뉴스레터 관련 API 서비스
 export const newsletterService = {

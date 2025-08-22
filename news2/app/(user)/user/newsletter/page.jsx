@@ -60,9 +60,65 @@ export default function UserNewsletter() {
         const emailsData = await emailsResponse.json()
         
         setMySubscriptions(subscriptionsData || [])
-      setAvailableNewsletters(fallbackAvailable)
-      setRecentEmails(fallbackEmails)
-      setLoading(false)
+        
+        // 폴백 데이터 설정
+        const fallbackAvailable = [
+          {
+            id: 1,
+            name: "AI 기술 트렌드",
+            description: "최신 AI 기술 동향과 미래 전망",
+            category: "기술",
+            frequency: "주간",
+            subscribers: 12500,
+            rating: 4.8
+          }
+        ]
+        
+        const fallbackEmails = [
+          {
+            id: 1,
+            subject: "AI 기술 트렌드 - 2025년 8월",
+            sender: "AI Tech Newsletter",
+            receivedAt: "2025-08-07",
+            isRead: false,
+            hasAttachment: false
+          }
+        ]
+        
+        setAvailableNewsletters(fallbackAvailable)
+        setRecentEmails(fallbackEmails)
+      } catch (error) {
+        console.error('데이터 로딩 실패:', error)
+        
+        // 에러 시에도 폴백 데이터 설정
+        const fallbackAvailable = [
+          {
+            id: 1,
+            name: "AI 기술 트렌드",
+            description: "최신 AI 기술 동향과 미래 전망",
+            category: "기술",
+            frequency: "주간",
+            subscribers: 12500,
+            rating: 4.8
+          }
+        ]
+        
+        const fallbackEmails = [
+          {
+            id: 1,
+            subject: "AI 기술 트렌드 - 2025년 8월",
+            sender: "AI Tech Newsletter",
+            receivedAt: "2025-08-07",
+            isRead: false,
+            hasAttachment: false
+          }
+        ]
+        
+        setAvailableNewsletters(fallbackAvailable)
+        setRecentEmails(fallbackEmails)
+      } finally {
+        setLoading(false)
+      }
     }
 
     fetchData()

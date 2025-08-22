@@ -31,6 +31,34 @@ export default function NewsletterTemplatePage() {
         setLoading(false)
       }
     }
+
+    const fallbackNewsletters = [
+      {
+        id: 1,
+        title: "AI 기술 트렌드",
+        description: "최신 AI 기술 동향과 미래 전망",
+        tags: ["AI", "기술", "혁신", "메타버스"],
+        footer: {
+          unsubscribe: "구독 해지",
+          preferences: "설정 변경",
+          contact: "문의하기"
+        }
+      }
+    ]
+      
+    setSampleNewsletters(fallbackNewsletters)
+    setLoading(false)
+  }
+
+  const fetchNewsletters = async () => {
+    try {
+      setLoading(true)
+      // 실제 API 호출 로직을 여기에 구현할 수 있습니다
+      const fallbackNewsletters = [
+        {
+          id: 1,
+          title: "AI 기술 트렌드",
+          description: "최신 AI 기술 동향과 미래 전망",
           tags: ["AI", "기술", "혁신", "메타버스"],
           footer: {
             unsubscribe: "구독 해지",
@@ -41,10 +69,14 @@ export default function NewsletterTemplatePage() {
       ]
       
       setSampleNewsletters(fallbackNewsletters)
+    } catch (error) {
+      console.error('뉴스레터 로딩 실패:', error)
+    } finally {
       setLoading(false)
     }
+  }
 
-    fetchNewsletters()
+  fetchNewsletters()
   }, [])
 
   const [selectedNewsletter, setSelectedNewsletter] = useState(0)

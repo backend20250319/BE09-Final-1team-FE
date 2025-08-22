@@ -1,4 +1,4 @@
-import { newsletterContentService } from '@/lib/services/NewsletterContentService'
+import NewsletterContentService from '@/lib/services/NewsletterContentService'
 import { emailRenderer } from '@/lib/renderers/EmailRenderer'
 
 /**

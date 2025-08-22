@@ -1,4 +1,4 @@
-import { newsletterContentService } from '@/lib/services/NewsletterContentService'
+import NewsletterContentService from '@/lib/services/NewsletterContentService'
 
 /**
  * 뉴스레터 콘텐츠 API

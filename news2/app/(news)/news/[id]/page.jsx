@@ -275,12 +275,18 @@ export default function NewsPage() {
               <div className="flex justify-between items-center text-gray-600 text-sm">
                 <p className="flex items-center">
                   <User className="w-4 h-4 mr-1.5" />
-                  {newsData.reporter?.name || '알 수 없음'} 기자
+                  {newsData.reporterName || '알 수 없음'} 기자
                 </p>
                 <div className="flex items-center space-x-4">
                   <span className="flex items-center text-sm mr-2 text-black">
                     <Clock className="h-4 w-4 mr-1" />
-                    {newsData.date || '날짜 없음'}
+                    {newsData.publishedAt ? new Date(newsData.publishedAt).toLocaleDateString("ko-KR", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit"
+                    }) : '날짜 없음'}
                   </span>
                 </div>
               </div>
@@ -339,12 +345,15 @@ export default function NewsPage() {
               </div>
             </div>
 
-            {newsData.imageUrl && (
+            {newsData.image && (
               <div className="my-6">
                 <img
-                  src={newsData.imageUrl}
+                  src={newsData.image}
                   alt={newsData.title || '뉴스 이미지'}
                   className="w-full max-h-[400px] object-cover rounded-xl mx-auto"
+                  onError={(e) => {
+                    e.target.src = "/placeholder.jpg"
+                  }}
                 />
               </div>
             )}
