@@ -31,7 +31,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
     error: newslettersError,
     refetch: refetchNewsletters 
   } = useNewsletters({
-    initialData: initialNewsletters, // SSR 데이터를 초기값으로 사용
+    initialData: initialNewsletters || [], // SSR 데이터를 초기값으로 사용
   })
 
   const { 
@@ -127,6 +127,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
 
   // 카테고리별 필터링된 뉴스레터 목록
   const filteredNewsletters = useMemo(() => {
+    if (!newsletters || !Array.isArray(newsletters)) return []
     if (selectedCategory === "전체") return newsletters
     return newsletters.filter(newsletter => newsletter.category === selectedCategory)
   }, [newsletters, selectedCategory])
@@ -203,6 +204,9 @@ export default function NewsletterPageClient({ initialNewsletters }) {
               {/* 필터링 결과 표시 */}
               <div className="mt-2 text-sm text-gray-500">
                 {(() => {
+                  if (!filteredNewsletters || !Array.isArray(filteredNewsletters)) return "로딩 중..."
+                  if (!userSubscriptions || !Array.isArray(userSubscriptions)) return "로딩 중..."
+                  
                   const availableNewsletters = filteredNewsletters.filter(
                     newsletter => !userSubscriptions.some(sub => sub.id === newsletter.id)
                   )
@@ -231,8 +235,8 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                 ))
               ) : (
                 // 실제 뉴스레터 목록
-                filteredNewsletters
-                  .filter(newsletter => !userSubscriptions.some(sub => sub.id === newsletter.id))
+                (filteredNewsletters || [])
+                  .filter(newsletter => !(userSubscriptions || []).some(sub => sub.id === newsletter.id))
                   .map((newsletter, index) => (
                     <Card 
                       key={newsletter.id} 

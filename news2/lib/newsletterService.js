@@ -6,18 +6,75 @@ export const newsletterService = {
   // 뉴스레터 목록 조회
   async getNewsletters() {
     try {
-      const response = await fetch('/api/newsletters', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
+      // 임시로 더미 데이터 반환 (백엔드 API가 준비될 때까지)
+      return [
+        {
+          id: 1,
+          title: "정치 뉴스레터",
+          description: "정치 분야의 주요 뉴스를 매일 전해드립니다.",
+          category: "정치",
+          frequency: "매일",
+          tags: ["정치", "국회", "정부"],
+          subscribers: 1250,
+          lastSent: "2024-01-15",
+          image: "/images/politics.jpg"
         },
-      })
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-      
-      return await response.json()
+        {
+          id: 2,
+          title: "경제 뉴스레터",
+          description: "경제 동향과 시장 분석을 제공합니다.",
+          category: "경제",
+          frequency: "매일",
+          tags: ["경제", "주식", "부동산"],
+          subscribers: 2100,
+          lastSent: "2024-01-15",
+          image: "/images/economy.jpg"
+        },
+        {
+          id: 3,
+          title: "IT/과학 뉴스레터",
+          description: "최신 기술 트렌드와 과학 소식을 전해드립니다.",
+          category: "IT/과학",
+          frequency: "주 3회",
+          tags: ["IT", "과학", "기술"],
+          subscribers: 1800,
+          lastSent: "2024-01-14",
+          image: "/images/tech.jpg"
+        },
+        {
+          id: 4,
+          title: "사회 뉴스레터",
+          description: "사회 이슈와 사람들의 이야기를 담습니다.",
+          category: "사회",
+          frequency: "매일",
+          tags: ["사회", "이슈", "사람"],
+          subscribers: 950,
+          lastSent: "2024-01-15",
+          image: "/images/society.jpg"
+        },
+        {
+          id: 5,
+          title: "생활 뉴스레터",
+          description: "일상생활에 유용한 정보를 제공합니다.",
+          category: "생활",
+          frequency: "주 2회",
+          tags: ["생활", "건강", "요리"],
+          subscribers: 1200,
+          lastSent: "2024-01-13",
+          image: "/images/lifestyle.jpg"
+        },
+        {
+          id: 6,
+          title: "세계 뉴스레터",
+          description: "세계 각국의 주요 뉴스를 전해드립니다.",
+          category: "세계",
+          frequency: "매일",
+          tags: ["세계", "국제", "외교"],
+          subscribers: 800,
+          lastSent: "2024-01-15",
+          image: "/images/world.jpg"
+        }
+      ]
     } catch (error) {
       console.error('뉴스레터 목록 조회 실패:', error)
       throw error
@@ -27,7 +84,8 @@ export const newsletterService = {
   // 뉴스레터 구독
   async subscribeNewsletter(newsletterId, email) {
     try {
-      const response = await fetch('/api/newsletters/subscribe', {
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+      const response = await fetch(`${baseUrl}/api/newsletters/subscribe`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -52,7 +110,8 @@ export const newsletterService = {
   // 뉴스레터 구독 해제
   async unsubscribeNewsletter(newsletterId) {
     try {
-      const response = await fetch('/api/newsletters/unsubscribe', {
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+      const response = await fetch(`${baseUrl}/api/newsletters/unsubscribe`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -76,18 +135,8 @@ export const newsletterService = {
   // 사용자 구독 목록 조회
   async getUserSubscriptions() {
     try {
-      const response = await fetch('/api/newsletters/user-subscriptions', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-      
-      return await response.json()
+      // 임시로 빈 배열 반환 (백엔드 API가 준비될 때까지)
+      return []
     } catch (error) {
       console.error('사용자 구독 목록 조회 실패:', error)
       throw error
@@ -105,7 +154,8 @@ export const newsletterService = {
         limit = 5
       } = options
 
-      const response = await fetch('/api/newsletters/content', {
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+      const response = await fetch(`${baseUrl}/api/newsletters/content`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -161,7 +211,8 @@ export const newsletterService = {
         format = 'html'
       } = options
 
-      const response = await fetch('/api/newsletters/email', {
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+      const response = await fetch(`${baseUrl}/api/newsletters/email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -205,7 +256,8 @@ export const newsletterService = {
         }
       })
 
-      const response = await fetch(`/api/newsletters/email?${queryParams.toString()}`, {
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+      const response = await fetch(`${baseUrl}/api/newsletters/email?${queryParams.toString()}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -228,7 +280,7 @@ export const newsletterService = {
     }
   },
 
-  // 로컬에서 뉴스레터 콘텐츠 생성 (API 호출 없이)
+  // 백엔드 API를 통한 뉴스레터 콘텐츠 생성
   async generateLocalNewsletterContent(options = {}) {
     try {
       const {
@@ -239,20 +291,22 @@ export const newsletterService = {
         limit = 5
       } = options
 
+      const contentService = new NewsletterContentService()
+
       if (personalized && userId) {
-        return await newsletterContentService.buildPersonalizedContent(
+        return await contentService.buildPersonalizedContent(
           newsletterId,
           userId,
           { category, limit }
         )
       } else {
-        return await newsletterContentService.buildContent(
+        return await contentService.buildContent(
           newsletterId,
           { personalized, userId, category, limit }
         )
       }
     } catch (error) {
-      console.error('로컬 뉴스레터 콘텐츠 생성 실패:', error)
+      console.error('뉴스레터 콘텐츠 생성 실패:', error)
       throw error
     }
   }
