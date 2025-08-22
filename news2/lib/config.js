@@ -2,8 +2,8 @@
 export const config = {
   // API 설정
   api: {
-    baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
-    backendUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
+    baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080",
+    backendUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080",
   },
 
   // 인증 설정

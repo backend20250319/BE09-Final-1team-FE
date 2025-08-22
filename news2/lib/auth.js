@@ -159,6 +159,8 @@ export async function refreshAccessToken() {
 // 로그인 함수
 export async function login(email, password) {
   try {
+    console.log("🔐 로그인 함수 호출:", { email, password: "***" });
+    
     const response = await fetch('/api/auth/login', {
       method: "POST",
       headers: {
@@ -167,14 +169,25 @@ export async function login(email, password) {
       body: JSON.stringify({ email, password }),
     });
 
-    const data = await response.json().catch(() => ({}));
+    console.log("📡 API 응답 상태:", response.status);
+    
+    const data = await response.json().catch((err) => {
+      console.error("JSON 파싱 오류:", err);
+      return {};
+    });
+
+    console.log("📦 API 응답 데이터:", data);
 
     if (response.ok && data.success) {
+      console.log("✅ 로그인 성공, 토큰 저장 중...");
+      
       // JWT 토큰 저장 (data 객체 안에 있음)
       setTokens(data.data.accessToken, data.data.refreshToken);
 
       // 사용자 정보 저장 (data 객체 안에 있음)
       setUserInfo(data.data.user);
+
+      console.log("💾 사용자 정보 저장됨:", data.data.user);
 
       return {
         success: true,
@@ -182,13 +195,14 @@ export async function login(email, password) {
         user: data.data.user,
       };
     } else {
+      console.log("❌ 로그인 실패:", data.message);
       return {
         success: false,
         message: data.message || "로그인에 실패했습니다.",
       };
     }
   } catch (error) {
-    console.error("로그인 오류:", error);
+    console.error("🚨 로그인 함수 오류:", error);
     return { success: false, message: "로그인 중 오류가 발생했습니다." };
   }
 }
