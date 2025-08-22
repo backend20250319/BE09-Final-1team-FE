@@ -11,9 +11,9 @@ import NewsletterTemplate from "@/components/NewsletterTemplate"
 export default function NewsletterTemplatePage() {
   const [isPreview, setIsPreview] = useState(true)
   const [showControls, setShowControls] = useState(true)
-
   const [sampleNewsletters, setSampleNewsletters] = useState([])
   const [loading, setLoading] = useState(true)
+  const [selectedNewsletter, setSelectedNewsletter] = useState(0)
 
   useEffect(() => {
     const fetchNewsletters = async () => {
@@ -26,60 +26,30 @@ export default function NewsletterTemplatePage() {
         setSampleNewsletters(data || [])
       } catch (error) {
         console.error('❌ 뉴스레터 템플릿 데이터 로딩 실패:', error)
-        setSampleNewsletters([])
+        
+        // 폴백 데이터 설정
+        const fallbackNewsletters = [
+          {
+            id: 1,
+            title: "AI 기술 트렌드",
+            description: "최신 AI 기술 동향과 미래 전망",
+            tags: ["AI", "기술", "혁신", "메타버스"],
+            footer: {
+              unsubscribe: "구독 해지",
+              preferences: "설정 변경",
+              contact: "문의하기"
+            }
+          }
+        ]
+        
+        setSampleNewsletters(fallbackNewsletters)
       } finally {
         setLoading(false)
       }
     }
 
-    const fallbackNewsletters = [
-      {
-        id: 1,
-        title: "AI 기술 트렌드",
-        description: "최신 AI 기술 동향과 미래 전망",
-        tags: ["AI", "기술", "혁신", "메타버스"],
-        footer: {
-          unsubscribe: "구독 해지",
-          preferences: "설정 변경",
-          contact: "문의하기"
-        }
-      }
-    ]
-      
-    setSampleNewsletters(fallbackNewsletters)
-    setLoading(false)
-  }
-
-  const fetchNewsletters = async () => {
-    try {
-      setLoading(true)
-      // 실제 API 호출 로직을 여기에 구현할 수 있습니다
-      const fallbackNewsletters = [
-        {
-          id: 1,
-          title: "AI 기술 트렌드",
-          description: "최신 AI 기술 동향과 미래 전망",
-          tags: ["AI", "기술", "혁신", "메타버스"],
-          footer: {
-            unsubscribe: "구독 해지",
-            preferences: "설정 변경",
-            contact: "문의하기"
-          }
-        }
-      ]
-      
-      setSampleNewsletters(fallbackNewsletters)
-    } catch (error) {
-      console.error('뉴스레터 로딩 실패:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  fetchNewsletters()
+    fetchNewsletters()
   }, [])
-
-  const [selectedNewsletter, setSelectedNewsletter] = useState(0)
 
   const handleCopyTemplate = () => {
     navigator.clipboard.writeText("뉴스레터 템플릿이 복사되었습니다.")
@@ -93,7 +63,6 @@ export default function NewsletterTemplatePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      
       <div className="container mx-auto px-4 py-8">
         {/* 컨트롤 패널 */}
         {showControls && (
@@ -164,10 +133,16 @@ export default function NewsletterTemplatePage() {
         )}
 
         {/* 뉴스레터 템플릿 */}
-        <NewsletterTemplate 
-          newsletter={sampleNewsletters[selectedNewsletter]}
-          isPreview={isPreview}
-        />
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <p className="text-gray-600">템플릿 로딩 중...</p>
+          </div>
+        ) : (
+          <NewsletterTemplate 
+            newsletter={sampleNewsletters[selectedNewsletter]}
+            isPreview={isPreview}
+          />
+        )}
       </div>
     </div>
   )

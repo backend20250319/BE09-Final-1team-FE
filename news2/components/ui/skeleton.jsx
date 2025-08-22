@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils"
 import { Children } from "react"
 import Header from "@/components/header"
 
-function Skeleton({
+export function Skeleton({
   className,
   ...props
 }) {

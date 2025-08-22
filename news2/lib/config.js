@@ -4,7 +4,7 @@ export const config = {
   api: {
     baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080",
     backendUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080",
-    newsServiceUrl: process.env.NEXT_PUBLIC_NEWS_SERVICE_URL || "http://localhost:8000",
+    newsServiceUrl: process.env.NEXT_PUBLIC_NEWS_SERVICE_URL || "http://localhost:8082",
   },
 
   // 인증 설정

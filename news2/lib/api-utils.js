@@ -1,7 +1,7 @@
 /**
  * API 연결 및 디버깅 유틸리티
  */
-import { getApiUrl } from "./config";
+import { apiUrl } from "./api-url";
 import { z } from "zod";
 
 // 캐시 저장소
@@ -41,7 +41,7 @@ const cacheUtils = {
  */
 export async function checkBackendHealth() {
   try {
-    const response = await fetch(getApiUrl("/api/news/health"), {
+    const response = await fetch(apiUrl("/api/news/health"), {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -69,11 +69,11 @@ export async function checkBackendHealth() {
  * API URL을 테스트합니다
  */
 export function testApiUrl(endpoint = "") {
-  const url = getApiUrl(endpoint);
+  const url = apiUrl(endpoint);
   console.log("🔗 API URL 테스트:", {
     endpoint,
     fullUrl: url,
-    baseUrl: process.env.NEXT_PUBLIC_API_URL || "설정되지 않음",
+    baseUrl: process.env.API_BASE_URL || "설정되지 않음",
     env: process.env.NODE_ENV,
   });
   return url;
@@ -111,6 +111,7 @@ export async function diagnoseCorsIssue() {
     apiUrl: testApiUrl("/api/news/health"),
     environment: {
       NODE_ENV: process.env.NODE_ENV,
+      API_BASE_URL: process.env.API_BASE_URL,
       NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
       isBrowser: typeof window !== "undefined",
     },
@@ -171,13 +172,12 @@ export async function safeApiCall(endpoint, options = {}) {
     }
   }
 
-  // '/api/*' 형태는 Next.js rewrites를 통해 프록시(무CORS)로 호출
-  // 절대 URL은 그대로 사용, 그 외에는 중앙 설정 빌더 사용
+  // 게이트웨이 절대 URL로 강제 변환 (SSR에서 안전)
   let url = endpoint;
   if (endpoint.startsWith("/api/")) {
-    url = endpoint; // 상대 경로 유지 -> next.config.mjs rewrites 적용
+    url = apiUrl(endpoint); // 게이트웨이로 강제
   } else if (!endpoint.startsWith("http")) {
-    url = getApiUrl(endpoint);
+    url = apiUrl(endpoint);
   }
 
   try {
@@ -186,6 +186,10 @@ export async function safeApiCall(endpoint, options = {}) {
     const requestOptions = {
       ...apiConfig,
       method,
+      // SSR에서 캐시 끄기 (필요 시 조정)
+      cache: 'no-store',
+      // Next.js 15 App Router에서 재검증 off
+      next: { revalidate: 0 },
       ...restOptions,
     };
 
