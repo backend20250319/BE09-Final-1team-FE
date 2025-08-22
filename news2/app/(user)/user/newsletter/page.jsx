@@ -38,99 +38,91 @@ export default function UserNewsletter() {
     }
   }, [])
 
-  // 샘플 데이터
-  const mySubscriptions = [
-    {
-      id: 1,
-      name: "주간 IT 뉴스",
-      description: "IT 업계의 최신 동향과 기술 소식을 매주 전달합니다",
-      category: "IT/과학",
-      frequency: "주간",
-      lastReceived: "2024-01-15",
-      nextDelivery: "2024-01-22",
-      status: "active",
-      unreadCount: 2
-    },
-    {
-      id: 2,
-      name: "일간 경제 브리핑",
-      description: "경제 뉴스와 시장 동향을 매일 간단히 요약해드립니다",
-      category: "경제",
-      frequency: "일간",
-      lastReceived: "2024-01-15",
-      nextDelivery: "2024-01-16",
-      status: "active",
-      unreadCount: 0
-    },
-    {
-      id: 3,
-      name: "월간 환경 리포트",
-      description: "환경 보호와 지속가능한 발전에 대한 심층 분석",
-      category: "사회",
-      frequency: "월간",
-      lastReceived: "2024-01-01",
-      nextDelivery: "2024-02-01",
-      status: "inactive",
-      unreadCount: 0
-    }
-  ]
+  const [mySubscriptions, setMySubscriptions] = useState([])
+  const [availableNewsletters, setAvailableNewsletters] = useState([])
+  const [recentEmails, setRecentEmails] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  const availableNewsletters = [
-    {
-      id: 4,
-      name: "스포츠 하이라이트",
-      description: "주요 스포츠 경기 결과와 선수 소식을 전달합니다",
-      category: "스포츠",
-      frequency: "일간",
-      subscribers: 12500,
-      rating: 4.5
-    },
-    {
-      id: 5,
-      name: "문화 예술 소식",
-      description: "영화, 음악, 미술 등 문화 예술계의 최신 소식",
-      category: "문화",
-      frequency: "주간",
-      subscribers: 8900,
-      rating: 4.3
-    },
-    {
-      id: 6,
-      name: "정치 동향 분석",
-      description: "정치 현안과 정책 변화에 대한 전문적인 분석",
-      category: "정치",
-      frequency: "주간",
-      subscribers: 15600,
-      rating: 4.7
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true)
+      
+      try {
+        // 실제 API 호출로 변경
+        const [subscriptionsResponse, availableResponse, emailsResponse] = await Promise.all([
+          fetch('/api/user/newsletters/subscriptions'),
+          fetch('/api/user/newsletters/available'),
+          fetch('/api/user/newsletters/emails')
+        ])
+        
+        const subscriptionsData = await subscriptionsResponse.json()
+        const availableData = await availableResponse.json()
+        const emailsData = await emailsResponse.json()
+        
+        setMySubscriptions(subscriptionsData || [])
+        
+        // 폴백 데이터 설정
+        const fallbackAvailable = [
+          {
+            id: 1,
+            name: "AI 기술 트렌드",
+            description: "최신 AI 기술 동향과 미래 전망",
+            category: "기술",
+            frequency: "주간",
+            subscribers: 12500,
+            rating: 4.8
+          }
+        ]
+        
+        const fallbackEmails = [
+          {
+            id: 1,
+            subject: "AI 기술 트렌드 - 2025년 8월",
+            sender: "AI Tech Newsletter",
+            receivedAt: "2025-08-07",
+            isRead: false,
+            hasAttachment: false
+          }
+        ]
+        
+        setAvailableNewsletters(fallbackAvailable)
+        setRecentEmails(fallbackEmails)
+      } catch (error) {
+        console.error('데이터 로딩 실패:', error)
+        
+        // 에러 시에도 폴백 데이터 설정
+        const fallbackAvailable = [
+          {
+            id: 1,
+            name: "AI 기술 트렌드",
+            description: "최신 AI 기술 동향과 미래 전망",
+            category: "기술",
+            frequency: "주간",
+            subscribers: 12500,
+            rating: 4.8
+          }
+        ]
+        
+        const fallbackEmails = [
+          {
+            id: 1,
+            subject: "AI 기술 트렌드 - 2025년 8월",
+            sender: "AI Tech Newsletter",
+            receivedAt: "2025-08-07",
+            isRead: false,
+            hasAttachment: false
+          }
+        ]
+        
+        setAvailableNewsletters(fallbackAvailable)
+        setRecentEmails(fallbackEmails)
+      } finally {
+        setLoading(false)
+      }
     }
-  ]
 
-  const recentEmails = [
-    {
-      id: 1,
-      subject: "[주간 IT 뉴스] AI 기술의 미래 전망",
-      sender: "주간 IT 뉴스",
-      receivedAt: "2024-01-15 08:00",
-      isRead: false,
-      hasAttachment: false
-    },
-    {
-      id: 2,
-      subject: "[일간 경제 브리핑] 경제 정책 변화 분석",
-      sender: "일간 경제 브리핑",
-      receivedAt: "2024-01-15 07:00",
-      isRead: true,
-      hasAttachment: true
-    },
-    {
-      id: 3,
-      subject: "[주간 IT 뉴스] 새로운 프로그래밍 언어 동향",
-      sender: "주간 IT 뉴스",
-      receivedAt: "2024-01-14 08:00",
-      isRead: false,
-      hasAttachment: false
-    }
-  ]
+    fetchData()
+  }, [])
 
   // 구독 처리 함수
   const handleSubscribe = (newsletterId) => {

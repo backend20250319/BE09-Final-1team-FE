@@ -31,18 +31,23 @@ export default function LoginForm() {
     setError("");
 
     try {
+      console.log("로그인 시도:", { email, password: "***" });
       const result = await login(email, password);
+      console.log("로그인 결과:", result);
 
       if (result.success) {
+        console.log("로그인 성공, 역할:", result.role);
         if (result.role === "admin") {
           router.push("/admin");
         } else {
           router.push("/");
         }
       } else {
+        console.log("로그인 실패:", result.message);
         setError(result.message);
       }
     } catch (err) {
+      console.error("로그인 오류:", err);
       setError("로그인 중 오류가 발생했습니다.");
     } finally {
       setIsLoading(false);

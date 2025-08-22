@@ -2,18 +2,31 @@
 import { safeApiCall, diagnoseCorsIssue } from "./api-utils";
 import { getApiUrl } from "./config";
 
-// 뉴스 카테고리 상수
+// 뉴스 카테고리 상수 (백엔드 Category enum과 일치)
 export const NEWS_CATEGORIES = {
   ALL: "전체",
   POLITICS: "정치",
   ECONOMY: "경제",
   SOCIETY: "사회",
-  CULTURE: "문화",
-  WORLD: "국제",
-  SPORTS: "스포츠",
-  TECHNOLOGY: "기술",
-  ENTERTAINMENT: "연예",
-  HEALTH: "건강",
+  CULTURE: "생활",
+  INTERNATIONAL: "세계",
+  IT_SCIENCE: "IT/과학",
+  VEHICLE: "자동차/교통",
+  TRAVEL_FOOD: "여행/음식",
+  ART: "예술",
+};
+
+// 카테고리 아이콘 매핑 (백엔드 Category enum과 일치)
+export const CATEGORY_ICONS = {
+  POLITICS: "🏛️",
+  ECONOMY: "💰",
+  SOCIETY: "👥",
+  CULTURE: "🎭",
+  INTERNATIONAL: "🌍",
+  IT_SCIENCE: "💻",
+  VEHICLE: "🚗",
+  TRAVEL_FOOD: "🧳",
+  ART: "🎨",
 };
 
 /**

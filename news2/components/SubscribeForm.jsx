@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { useAsyncLoading } from "@/hooks/useLoading";
+import { LoadingButton } from "@/components/ui/loading";
 
 // 이메일 검증 함수
 const validateEmail = (email) => {
@@ -14,7 +16,7 @@ const validateEmail = (email) => {
 export default function SubscribeForm({ compact = false, darkTheme = false }) {
   const { toast } = useToast();
   const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
+  const { loading, execute } = useAsyncLoading();
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -27,31 +29,30 @@ export default function SubscribeForm({ compact = false, darkTheme = false }) {
       return;
     }
     
-    setLoading(true);
     try {
-      const res = await fetch("/api/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+      await execute(async () => {
+        const res = await fetch("/api/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        const data = await res.json();
+        
+        if (!res.ok) {
+          throw new Error(data.message || "구독 실패");
+        }
+        
+        toast({ 
+          description: "구독 확인 메일을 보냈어요. 메일함을 확인해 주세요.",
+          variant: "default"
+        });
+        setEmail("");
       });
-      const data = await res.json();
-      
-      if (!res.ok) {
-        throw new Error(data.message || "구독 실패");
-      }
-      
-      toast({ 
-        description: "구독 확인 메일을 보냈어요. 메일함을 확인해 주세요.",
-        variant: "default"
-      });
-      setEmail("");
     } catch (err) {
       toast({ 
         description: err.message || "오류가 발생했습니다.",
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -69,20 +70,14 @@ export default function SubscribeForm({ compact = false, darkTheme = false }) {
         }`}
         disabled={loading}
       />
-      <Button 
+      <LoadingButton 
         type="submit" 
-        disabled={loading} 
+        loading={loading}
+        loadingText="처리 중..."
         className={`${compact ? 'h-10 text-sm px-6' : 'h-12 text-base px-8'} font-semibold bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap flex-shrink-0`}
       >
-        {loading ? (
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            처리 중...
-          </div>
-        ) : (
-          "구독하기"
-        )}
-      </Button>
+        구독하기
+      </LoadingButton>
     </form>
   );
 } 

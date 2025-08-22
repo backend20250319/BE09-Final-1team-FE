@@ -89,13 +89,13 @@ export default function UsersManagement() {
       if (!res.ok) {
         let msg = "회원 목록을 불러오는데 실패했습니다.";
         try {
-          const errJson = await res.json();
+          const errJson = await res.json().catch(() => ({}));
           if (errJson?.message) msg = errJson.message;
         } catch {}
         throw new Error(msg);
       }
 
-      const json = await res.json();
+      const json = await res.json().catch(() => ({}));
       const payload = json?.data; // { content, totalElements, first, last, ... }
 
       setUsers(payload?.content ?? []);
