@@ -14,6 +14,7 @@ const config: Config = {
     extend: {
       fontFamily: {
         noonnu: ['"NoonnuBasicGothic"', "sans-serif"],
+        naguile: ['"Naguile"', "sans-serif"],
         protest: ['"Protest Riot"', "cursive"],
         logo: ['"Protest Riot"', "cursive"],
         sans: [
