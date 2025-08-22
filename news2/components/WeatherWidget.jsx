@@ -40,25 +40,15 @@ export default function WeatherWidget() {
       // const response = await fetch(`/api/weather?city=Seoul`)
       // const data = await response.json()
       
-      // 개발용 더미 데이터
-      const mockWeather = {
-        temperature: 22,
-        condition: "맑음",
-        humidity: 65,
-        windSpeed: 12,
-        location: "서울특별시",
-        feelsLike: 24,
-        pressure: 1013,
-        visibility: 10,
-        uvIndex: 5,
-        sunrise: "06:30",
-        sunset: "18:45"
-      }
-
-      // API 응답 시뮬레이션
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // 실제 API 호출
+      const response = await fetch(`/api/weather?city=Seoul`)
+      const data = await response.json().catch(() => ({}))
       
-      setWeather(mockWeather)
+      if (!response.ok) {
+        throw new Error(data.message || `날씨 정보를 가져올 수 없습니다. (${response.status})`)
+      }
+      
+      setWeather(data)
     } catch (err) {
       console.error('날씨 데이터 가져오기 실패:', err)
       setError('날씨 정보를 가져올 수 없습니다.')

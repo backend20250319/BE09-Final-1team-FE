@@ -9,7 +9,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Header from "@/components/header";
 import { useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 
 // 분리된 컴포넌트들 import
 import ProfileSidebar from "./_components/ProfileSidebar";
@@ -18,7 +18,7 @@ import ScrapsTab from "./_components/ScrapsTab";
 import HistoryTab from "./_components/HistoryTab";
 import SettingsTab from "./_components/SettingsTab";
 
-export default function MyPage() {
+function MyPageContent() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("profile");
 
@@ -81,5 +81,28 @@ export default function MyPage() {
         </div>
       </div>
     </>
+  );
+}
+
+export default function MyPage() {
+  return (
+    <Suspense fallback={
+      <>
+        <Header />
+        <div className="min-h-screen bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+              <div className="h-64 bg-gray-200 rounded mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            </div>
+          </div>
+        </div>
+      </>
+    }>
+      <MyPageContent />
+    </Suspense>
   );
 }

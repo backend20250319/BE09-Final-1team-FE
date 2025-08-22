@@ -35,5 +35,9 @@ export function ScrapProvider({ children }) {
 }
 
 export function useScrap() {
-  return useContext(ScrapContext);
+  const context = useContext(ScrapContext);
+  if (context === undefined) {
+    throw new Error('useScrap must be used within a ScrapProvider');
+  }
+  return context;
 }
