@@ -168,18 +168,30 @@ export default function NewsPage() {
         setLoading(true);
         setError(null);
         
+        console.log('🔄 뉴스 데이터 로딩 시작:', articleId);
+        
         // 실제 API 호출
         const response = await fetch(`/api/news/${articleId}`);
+        console.log('📡 API 응답 상태:', response.status, response.statusText);
+        
         if (!response.ok) {
-          throw new Error('뉴스를 찾을 수 없습니다.');
+          const errorText = await response.text();
+          console.error('❌ API 응답 오류:', errorText);
+          throw new Error(`뉴스를 찾을 수 없습니다. (${response.status})`);
         }
         
         const data = await response.json();
+        console.log('✅ 받은 뉴스 데이터:', data);
+        
+        if (!data || !data.title) {
+          throw new Error('뉴스 데이터가 올바르지 않습니다.');
+        }
+        
         setNewsData(data);
         setError(null);
       } catch (err) {
         console.error('❌ 뉴스 상세 데이터 로딩 실패:', err);
-        setError("뉴스를 불러올 수 없습니다.");
+        setError(err.message || "뉴스를 불러올 수 없습니다.");
         setNewsData(null);
       } finally {
         setLoading(false);

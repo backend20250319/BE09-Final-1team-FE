@@ -135,8 +135,19 @@ export const newsletterService = {
   // 사용자 구독 목록 조회
   async getUserSubscriptions() {
     try {
-      // 임시로 빈 배열 반환 (백엔드 API가 준비될 때까지)
-      return []
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+      const response = await fetch(`${baseUrl}/api/newsletters/user-subscriptions`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      return await response.json()
     } catch (error) {
       console.error('사용자 구독 목록 조회 실패:', error)
       throw error
