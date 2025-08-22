@@ -181,54 +181,24 @@ export default function NewsPage() {
           throw new Error('뉴스 데이터가 올바르지 않습니다.');
         }
         
-        setNewsData(data);
-        setError(null);
-
-        const data = await newsService.getNewsById(articleId);
-        if (!data) throw new Error("뉴스를 찾을 수 없습니다.");
-
-        const rawCategory =
-          data.category ||
-          data.categoryName ||
-          data.categoryDescription ||
-          "일반";
-        const convertedCategory =
-          backendToFrontendCategory[rawCategory] || rawCategory;
-
+        // 백엔드 응답을 프론트엔드 형식으로 변환
+        const rawCategory = data.category || "일반";
+        const convertedCategory = backendToFrontendCategory[rawCategory] || rawCategory;
+        
         const transformedData = {
+          ...data,
           category: convertedCategory,
-          date: data.publishedAt
-            ? new Date(data.publishedAt).toLocaleString("ko-KR", {
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-              })
-            : "-",
-          title: data.title,
-          reporter: {
-            name: data.reporter || data.author || "크롤링 시스템",
-            email: "system@newsphere.com",
-            avatar: "https://placehold.co/40x40/E2E8F0/4A5568?text=기자",
-          },
-          content: data.content || "상세 내용은 원본 링크를 확인해주세요.",
-          url: "#",
-          views: data.views || 0,
-          source: data.press || data.source || "크롤링 뉴스",
-          sourceLogo: "/placeholder-logo.png",
-          tags: data.tags || [convertedCategory],
-          newsId: data.newsId || data.id,
+          reporterName: data.reporterName || data.reporter || "알 수 없음",
+          source: data.source || data.press || "알 수 없음",
+          image: data.image || data.imageUrl || "/placeholder.jpg",
+          views: data.views || data.viewCount || 0,
           publishedAt: data.publishedAt,
-          dedupState: data.dedupState,
-          dedupStateDescription: data.dedupStateDescription,
-          imageUrl: data.image,
+          content: data.content || "내용이 없습니다.",
+          tags: data.tags || [convertedCategory]
         };
+        
         setNewsData(transformedData);
-
-        // 뉴스 데이터 로딩 성공 시 읽음 기록 및 조회수 증가
-        await newsService.addReadHistory(articleId);
-        await newsService.incrementViews(articleId);
+        setError(null);
 
       } catch (err) {
         console.error('❌ 뉴스 상세 데이터 로딩 실패:', err);
