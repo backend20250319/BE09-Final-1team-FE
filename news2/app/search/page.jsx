@@ -59,8 +59,21 @@ function SearchPageContent() {
         size: "20"
       })
 
+      // 정렬 파라미터 추가
+      if (sortBy) {
+        // 백엔드에서 기대하는 파라미터명으로 변환
+        let backendSortBy = sortBy
+        if (sortBy === "publishedAt") {
+          backendSortBy = "date" // 백엔드에서는 "date"로 처리
+        }
+        params.append("sortBy", backendSortBy)
+        params.append("sortOrder", sortOrder)
+      }
+
       if (filters.press) params.append("press", filters.press)
       if (filters.category) params.append("category", filters.category)
+
+      console.log('🔍 검색 API 호출 파라미터:', params.toString())
 
       const response = await fetch(`/api/news/search?${params}`)
       if (response.ok) {
@@ -68,6 +81,8 @@ function SearchPageContent() {
         setSearchResults(data.content || [])
         setTotalPages(data.totalPages || 1)
         setTotalElements(data.totalElements || 0)
+      } else {
+        console.error('검색 API 응답 오류:', response.status, response.statusText)
       }
     } catch (error) {
       console.error("검색 결과 로드 실패:", error)
@@ -225,25 +240,33 @@ function SearchPageContent() {
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-gray-700">정렬:</span>
             <Button
-              variant="outline"
+              variant={sortBy === "publishedAt" ? "default" : "outline"}
               size="sm"
               onClick={() => handleSortChange("publishedAt")}
-              className={`flex items-center gap-1 ${
-                sortBy === "publishedAt" ? "bg-blue-50 border-blue-200" : ""
-              }`}
+              className="flex items-center gap-1"
             >
-              {sortOrder === "desc" ? <SortDesc className="w-3 h-3" /> : <SortAsc className="w-3 h-3" />}
+              {sortBy === "publishedAt" && sortOrder === "desc" ? (
+                <SortDesc className="w-3 h-3" />
+              ) : sortBy === "publishedAt" && sortOrder === "asc" ? (
+                <SortAsc className="w-3 h-3" />
+              ) : (
+                <Clock className="w-3 h-3" />
+              )}
               최신순
             </Button>
             <Button
-              variant="outline"
+              variant={sortBy === "viewCount" ? "default" : "outline"}
               size="sm"
               onClick={() => handleSortChange("viewCount")}
-              className={`flex items-center gap-1 ${
-                sortBy === "viewCount" ? "bg-blue-50 border-blue-200" : ""
-              }`}
+              className="flex items-center gap-1"
             >
-              {sortOrder === "desc" ? <SortDesc className="w-3 h-3" /> : <SortAsc className="w-3 h-3" />}
+              {sortBy === "viewCount" && sortOrder === "desc" ? (
+                <SortDesc className="w-3 h-3" />
+              ) : sortBy === "viewCount" && sortOrder === "asc" ? (
+                <SortAsc className="w-3 h-3" />
+              ) : (
+                <TrendingUp className="w-3 h-3" />
+              )}
               조회순
             </Button>
           </div>
