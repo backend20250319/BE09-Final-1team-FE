@@ -32,17 +32,14 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
     const size = parseInt(searchParams.get('size') || '21')
-    const category = searchParams.get('category')
+    let category = searchParams.get('category')
     
-    console.log('🔄 뉴스 API 호출:', { page, size, category })
     
-    // 백엔드 뉴스 서비스 API URL 구성
     let backendUrl = `${getNewsServiceUrl('api/news')}?page=${page - 1}&size=${size}`
     if (category && category !== "전체") {
       backendUrl += `&category=${category}`
     }
     
-    console.log('📡 백엔드 뉴스 서비스 API 호출:', backendUrl)
     
     try {
       // 실제 백엔드 API 호출 시도

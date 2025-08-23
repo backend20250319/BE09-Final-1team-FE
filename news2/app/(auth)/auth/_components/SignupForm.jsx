@@ -77,7 +77,7 @@ export default function SignupForm({ onSignupSuccess }) {
           { id: "POLITICS", icon: "🏛️", categoryName: "정치" },
           { id: "ECONOMY", icon: "💰", categoryName: "경제" },
           { id: "SOCIETY", icon: "👥", categoryName: "사회" },
-          { id: "CULTURE", icon: "🎭", categoryName: "생활" },
+          { id: "LIFE", icon: "🎭", categoryName: "생활" },
           { id: "INTERNATIONAL", icon: "🌍", categoryName: "세계" },
           { id: "IT_SCIENCE", icon: "💻", categoryName: "IT/과학" },
           { id: "VEHICLE", icon: "🚗", categoryName: "자동차/교통" },
