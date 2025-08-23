@@ -2,8 +2,13 @@ import NewsletterContentService from '@/lib/services/NewsletterContentService'
 import { emailRenderer } from '@/lib/renderers/EmailRenderer'
 
 /**
- * 뉴스레터 이메일 HTML 생성 API
- * 뉴스레터 콘텐츠를 이메일-safe HTML로 렌더링
+ * 뉴스레터 이메일 HTML 생성 API (BFF)
+ * 
+ * 클라이언트 요청을 받아 백엔드로 프록시하고 이메일 HTML을 생성합니다.
+ * - 입력 검증
+ * - 백엔드 콘텐츠 생성
+ * - 이메일 렌더링
+ * - 에러 처리 및 표준화
  */
 export async function POST(request) {
   try {
@@ -26,7 +31,11 @@ export async function POST(request) {
     // 입력 검증
     if (personalized && !userId) {
       return Response.json(
-        { error: '개인화된 뉴스레터를 위해서는 userId가 필요합니다.' },
+        { 
+          code: 'MISSING_USER_ID',
+          message: '개인화된 뉴스레터를 위해서는 userId가 필요합니다.',
+          details: 'personalized=true일 때 userId는 필수입니다.'
+        },
         { status: 400 }
       )
     }
@@ -35,7 +44,7 @@ export async function POST(request) {
     let content
 
     if (personalized && userId) {
-      content = await newsletterContentService.buildPersonalizedContent(
+      content = await NewsletterContentService.buildPersonalizedContent(
         newsletterId,
         userId,
         {
@@ -46,7 +55,7 @@ export async function POST(request) {
         }
       )
     } else {
-      content = await newsletterContentService.buildContent(
+      content = await NewsletterContentService.buildContent(
         newsletterId,
         {
           personalized,
@@ -73,12 +82,13 @@ export async function POST(request) {
       contentType = 'text/html; charset=utf-8'
     }
 
-    // HTML 또는 텍스트 형태로 반환
+    // HTML 또는 텍스트 형태로 반환 (BFF 헤더 추가)
     return new Response(emailContent, {
       status: 200,
       headers: {
         'Content-Type': contentType,
-        'Cache-Control': 'no-cache'
+        'Cache-Control': 'no-cache',
+        'X-Source': 'BFF'
       }
     })
 
@@ -87,7 +97,8 @@ export async function POST(request) {
     
     return Response.json(
       { 
-        error: '뉴스레터 이메일 생성에 실패했습니다.',
+        code: 'EMAIL_GENERATION_FAILED',
+        message: '뉴스레터 이메일 생성에 실패했습니다.',
         details: error.message 
       },
       { status: 500 }
@@ -96,7 +107,7 @@ export async function POST(request) {
 }
 
 /**
- * 뉴스레터 이메일 미리보기 API
+ * 뉴스레터 이메일 미리보기 API (BFF)
  * GET 요청으로 뉴스레터 이메일 HTML을 생성하고 반환
  */
 export async function GET(request) {
@@ -117,7 +128,11 @@ export async function GET(request) {
     // 입력 검증
     if (personalized && !userId) {
       return Response.json(
-        { error: '개인화된 뉴스레터를 위해서는 userId가 필요합니다.' },
+        { 
+          code: 'MISSING_USER_ID',
+          message: '개인화된 뉴스레터를 위해서는 userId가 필요합니다.',
+          details: 'personalized=true일 때 userId는 필수입니다.'
+        },
         { status: 400 }
       )
     }
@@ -126,7 +141,7 @@ export async function GET(request) {
     let content
 
     if (personalized && userId) {
-      content = await newsletterContentService.buildPersonalizedContent(
+      content = await NewsletterContentService.buildPersonalizedContent(
         newsletterId,
         userId,
         {
@@ -137,7 +152,7 @@ export async function GET(request) {
         }
       )
     } else {
-      content = await newsletterContentService.buildContent(
+      content = await NewsletterContentService.buildContent(
         newsletterId,
         {
           personalized,

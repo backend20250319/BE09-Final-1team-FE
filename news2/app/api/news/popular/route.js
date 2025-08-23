@@ -6,8 +6,8 @@ export async function GET(request) {
     const page = searchParams.get('page') || '0'
     const size = searchParams.get('size') || '10'
     
-    // 백엔드 API 호출
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8082'
+    // 백엔드 API 호출 (뉴스 서비스)
+    const backendUrl = process.env.NEXT_PUBLIC_NEWS_SERVICE_URL || 'http://localhost:8082'
     const response = await fetch(
       `${backendUrl}/api/trending/popular?page=${page}&size=${size}`,
       {

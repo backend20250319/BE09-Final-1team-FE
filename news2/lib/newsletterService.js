@@ -1,7 +1,11 @@
 import { NewsletterContent } from './types/newsletter'
-import NewsletterContentService from '@/lib/services/NewsletterContentService'
 
-// 뉴스레터 관련 API 서비스
+/**
+ * 뉴스레터 관련 API 서비스 (클라이언트 전용)
+ * 
+ * 모든 뉴스레터 관련 작업은 이 서비스를 통해 Next.js API Route를 호출합니다.
+ * 직접 백엔드 호출은 하지 않으며, BFF 패턴을 따릅니다.
+ */
 export const newsletterService = {
   // 뉴스레터 목록 조회
   async getNewsletters() {
@@ -291,34 +295,4 @@ export const newsletterService = {
     }
   },
 
-  // 백엔드 API를 통한 뉴스레터 콘텐츠 생성
-  async generateLocalNewsletterContent(options = {}) {
-    try {
-      const {
-        newsletterId = Date.now(),
-        category,
-        personalized = false,
-        userId,
-        limit = 5
-      } = options
-
-      const contentService = new NewsletterContentService()
-
-      if (personalized && userId) {
-        return await contentService.buildPersonalizedContent(
-          newsletterId,
-          userId,
-          { category, limit }
-        )
-      } else {
-        return await contentService.buildContent(
-          newsletterId,
-          { personalized, userId, category, limit }
-        )
-      }
-    } catch (error) {
-      console.error('뉴스레터 콘텐츠 생성 실패:', error)
-      throw error
-    }
-  }
 }

@@ -51,7 +51,7 @@ export default function NewsletterPreviewPage() {
   const generateNewsletter = async () => {
     setLoading(true)
     try {
-      const content = await newsletterService.generateLocalNewsletterContent({
+      const content = await newsletterService.generateNewsletterContent({
         newsletterId: Date.now(),
         category: settings.category,
         personalized: settings.personalized,
