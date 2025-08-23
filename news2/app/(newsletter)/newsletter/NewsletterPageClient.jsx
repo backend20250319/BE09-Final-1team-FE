@@ -80,11 +80,36 @@ export default function NewsletterPageClient({ initialNewsletters }) {
     }
 
     const newsletter = newsletters.find(nl => nl.id === newsletterId)
-    const isCurrentlySubscribed = userSubscriptions.some(nl => nl.id === newsletterId)
+    console.log('구독 처리:', { newsletterId, newsletter, userSubscriptions })
+    
+    const isCurrentlySubscribed = Array.isArray(userSubscriptions) && userSubscriptions.some(nl => 
+      nl.category === newsletter.category || nl.preferredCategories?.includes(newsletter.category)
+    )
+    
+    console.log('현재 구독 상태:', { isCurrentlySubscribed, category: newsletter.category })
 
     if (isCurrentlySubscribed) {
-      // 구독 해제 - 카테고리 기반으로 변경
-      unsubscribeMutation.mutate(newsletter.category)
+      // 구독 해제 - 해당 카테고리의 구독 찾기
+      const subscription = userSubscriptions.find(nl => 
+        nl.category === newsletter.category || nl.preferredCategories?.includes(newsletter.category)
+      )
+      console.log('구독 해제 대상:', subscription)
+      
+      if (subscription) {
+        unsubscribeMutation.mutate(subscription.id, {
+          onSuccess: () => {
+            console.log('구독 해제 성공')
+            refetchSubscriptions()
+          }
+        })
+      } else {
+        unsubscribeMutation.mutate(newsletter.category, {
+          onSuccess: () => {
+            console.log('구독 해제 성공')
+            refetchSubscriptions()
+          }
+        })
+      }
     } else {
       // 구독 추가 - 로그인한 사용자는 바로 구독 (이메일 입력 불필요)
       const userInfo = getUserInfo()
@@ -98,14 +123,15 @@ export default function NewsletterPageClient({ initialNewsletters }) {
         return
       }
       
+      console.log('구독 요청:', { category: newsletter.category, email: userInfo.email })
+      
       subscribeMutation.mutate(
         { category: newsletter.category, email: userInfo.email },
         {
-          onSuccess: () => {
-            // 구독 완료 후 마이페이지 설정 탭으로 이동
-            setTimeout(() => {
-              window.location.href = "/mypage?tab=settings"
-            }, 2000)
+          onSuccess: (data) => {
+            console.log('구독 성공:', data)
+            // 구독 완료 후 즉시 구독 목록 새로고침
+            refetchSubscriptions()
           },
           onError: (error) => {
             console.error('구독 실패:', error)
@@ -248,7 +274,9 @@ export default function NewsletterPageClient({ initialNewsletters }) {
               ) : (
                 // 실제 뉴스레터 목록
                 (filteredNewsletters || [])
-                  .filter(newsletter => !(Array.isArray(userSubscriptions) ? userSubscriptions : []).some(sub => sub.id === newsletter.id))
+                  .filter(newsletter => !(Array.isArray(userSubscriptions) ? userSubscriptions : []).some(sub => 
+                    sub.category === newsletter.category || sub.preferredCategories?.includes(newsletter.category)
+                  ))
                   .map((newsletter, index) => (
                     <Card 
                       key={newsletter.id} 
@@ -276,14 +304,26 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                             </CardDescription>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <Switch
-                              checked={Array.isArray(userSubscriptions) && userSubscriptions.some(nl => nl.id === newsletter.id)}
-                              onCheckedChange={() => handleSubscribe(newsletter.id)}
-                              disabled={subscribeMutation.isPending || unsubscribeMutation.isPending || subscriptionsLoading}
-                            />
-                            <Label className="text-xs">
-                              {subscribeMutation.isPending || unsubscribeMutation.isPending ? "처리 중..." : "구독"}
-                            </Label>
+                            <div className="flex items-center space-x-2">
+                              <Switch
+                                checked={Array.isArray(userSubscriptions) && userSubscriptions.some(nl => 
+                                  nl.category === newsletter.category || nl.preferredCategories?.includes(newsletter.category)
+                                )}
+                                onCheckedChange={() => handleSubscribe(newsletter.id)}
+                                disabled={subscribeMutation.isPending || unsubscribeMutation.isPending || subscriptionsLoading}
+                                className="data-[state=checked]:bg-blue-600"
+                              />
+                              <Label className={`text-xs font-medium ${
+                                Array.isArray(userSubscriptions) && userSubscriptions.some(nl => 
+                                  nl.category === newsletter.category || nl.preferredCategories?.includes(newsletter.category)
+                                ) ? "text-blue-600" : "text-gray-600"
+                              }`}>
+                                {subscribeMutation.isPending || unsubscribeMutation.isPending ? "처리 중..." : 
+                                 Array.isArray(userSubscriptions) && userSubscriptions.some(nl => 
+                                   nl.category === newsletter.category || nl.preferredCategories?.includes(newsletter.category)
+                                 ) ? "구독 중" : "구독"}
+                              </Label>
+                            </div>
                           </div>
                         </div>
                       </CardHeader>
@@ -341,7 +381,9 @@ export default function NewsletterPageClient({ initialNewsletters }) {
 
               {/* 구독한 뉴스레터가 모두 숨겨져서 표시할 뉴스레터가 없을 때 */}
               {!isLoading && filteredNewsletters.length > 0 && 
-               filteredNewsletters.filter(newsletter => !userSubscriptions.some(sub => sub.id === newsletter.id)).length === 0 && (
+               filteredNewsletters.filter(newsletter => !(Array.isArray(userSubscriptions) ? userSubscriptions : []).some(sub => 
+                 sub.category === newsletter.category || sub.preferredCategories?.includes(newsletter.category)
+               )).length === 0 && (
                 <div className="col-span-2 text-center py-12">
                   <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -415,7 +457,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleSubscribe(newsletter.id)}
+                              onClick={() => unsubscribeMutation.mutate(newsletter.id)}
                               disabled={unsubscribeMutation.isPending}
                               className="hover-glow"
                             >

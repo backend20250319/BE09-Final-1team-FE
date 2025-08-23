@@ -69,8 +69,8 @@ export function useUnsubscribeNewsletter() {
   const { toast } = useToast()
 
   return useMutation({
-    mutationFn: (category) => 
-      newsletterService.unsubscribeNewsletter(category),
+    mutationFn: (subscriptionId) => 
+      newsletterService.unsubscribeNewsletter(subscriptionId),
     
     onSuccess: (data, variables) => {
       // 캐시 무효화하여 최신 데이터 가져오기
@@ -79,7 +79,7 @@ export function useUnsubscribeNewsletter() {
       
       toast({
         title: "구독 해제 완료",
-        description: `${variables} 카테고리 뉴스레터 구독이 해제되었습니다.`,
+        description: "뉴스레터 구독이 해제되었습니다.",
         icon: <CheckCircle className="h-4 w-4 text-green-500" />
       })
     },

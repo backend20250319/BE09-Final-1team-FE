@@ -1,51 +1,36 @@
-// 뉴스레터 구독 해제 API - 카테고리 기반
+// 뉴스레터 구독 해제 API - 구독 ID 기반
 export async function POST(request) {
   try {
-    const { category } = await request.json()
+    const { subscriptionId } = await request.json()
 
     // 입력 검증
-    if (!category) {
+    if (!subscriptionId) {
       return Response.json(
-        { error: '카테고리가 필요합니다.' },
+        { error: '구독 ID가 필요합니다.' },
         { status: 400 }
       )
     }
 
-    // 카테고리 매핑 (프론트엔드 → 백엔드)
-    const categoryMapping = {
-      '정치': 'POLITICS',
-      '경제': 'ECONOMY', 
-      '사회': 'SOCIETY',
-      '생활': 'LIFE',
-      '세계': 'INTERNATIONAL',
-      'IT/과학': 'IT_SCIENCE',
-      '자동차/교통': 'VEHICLE',
-      '여행/음식': 'TRAVEL_FOOD',
-      '예술': 'ART'
-    }
-
-    const backendCategory = categoryMapping[category]
-    if (!backendCategory) {
-      return Response.json(
-        { error: '지원하지 않는 카테고리입니다.' },
-        { status: 400 }
-      )
-    }
-
-    // 백엔드 API 호출 (구독 해제 API가 구현되면 활성화)
+    // 백엔드 API 호출
     const backendUrl = process.env.NEWSLETTER_SERVICE_URL || 'http://localhost:8085'
     
+    // 인증 토큰 가져오기
+    const authHeader = request.headers.get('authorization')
+    
     try {
-      // TODO: 백엔드에 구독 해제 API가 구현되면 아래 코드 활성화
-      /*
-      const response = await fetch(`${backendUrl}/api/newsletter/unsubscribe`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          category: backendCategory,
-        })
+      const headers = {
+        'Content-Type': 'application/json',
+      }
+      
+      // 인증 토큰이 있으면 백엔드로 전달
+      if (authHeader) {
+        headers['Authorization'] = authHeader
+      }
+      
+      // 구독 해제 API 호출
+      const response = await fetch(`${backendUrl}/api/newsletter/subscription/${subscriptionId}`, {
+        method: 'DELETE',
+        headers,
       })
 
       if (!response.ok) {
@@ -58,31 +43,28 @@ export async function POST(request) {
       }
 
       const result = await response.json()
-      */
       
-      console.log(`뉴스레터 구독 해제 (임시): 카테고리=${category}`)
+      console.log(`뉴스레터 구독 해제 성공: 구독ID=${subscriptionId}`)
 
-      // 구독 해제 성공 응답 (임시)
       return Response.json({
         success: true,
-        message: '뉴스레터 구독이 해제되었습니다. (임시 모드)',
+        message: '뉴스레터 구독이 해제되었습니다.',
         data: {
-          category,
-          unsubscribedAt: new Date().toISOString(),
-          isTemporary: true
+          subscriptionId,
+          unsubscribedAt: new Date().toISOString()
         }
       })
     } catch (backendError) {
       console.error('백엔드 서비스 연결 실패, 임시 모드로 전환:', backendError.message)
       
       // 백엔드 서비스가 실행되지 않았을 때 임시 성공 응답
-      console.log(`뉴스레터 구독 해제 (임시): 카테고리=${category}`)
+      console.log(`뉴스레터 구독 해제 (임시): 구독ID=${subscriptionId}`)
       
       return Response.json({
         success: true,
         message: '뉴스레터 구독이 해제되었습니다. (임시 모드)',
         data: {
-          category,
+          subscriptionId,
           unsubscribedAt: new Date().toISOString(),
           isTemporary: true
         }

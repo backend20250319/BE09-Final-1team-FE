@@ -217,8 +217,8 @@ export const newsletterService = {
     }
   },
 
-  // 뉴스레터 구독 해제 (카테고리 기반)
-  async unsubscribeNewsletter(category) {
+  // 뉴스레터 구독 해제 (구독 ID 기반)
+  async unsubscribeNewsletter(subscriptionId) {
     try {
       const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
       
@@ -234,12 +234,21 @@ export const newsletterService = {
         headers['Authorization'] = `Bearer ${token}`
       }
       
+      const requestBody = {
+        subscriptionId,
+      }
+      
+      console.log('구독 해제 요청 전송:', {
+        url: `${baseUrl}/api/newsletters/unsubscribe`,
+        method: 'POST',
+        headers,
+        body: requestBody
+      })
+      
       const response = await fetch(`${baseUrl}/api/newsletters/unsubscribe`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({
-          category,
-        }),
+        body: JSON.stringify(requestBody),
       })
       
       if (!response.ok) {

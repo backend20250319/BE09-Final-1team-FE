@@ -116,6 +116,7 @@ export async function POST(request) {
         data: {
           category,
           email,
+          subscriptionId: result.data?.id,
           subscribedAt: new Date().toISOString(),
           ...result.data
         }
