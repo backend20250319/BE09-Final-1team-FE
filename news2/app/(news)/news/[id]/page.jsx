@@ -165,14 +165,13 @@ export default function NewsPage() {
         
         console.log('🔄 뉴스 데이터 로딩 시작:', articleId);
         
-        // 실제 API 호출
-        const response = await fetch(`/api/news/${articleId}`);
+        // 새로운 API 호출 (기존 API에 503 오류가 있어서 임시로 변경)
+        const response = await fetch(`/api/news-detail?id=${articleId}`);
         console.log('📡 API 응답 상태:', response.status, response.statusText);
         
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error('❌ API 응답 오류:', errorText);
-          throw new Error(`뉴스를 찾을 수 없습니다. (${response.status})`);
+          console.error('❌ API 응답 오류:', response.status, response.statusText);
+          throw new Error(`뉴스를 불러올 수 없습니다. (${response.status})`);
         }
         
         const data = await response.json();
@@ -200,6 +199,9 @@ export default function NewsPage() {
         
         setNewsData(transformedData);
         setError(null);
+        
+        // 실제 데이터 로드 완료 알림
+        console.log('✅ 뉴스 데이터 로드 완료');
 
       } catch (err) {
         console.error('❌ 뉴스 상세 데이터 로딩 실패:', err);
@@ -247,17 +249,38 @@ export default function NewsPage() {
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h1 className="text-2xl font-bold text-center text-gray-800 mb-4">
-                뉴스를 찾을 수 없습니다
-              </h1>
-              <p className="text-center text-gray-600 mb-6">{error}</p>
-              <div className="flex justify-center">
-                <Link
-                  href="/"
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 transition-all duration-300"
-                >
-                  메인으로 돌아가기
-                </Link>
+              <div className="text-center">
+                <div className="mb-6">
+                  <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                  </div>
+                  <h1 className="text-2xl font-bold text-gray-800 mb-2">
+                    뉴스를 불러올 수 없습니다
+                  </h1>
+                  <p className="text-gray-600 mb-6">{error}</p>
+                </div>
+                
+                <div className="space-y-4">
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="w-full px-6 py-3 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 transition-all duration-300 font-semibold"
+                  >
+                    다시 시도하기
+                  </button>
+                  
+                  <Link
+                    href="/"
+                    className="block w-full px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-300 font-semibold"
+                  >
+                    메인으로 돌아가기
+                  </Link>
+                </div>
+                
+                <div className="mt-6 text-sm text-gray-500">
+                  <p>문제가 지속되면 잠시 후 다시 시도해주세요.</p>
+                </div>
               </div>
             </div>
           </div>
