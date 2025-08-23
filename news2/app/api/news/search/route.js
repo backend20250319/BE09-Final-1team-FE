@@ -7,10 +7,12 @@ export async function GET(request) {
     const query = searchParams.get('query') || ''
     const page = parseInt(searchParams.get('page') || '0')
     const size = parseInt(searchParams.get('size') || '10')
-    const category = searchParams.get('category')
+    let category = searchParams.get('category')
     const press = searchParams.get('press')
     const sortBy = searchParams.get('sortBy') || 'publishedAt'
     const sortOrder = searchParams.get('sortOrder') || 'desc'
+    
+    // 카테고리 매핑 제거: 이제 LIFE 카테고리를 직접 사용
     
     console.log('🔍 뉴스 검색 API 호출:', { query, page, size, category, press, sortBy, sortOrder })
     

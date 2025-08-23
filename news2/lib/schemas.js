@@ -5,7 +5,7 @@ export const CategoryId = z.enum([
   "POLITICS",
   "ECONOMY", 
   "SOCIETY",
-  "CULTURE",
+  "LIFE",
   "INTERNATIONAL",
   "IT_SCIENCE",
   "VEHICLE",

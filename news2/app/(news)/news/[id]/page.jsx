@@ -151,6 +151,7 @@ export default function NewsPage() {
     ECONOMY: "경제",
     SOCIETY: "사회",
     CULTURE: "생활/문화",
+    LIFE: "생활",
     INTERNATIONAL: "세계",
     IT_SCIENCE: "IT/과학",
   };

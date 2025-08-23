@@ -32,7 +32,9 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
     const size = parseInt(searchParams.get('size') || '21')
-    const category = searchParams.get('category')
+    let category = searchParams.get('category')
+    
+    // 카테고리 매핑 제거: 이제 LIFE 카테고리를 직접 사용
     
     console.log('🔄 뉴스 API 호출:', { page, size, category })
     
