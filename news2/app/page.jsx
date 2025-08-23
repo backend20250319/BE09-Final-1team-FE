@@ -46,16 +46,19 @@ export default function MainPage() {
         
         if (data.content && data.content.length > 0) {
           const news = data.content[0]
+          console.log('🔥 인기 뉴스 상세 데이터:', news)
           setPopularNews({
             id: news.newsId,
             title: news.title,
-            content: news.content,
+            content: news.content || news.summary || "내용을 불러올 수 없습니다.",
             source: news.press,
             publishedAt: news.publishedAt,
             category: news.categoryName,
             image: news.imageUrl || "/placeholder.jpg",
             views: news.viewCount || 0
           })
+        } else {
+          console.log('🔥 인기 뉴스 데이터가 없습니다:', data)
         }
         setPopularNewsLoading(false)
       } catch (error) {
@@ -242,7 +245,11 @@ export default function MainPage() {
                           {popularNews.title}
                         </h2>
                         <p className="text-sm mb-4 line-clamp-2">
-                          <TextWithTooltips text={popularNews.content.substring(0, 150) + "..."} />
+                          <TextWithTooltips text={
+                            popularNews.content && popularNews.content.length > 150 
+                              ? popularNews.content.substring(0, 150) + "..." 
+                              : popularNews.content || "내용을 불러올 수 없습니다."
+                          } />
                         </p>
 
                         {/* 하단 메타정보 */}
