@@ -10,78 +10,163 @@ export const newsletterService = {
   // 뉴스레터 목록 조회
   async getNewsletters() {
     try {
-      // 임시로 더미 데이터 반환 (백엔드 API가 준비될 때까지)
+      // 서버 사이드에서는 직접 데이터 반환 (SSR을 위해)
+      if (typeof window === 'undefined') {
+        return [
+          {
+            id: 1,
+            title: "정치 뉴스 데일리",
+            description: "매일 업데이트되는 정치 관련 최신 뉴스를 받아보세요. 국회 소식, 정책 동향, 정치 현안을 한눈에!",
+            category: "정치",
+            frequency: "매일",
+            subscribers: 15420,
+            lastSent: "2시간 전",
+            tags: ["정치", "국회", "정책", "현안"],
+            isSubscribed: false
+          },
+          {
+            id: 2,
+            title: "경제 트렌드 위클리",
+            description: "주요 경제 지표, 주식 시장 동향, 부동산 소식을 주간으로 정리해서 전달합니다.",
+            category: "경제",
+            frequency: "주간",
+            subscribers: 8920,
+            lastSent: "1일 전",
+            tags: ["경제", "주식", "부동산", "투자"],
+            isSubscribed: false
+          },
+          {
+            id: 3,
+            title: "IT/과학 인사이드",
+            description: "최신 기술 트렌드, 스타트업 소식, 과학 연구 성과를 깊이 있게 다룹니다.",
+            category: "IT/과학",
+            frequency: "주 3회",
+            subscribers: 12350,
+            lastSent: "6시간 전",
+            tags: ["IT", "기술", "스타트업", "과학"],
+            isSubscribed: false
+          },
+          {
+            id: 4,
+            title: "사회 이슈 포커스",
+            description: "사회적 이슈와 현안을 다양한 관점에서 분석하고 해석합니다.",
+            category: "사회",
+            frequency: "매일",
+            subscribers: 18760,
+            lastSent: "4시간 전",
+            tags: ["사회", "이슈", "현안", "분석"],
+            isSubscribed: false
+          },
+          {
+            id: 5,
+            title: "생활 정보 가이드",
+            description: "일상생활에 유용한 정보, 건강, 요리, 쇼핑 팁을 제공합니다.",
+            category: "생활",
+            frequency: "주 2회",
+            subscribers: 6540,
+            lastSent: "2일 전",
+            tags: ["생활", "건강", "요리", "쇼핑"],
+            isSubscribed: false
+          },
+          {
+            id: 6,
+            title: "세계 뉴스 브리프",
+            description: "전 세계 주요 뉴스와 국제 관계 동향을 간결하게 요약해서 전달합니다.",
+            category: "세계",
+            frequency: "매일",
+            subscribers: 11230,
+            lastSent: "3시간 전",
+            tags: ["세계", "국제", "외교", "글로벌"],
+            isSubscribed: false
+          }
+        ]
+      }
+
+      // 클라이언트 사이드에서는 API 호출
+      const baseUrl = window.location.origin
+      const response = await fetch(`${baseUrl}/api/newsletters`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      return await response.json()
+    } catch (error) {
+      console.error('뉴스레터 목록 조회 실패:', error)
+      // API 호출 실패 시 기본 데이터 반환
       return [
         {
           id: 1,
-          title: "정치 뉴스레터",
-          description: "정치 분야의 주요 뉴스를 매일 전해드립니다.",
+          title: "정치 뉴스 데일리",
+          description: "매일 업데이트되는 정치 관련 최신 뉴스를 받아보세요. 국회 소식, 정책 동향, 정치 현안을 한눈에!",
           category: "정치",
           frequency: "매일",
-          tags: ["정치", "국회", "정부"],
-          subscribers: 1250,
-          lastSent: "2024-01-15",
-          image: "/images/politics.jpg"
+          subscribers: 15420,
+          lastSent: "2시간 전",
+          tags: ["정치", "국회", "정책", "현안"],
+          isSubscribed: false
         },
         {
           id: 2,
-          title: "경제 뉴스레터",
-          description: "경제 동향과 시장 분석을 제공합니다.",
+          title: "경제 트렌드 위클리",
+          description: "주요 경제 지표, 주식 시장 동향, 부동산 소식을 주간으로 정리해서 전달합니다.",
           category: "경제",
-          frequency: "매일",
-          tags: ["경제", "주식", "부동산"],
-          subscribers: 2100,
-          lastSent: "2024-01-15",
-          image: "/images/economy.jpg"
+          frequency: "주간",
+          subscribers: 8920,
+          lastSent: "1일 전",
+          tags: ["경제", "주식", "부동산", "투자"],
+          isSubscribed: false
         },
         {
           id: 3,
-          title: "IT/과학 뉴스레터",
-          description: "최신 기술 트렌드와 과학 소식을 전해드립니다.",
+          title: "IT/과학 인사이드",
+          description: "최신 기술 트렌드, 스타트업 소식, 과학 연구 성과를 깊이 있게 다룹니다.",
           category: "IT/과학",
           frequency: "주 3회",
-          tags: ["IT", "과학", "기술"],
-          subscribers: 1800,
-          lastSent: "2024-01-14",
-          image: "/images/tech.jpg"
+          subscribers: 12350,
+          lastSent: "6시간 전",
+          tags: ["IT", "기술", "스타트업", "과학"],
+          isSubscribed: false
         },
         {
           id: 4,
-          title: "사회 뉴스레터",
-          description: "사회 이슈와 사람들의 이야기를 담습니다.",
+          title: "사회 이슈 포커스",
+          description: "사회적 이슈와 현안을 다양한 관점에서 분석하고 해석합니다.",
           category: "사회",
           frequency: "매일",
-          tags: ["사회", "이슈", "사람"],
-          subscribers: 950,
-          lastSent: "2024-01-15",
-          image: "/images/society.jpg"
+          subscribers: 18760,
+          lastSent: "4시간 전",
+          tags: ["사회", "이슈", "현안", "분석"],
+          isSubscribed: false
         },
         {
           id: 5,
-          title: "생활 뉴스레터",
-          description: "일상생활에 유용한 정보를 제공합니다.",
+          title: "생활 정보 가이드",
+          description: "일상생활에 유용한 정보, 건강, 요리, 쇼핑 팁을 제공합니다.",
           category: "생활",
           frequency: "주 2회",
-          tags: ["생활", "건강", "요리"],
-          subscribers: 1200,
-          lastSent: "2024-01-13",
-          image: "/images/lifestyle.jpg"
+          subscribers: 6540,
+          lastSent: "2일 전",
+          tags: ["생활", "건강", "요리", "쇼핑"],
+          isSubscribed: false
         },
         {
           id: 6,
-          title: "세계 뉴스레터",
-          description: "세계 각국의 주요 뉴스를 전해드립니다.",
+          title: "세계 뉴스 브리프",
+          description: "전 세계 주요 뉴스와 국제 관계 동향을 간결하게 요약해서 전달합니다.",
           category: "세계",
           frequency: "매일",
-          tags: ["세계", "국제", "외교"],
-          subscribers: 800,
-          lastSent: "2024-01-15",
-          image: "/images/world.jpg"
+          subscribers: 11230,
+          lastSent: "3시간 전",
+          tags: ["세계", "국제", "외교", "글로벌"],
+          isSubscribed: false
         }
       ]
-    } catch (error) {
-      console.error('뉴스레터 목록 조회 실패:', error)
-      throw error
     }
   },
 

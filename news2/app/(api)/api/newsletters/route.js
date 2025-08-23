@@ -68,50 +68,6 @@ export async function GET() {
         lastSent: "3시간 전",
         tags: ["세계", "국제", "외교", "글로벌"],
         isSubscribed: false
-      },
-      {
-        id: 7,
-        title: "자동차/교통 업데이트",
-        description: "자동차 시장 동향, 신차 소식, 교통 정책 변화를 실시간으로 전달합니다.",
-        category: "자동차/교통",
-        frequency: "주 3회",
-        subscribers: 7890,
-        lastSent: "1일 전",
-        tags: ["자동차", "교통", "신차", "정책"],
-        isSubscribed: false
-      },
-      {
-        id: 8,
-        title: "여행/음식 스토리",
-        description: "국내외 여행지 소개, 맛집 추천, 음식 문화 이야기를 담습니다.",
-        category: "여행/음식",
-        frequency: "주 2회",
-        subscribers: 5670,
-        lastSent: "3일 전",
-        tags: ["여행", "음식", "맛집", "문화"],
-        isSubscribed: false
-      },
-      {
-        id: 9,
-        title: "예술/문화 인사이트",
-        description: "전시회, 공연, 영화, 음악 등 문화 예술계의 최신 소식을 전합니다.",
-        category: "예술",
-        frequency: "주 2회",
-        subscribers: 4320,
-        lastSent: "4일 전",
-        tags: ["예술", "문화", "전시", "공연"],
-        isSubscribed: false
-      },
-      {
-        id: 10,
-        title: "스포츠 하이라이트",
-        description: "국내외 스포츠 소식, 경기 결과, 선수 인터뷰를 빠르게 전달합니다.",
-        category: "스포츠",
-        frequency: "매일",
-        subscribers: 15670,
-        lastSent: "1시간 전",
-        tags: ["스포츠", "경기", "선수", "하이라이트"],
-        isSubscribed: false
       }
     ]
 

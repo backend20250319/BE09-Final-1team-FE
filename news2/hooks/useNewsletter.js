@@ -11,7 +11,9 @@ export function useNewsletters(options = {}) {
     staleTime: 5 * 60 * 1000, // 5분간 fresh 상태 유지
     cacheTime: 15 * 60 * 1000, // 15분간 캐시 유지
     refetchInterval: 10 * 60 * 1000, // 10분마다 자동 새로고침
-    initialData: [], // 기본값으로 빈 배열 설정
+    initialData: options.initialData || [], // 전달받은 초기 데이터 사용
+    refetchOnMount: false, // 마운트 시 자동 refetch 비활성화
+    refetchOnWindowFocus: false, // 윈도우 포커스 시 자동 refetch 비활성화
     ...options,
   })
 }

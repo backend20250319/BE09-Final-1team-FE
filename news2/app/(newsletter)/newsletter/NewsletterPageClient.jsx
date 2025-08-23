@@ -22,6 +22,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
   const [showEmailModal, setShowEmailModal] = useState(false)
   const [pendingNewsletterId, setPendingNewsletterId] = useState(null)
   const [userRole, setUserRole] = useState(null)
+  const [isClient, setIsClient] = useState(false)
   const { toast } = useToast()
 
   // React Query 훅들
@@ -32,6 +33,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
     refetch: refetchNewsletters 
   } = useNewsletters({
     initialData: initialNewsletters || [], // SSR 데이터를 초기값으로 사용
+    staleTime: 0, // 즉시 stale로 설정하여 클라이언트에서 재검증
   })
 
   const { 
@@ -48,10 +50,19 @@ export default function NewsletterPageClient({ initialNewsletters }) {
   const unsubscribeMutation = useUnsubscribeNewsletter()
 
   useEffect(() => {
-    setIsLoaded(true)
+    // 클라이언트에서 마운트된 후에만 로딩 상태를 true로 설정
+    const timer = setTimeout(() => {
+      setIsLoaded(true)
+    }, 100)
+    
     // 사용자 역할 확인
     const role = getUserRole()
     setUserRole(role)
+    
+    // 클라이언트 사이드 렌더링 확인
+    setIsClient(true)
+    
+    return () => clearTimeout(timer)
   }, [])
 
   const categories = ["전체", "정치", "경제", "사회", "생활", "세계", "IT/과학", "자동차/교통", "여행/음식", "예술"]
@@ -134,6 +145,25 @@ export default function NewsletterPageClient({ initialNewsletters }) {
 
   // 로딩 상태
   const isLoading = newslettersLoading || (userRole && subscriptionsLoading)
+
+  // 클라이언트 사이드에서만 렌더링
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2 mb-8"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <div key={index} className="h-48 bg-gray-200 rounded"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <>
