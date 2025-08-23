@@ -170,23 +170,44 @@ export const newsletterService = {
     }
   },
 
-  // 뉴스레터 구독
-  async subscribeNewsletter(newsletterId, email) {
+  // 뉴스레터 구독 (카테고리 기반)
+  async subscribeNewsletter(category, email) {
     try {
       const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+      
+      // 인증 토큰 가져오기
+      const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null
+      
+      const headers = {
+        'Content-Type': 'application/json',
+      }
+      
+      // 토큰이 있으면 인증 헤더 추가
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+      
+      const requestBody = {
+        category,
+        email,
+      }
+      
+      console.log('구독 요청 전송:', {
+        url: `${baseUrl}/api/newsletters/subscribe`,
+        method: 'POST',
+        headers,
+        body: requestBody
+      })
+      
       const response = await fetch(`${baseUrl}/api/newsletters/subscribe`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          newsletterId,
-          email,
-        }),
+        headers,
+        body: JSON.stringify(requestBody),
       })
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
       }
       
       return await response.json()
@@ -196,22 +217,34 @@ export const newsletterService = {
     }
   },
 
-  // 뉴스레터 구독 해제
-  async unsubscribeNewsletter(newsletterId) {
+  // 뉴스레터 구독 해제 (카테고리 기반)
+  async unsubscribeNewsletter(category) {
     try {
       const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+      
+      // 인증 토큰 가져오기
+      const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null
+      
+      const headers = {
+        'Content-Type': 'application/json',
+      }
+      
+      // 토큰이 있으면 인증 헤더 추가
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+      
       const response = await fetch(`${baseUrl}/api/newsletters/unsubscribe`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify({
-          newsletterId,
+          category,
         }),
       })
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
       }
       
       return await response.json()
@@ -225,15 +258,27 @@ export const newsletterService = {
   async getUserSubscriptions() {
     try {
       const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+      
+      // 인증 토큰 가져오기
+      const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null
+      
+      const headers = {
+        'Content-Type': 'application/json',
+      }
+      
+      // 토큰이 있으면 인증 헤더 추가
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+      
       const response = await fetch(`${baseUrl}/api/newsletters/user-subscriptions`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
       })
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
       }
       
       return await response.json()

@@ -3,24 +3,23 @@
 import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+
 import { Mail, Clock, Users, Star, TrendingUp, Bell, Zap, Filter, CheckCircle, AlertCircle, ArrowRight, User, RefreshCw } from "lucide-react"
 import { TextWithTooltips } from "@/components/tooltip"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
-import { getUserRole } from "@/lib/auth"
+import { getUserRole, getUserInfo } from "@/lib/auth"
 import Header from "@/components/header"
 import { useNewsletters, useUserSubscriptions, useSubscribeNewsletter, useUnsubscribeNewsletter } from "@/hooks/useNewsletter"
 
 export default function NewsletterPageClient({ initialNewsletters }) {
   const [selectedCategory, setSelectedCategory] = useState("전체")
   const [isLoaded, setIsLoaded] = useState(false)
-  const [email, setEmail] = useState("")
-  const [showEmailModal, setShowEmailModal] = useState(false)
-  const [pendingNewsletterId, setPendingNewsletterId] = useState(null)
+
   const [userRole, setUserRole] = useState(null)
   const [isClient, setIsClient] = useState(false)
   const { toast } = useToast()
@@ -43,6 +42,8 @@ export default function NewsletterPageClient({ initialNewsletters }) {
     refetch: refetchSubscriptions 
   } = useUserSubscriptions({
     enabled: !!userRole, // 로그인한 사용자만 활성화
+    retry: 1, // 재시도 횟수 제한
+    retryDelay: 1000, // 재시도 간격
   })
 
   // 뮤테이션 훅들
@@ -67,12 +68,6 @@ export default function NewsletterPageClient({ initialNewsletters }) {
 
   const categories = ["전체", "정치", "경제", "사회", "생활", "세계", "IT/과학", "자동차/교통", "여행/음식", "예술"]
 
-  // 이메일 유효성 검사
-  const validateEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    return emailRegex.test(email)
-  }
-
   const handleSubscribe = async (newsletterId) => {
     if (!userRole) {
       toast({
@@ -88,53 +83,40 @@ export default function NewsletterPageClient({ initialNewsletters }) {
     const isCurrentlySubscribed = userSubscriptions.some(nl => nl.id === newsletterId)
 
     if (isCurrentlySubscribed) {
-      // 구독 해제
-      unsubscribeMutation.mutate(newsletterId)
+      // 구독 해제 - 카테고리 기반으로 변경
+      unsubscribeMutation.mutate(newsletter.category)
     } else {
-      // 구독 추가 - 이메일 입력 필요
-      setPendingNewsletterId(newsletterId)
-      setShowEmailModal(true)
-    }
-  }
-
-  const handleEmailSubmit = async () => {
-    if (!email.trim()) {
-      toast({
-        title: "이메일 주소를 입력해주세요",
-        description: "뉴스레터를 받으실 이메일 주소를 입력해주세요.",
-        variant: "destructive",
-        icon: <AlertCircle className="h-4 w-4 text-red-500" />
-      })
-      return
-    }
-
-    if (!validateEmail(email)) {
-      toast({
-        title: "올바른 이메일 주소를 입력해주세요",
-        description: "이메일 형식이 올바르지 않습니다.",
-        variant: "destructive",
-        icon: <AlertCircle className="h-4 w-4 text-red-500" />
-      })
-      return
-    }
-
-    // 구독 뮤테이션 실행
-    subscribeMutation.mutate(
-      { newsletterId: pendingNewsletterId, email },
-      {
-        onSuccess: () => {
-          setEmail("")
-          setShowEmailModal(false)
-          setPendingNewsletterId(null)
-          
-          // 구독 완료 후 마이페이지 설정 탭으로 이동
-          setTimeout(() => {
-            window.location.href = "/mypage?tab=settings"
-          }, 2000)
-        }
+      // 구독 추가 - 로그인한 사용자는 바로 구독 (이메일 입력 불필요)
+      const userInfo = getUserInfo()
+      if (!userInfo || !userInfo.email) {
+        toast({
+          title: "사용자 정보 오류",
+          description: "사용자 이메일 정보를 찾을 수 없습니다. 다시 로그인해주세요.",
+          variant: "destructive",
+          icon: <AlertCircle className="h-4 w-4 text-red-500" />
+        })
+        return
       }
-    )
+      
+      subscribeMutation.mutate(
+        { category: newsletter.category, email: userInfo.email },
+        {
+          onSuccess: () => {
+            // 구독 완료 후 마이페이지 설정 탭으로 이동
+            setTimeout(() => {
+              window.location.href = "/mypage?tab=settings"
+            }, 2000)
+          },
+          onError: (error) => {
+            console.error('구독 실패:', error)
+            // 에러 발생 시 토스트 메시지는 useNewsletter 훅에서 처리됨
+          }
+        }
+      )
+    }
   }
+
+
 
   // 카테고리별 필터링된 뉴스레터 목록
   const filteredNewsletters = useMemo(() => {
@@ -266,7 +248,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
               ) : (
                 // 실제 뉴스레터 목록
                 (filteredNewsletters || [])
-                  .filter(newsletter => !(userSubscriptions || []).some(sub => sub.id === newsletter.id))
+                  .filter(newsletter => !(Array.isArray(userSubscriptions) ? userSubscriptions : []).some(sub => sub.id === newsletter.id))
                   .map((newsletter, index) => (
                     <Card 
                       key={newsletter.id} 
@@ -295,11 +277,13 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                           </div>
                           <div className="flex items-center space-x-2">
                             <Switch
-                              checked={userSubscriptions.some(nl => nl.id === newsletter.id)}
+                              checked={Array.isArray(userSubscriptions) && userSubscriptions.some(nl => nl.id === newsletter.id)}
                               onCheckedChange={() => handleSubscribe(newsletter.id)}
-                              disabled={subscribeMutation.isPending || unsubscribeMutation.isPending}
+                              disabled={subscribeMutation.isPending || unsubscribeMutation.isPending || subscriptionsLoading}
                             />
-                            <Label className="text-xs">구독</Label>
+                            <Label className="text-xs">
+                              {subscribeMutation.isPending || unsubscribeMutation.isPending ? "처리 중..." : "구독"}
+                            </Label>
                           </div>
                         </div>
                       </CardHeader>
@@ -549,57 +533,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
         </div>
       </div>
 
-      {/* 이메일 입력 모달 */}
-      {showEmailModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-md mx-4">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Mail className="h-5 w-5 mr-2 text-blue-500" />
-                뉴스레터 구독
-              </CardTitle>
-              <CardDescription>
-                뉴스레터를 받으실 이메일 주소를 입력해주세요
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="email">이메일 주소</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="example@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="mt-1"
-                  disabled={subscribeMutation.isPending}
-                />
-              </div>
-              <div className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowEmailModal(false)
-                    setEmail("")
-                    setPendingNewsletterId(null)
-                  }}
-                  className="flex-1"
-                  disabled={subscribeMutation.isPending}
-                >
-                  취소
-                </Button>
-                <Button
-                  onClick={handleEmailSubmit}
-                  disabled={subscribeMutation.isPending}
-                  className="flex-1"
-                >
-                  {subscribeMutation.isPending ? "구독 중..." : "구독하기"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+
     </>
   )
 }
