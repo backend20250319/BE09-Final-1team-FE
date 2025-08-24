@@ -14,8 +14,12 @@ const config: Config = {
     extend: {
       fontFamily: {
         noonnu: ['"NoonnuBasicGothic"', "sans-serif"],
+        naguile: ['"Naguile"', "sans-serif"],
         protest: ['"Protest Riot"', "cursive"],
         logo: ['"Protest Riot"', "cursive"],
+        'nanum-gothic': ['var(--font-nanum-gothic)'],
+        'nanum-myeongjo': ['var(--font-nanum-myeongjo)'],
+        'nanum-brush': ['var(--font-nanum-brush)'],
         sans: [
           '"NoonnuBasicGothic"',
           "-apple-system",

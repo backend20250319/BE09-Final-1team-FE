@@ -1,0 +1,29 @@
+// 사용자 구독 목록 조회 API
+export async function GET(request) {
+  try {
+    // 실제 환경에서는 사용자 인증 후 해당 사용자의 구독 목록을 데이터베이스에서 가져와야 합니다
+    // 여기서는 시뮬레이션을 위해 빈 배열을 반환합니다
+    
+    // 사용자 인증 확인 (실제로는 JWT 토큰 등을 확인해야 함)
+    const authHeader = request.headers.get('authorization')
+    
+    if (!authHeader) {
+      return Response.json(
+        { error: '인증이 필요합니다.' },
+        { status: 401 }
+      )
+    }
+
+    // 시뮬레이션: 로그인한 사용자는 구독 중인 뉴스레터가 없다고 가정
+    const userSubscriptions = []
+
+    return Response.json(userSubscriptions)
+
+  } catch (error) {
+    console.error('사용자 구독 목록 조회 실패:', error)
+    return Response.json(
+      { error: '구독 목록을 불러오는데 실패했습니다.' },
+      { status: 500 }
+    )
+  }
+}

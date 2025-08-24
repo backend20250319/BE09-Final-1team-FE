@@ -2,8 +2,9 @@
 export const config = {
   // API 설정
   api: {
-    baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
-    backendUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
+    baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080",
+    backendUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080",
+    newsServiceUrl: process.env.NEXT_PUBLIC_NEWS_SERVICE_URL || "http://localhost:8082",
   },
 
   // 인증 설정
@@ -32,6 +33,13 @@ export const getApiUrl = (endpoint) => {
 // 백엔드 URL 생성 헬퍼 함수
 export const getBackendUrl = (endpoint) => {
   const baseUrl = config.api.backendUrl.replace(/\/$/, ""); // 끝의 슬래시 제거
+  const cleanEndpoint = endpoint.replace(/^\//, ""); // 시작의 슬래시 제거
+  return `${baseUrl}/${cleanEndpoint}`;
+};
+
+// 뉴스 서비스 URL 생성 헬퍼 함수
+export const getNewsServiceUrl = (endpoint) => {
+  const baseUrl = config.api.newsServiceUrl.replace(/\/$/, ""); // 끝의 슬래시 제거
   const cleanEndpoint = endpoint.replace(/^\//, ""); // 시작의 슬래시 제거
   return `${baseUrl}/${cleanEndpoint}`;
 };

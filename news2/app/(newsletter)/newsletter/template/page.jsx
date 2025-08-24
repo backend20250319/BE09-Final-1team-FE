@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
@@ -11,109 +11,45 @@ import NewsletterTemplate from "@/components/NewsletterTemplate"
 export default function NewsletterTemplatePage() {
   const [isPreview, setIsPreview] = useState(true)
   const [showControls, setShowControls] = useState(true)
+  const [sampleNewsletters, setSampleNewsletters] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [selectedNewsletter, setSelectedNewsletter] = useState(0)
 
-  const sampleNewsletters = [
-    {
-      id: 1,
-      title: "매일 경제 뉴스",
-      description: "주요 경제 뉴스와 시장 동향을 매일 아침에 받아보세요",
-      category: "경제",
-      author: "김경제",
-      authorAvatar: "/placeholder-user.jpg",
-      date: "2024년 1월 15일",
-      time: "오전 9:00",
-      subscribers: 15420,
-      views: 8920,
-      content: [
-        {
-          type: "header",
-          title: "오늘의 주요 경제 뉴스",
-          subtitle: "2024년 1월 15일 경제 동향 요약"
-        },
-        {
-          type: "article",
-          title: "한국은행, 기준금리 동결 결정",
-          summary: "한국은행이 기준금리를 현재 수준으로 동결하기로 결정했습니다. 인플레이션 압력과 경제 성장률을 종합적으로 고려한 결정으로 분석됩니다.",
-          image: "/placeholder.jpg",
-          readTime: "3분",
-          category: "금융"
-        },
-        {
-          type: "article",
-          title: "반도체 수출 회복세 지속",
-          summary: "반도체 수출이 전년 대비 15% 증가하며 회복세를 보이고 있습니다. AI 수요 증가와 메모리 가격 상승이 주요 요인으로 꼽힙니다.",
-          image: "/placeholder.jpg",
-          readTime: "2분",
-          category: "산업"
-        },
-        {
-          type: "article",
-          title: "원-달러 환율 변동성 확대",
-          summary: "원-달러 환율이 1,300원 선에서 변동성을 보이고 있습니다. 미국 연방준비제도(Fed)의 통화정책 기조와 국내 경제 지표가 영향을 미치고 있습니다.",
-          image: "/placeholder.jpg",
-          readTime: "4분",
-          category: "환율"
-        }
-      ],
-      tags: ["경제", "투자", "시장동향", "금융"],
-      footer: {
-        unsubscribe: "구독 해지",
-        preferences: "설정 변경",
-        contact: "문의하기"
-      }
-    },
-    {
-      id: 2,
-      title: "AI & Tech Weekly",
-      description: "AI와 기술 분야의 최신 동향을 주간으로 정리해드립니다",
-      category: "IT/과학",
-      author: "박테크",
-      authorAvatar: "/placeholder-user.jpg",
-      date: "2024년 1월 14일",
-      time: "오후 2:00",
-      subscribers: 8920,
-      views: 5670,
-      content: [
-        {
-          type: "header",
-          title: "이번 주 AI & Tech 하이라이트",
-          subtitle: "2024년 1월 14일 기술 트렌드 요약"
-        },
-        {
-          type: "article",
-          title: "ChatGPT-5 출시 예고",
-          summary: "OpenAI가 ChatGPT-5 출시를 예고했습니다. 더욱 정교한 대화 능력과 멀티모달 기능이 강화될 것으로 예상됩니다.",
-          image: "/placeholder.jpg",
-          readTime: "5분",
-          category: "AI"
-        },
-        {
-          type: "article",
-          title: "메타버스 기술 발전",
-          summary: "VR/AR 기술이 급속도로 발전하며 메타버스 생태계가 확장되고 있습니다. 주요 기업들의 투자가 활발히 이어지고 있습니다.",
-          image: "/placeholder.jpg",
-          readTime: "4분",
-          category: "메타버스"
-        },
-        {
-          type: "article",
-          title: "블록체인 기술 동향",
-          summary: "블록체인 기술이 금융, 공급망, 디지털 자산 분야에서 혁신을 가져오고 있습니다. 새로운 활용 사례들이 계속 등장하고 있습니다.",
-          image: "/placeholder.jpg",
-          readTime: "3분",
-          category: "블록체인"
-        }
-      ],
-      tags: ["AI", "기술", "혁신", "메타버스"],
-      footer: {
-        unsubscribe: "구독 해지",
-        preferences: "설정 변경",
-        contact: "문의하기"
+  useEffect(() => {
+    const fetchNewsletters = async () => {
+      setLoading(true)
+      
+      try {
+        // 실제 API 호출로 변경
+        const response = await fetch('/api/newsletters/templates')
+        const data = await response.json()
+        setSampleNewsletters(data || [])
+      } catch (error) {
+        console.error('❌ 뉴스레터 템플릿 데이터 로딩 실패:', error)
+        
+        // 폴백 데이터 설정
+        const fallbackNewsletters = [
+          {
+            id: 1,
+            title: "AI 기술 트렌드",
+            description: "최신 AI 기술 동향과 미래 전망",
+            tags: ["AI", "기술", "혁신", "메타버스"],
+            footer: {
+              unsubscribe: "구독 해지",
+              preferences: "설정 변경",
+              contact: "문의하기"
+            }
+          }
+        ]
+        
+        setSampleNewsletters(fallbackNewsletters)
+      } finally {
+        setLoading(false)
       }
     }
-  ]
 
-  const [selectedNewsletter, setSelectedNewsletter] = useState(0)
+    fetchNewsletters()
+  }, [])
 
   const handleCopyTemplate = () => {
     navigator.clipboard.writeText("뉴스레터 템플릿이 복사되었습니다.")
@@ -127,7 +63,6 @@ export default function NewsletterTemplatePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      
       <div className="container mx-auto px-4 py-8">
         {/* 컨트롤 패널 */}
         {showControls && (
@@ -198,10 +133,16 @@ export default function NewsletterTemplatePage() {
         )}
 
         {/* 뉴스레터 템플릿 */}
-        <NewsletterTemplate 
-          newsletter={sampleNewsletters[selectedNewsletter]}
-          isPreview={isPreview}
-        />
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <p className="text-gray-600">템플릿 로딩 중...</p>
+          </div>
+        ) : (
+          <NewsletterTemplate 
+            newsletter={sampleNewsletters[selectedNewsletter]}
+            isPreview={isPreview}
+          />
+        )}
       </div>
     </div>
   )

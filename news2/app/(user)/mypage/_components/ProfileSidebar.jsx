@@ -29,7 +29,7 @@ export default function ProfileSidebar() {
           throw new Error("사용자 정보를 불러올 수 없습니다.");
         }
 
-        const data = await response.json();
+        const data = await response.json().catch(() => ({}));
 
         if (data.success) {
           setUserData(data.data);

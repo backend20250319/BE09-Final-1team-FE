@@ -1,47 +1,43 @@
-import { GeistMono } from 'geist/font/mono'
-import './globals.css'
-import { ThemeProvider } from '@/components/theme-provider'
-import { ScrapProvider } from '@/contexts/ScrapContext' // 이 부분을 추가
-import Footer from '../components/footer'
+import { Inter, Nanum_Gothic, Nanum_Myeongjo, Nanum_Brush_Script } from "next/font/google"
+import "./globals.css"
+import { Providers } from "@/components/providers"
+import Footer from "@/components/footer"
 
+const inter = Inter({ subsets: ["latin"] })
+const nanumGothic = Nanum_Gothic({ 
+  weight: ["400", "700", "800"],
+  subsets: ["latin"],
+  variable: "--font-nanum-gothic"
+})
+const nanumMyeongjo = Nanum_Myeongjo({ 
+  weight: ["400", "700", "800"],
+  subsets: ["latin"],
+  variable: "--font-nanum-myeongjo"
+})
+const nanumBrush = Nanum_Brush_Script({ 
+  weight: ["400"],
+  subsets: ["latin"],
+  variable: "--font-nanum-brush"
+})
 
 export const metadata = {
-  title: "NewSPhere - 최신 뉴스와 정보",
-  description: "실시간 뉴스, 커뮤니티, 뉴스레터를 제공하는 종합 뉴스 플랫폼",
-  keywords: "뉴스, 커뮤니티, 뉴스레터, 실시간뉴스",
-  authors: [{ name: "New NormalLists" }],
-};
-
-export const viewport = {
-  width: "device-width",
-  initialScale: 1,
-};
+  title: "뉴스포털",
+  description: "최신 뉴스를 실시간으로 확인하세요",
+}
 
 export default function RootLayout({ children }) {
   return (
     <html lang="ko" suppressHydrationWarning>
-      <head>
-        <style>{`
-html {
-  font-family: "NoonnuBasicGothic", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-mono: ${GeistMono.variable};
-}
-        `}</style>
-      </head>
-      <body className="min-h-screen bg-background font-sans antialiased">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-
-          <ScrapProvider>
-            {children}            
-          </ScrapProvider>
-        </ThemeProvider>
-        <Footer />
+      <body className={`${inter.className} ${nanumGothic.variable} ${nanumMyeongjo.variable} ${nanumBrush.variable}`}>
+        <Providers>
+          <div className="flex flex-col min-h-screen">
+            <main className="flex-1">
+              {children}
+            </main>
+            <Footer />
+          </div>
+        </Providers>
       </body>
     </html>
-  );
+  )
 }
