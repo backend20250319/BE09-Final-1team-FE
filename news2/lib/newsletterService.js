@@ -317,7 +317,7 @@ export const newsletterService = {
   },
 
   // 구독 정보 조회
-  async getSubscription(id) {
+  async getSubscription(subscriptionId) {
     try {
       const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
       
@@ -333,7 +333,7 @@ export const newsletterService = {
         headers['Authorization'] = `Bearer ${token}`
       }
       
-      const response = await fetch(`${baseUrl}/api/newsletters/subscription/${id}`, {
+      const response = await fetch(`${baseUrl}/api/newsletters/subscription/${subscriptionId}`, {
         method: 'GET',
         headers,
       })

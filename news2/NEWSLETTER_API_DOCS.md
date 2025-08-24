@@ -41,7 +41,7 @@ Authorization: Bearer <your-jwt-token>
 ```
 
 ### 2. 구독 정보 조회
-**GET** `/api/newsletters/subscription/{id}`
+**GET** `/api/newsletters/subscription/{subscriptionId}`
 
 특정 구독의 정보를 조회합니다.
 
@@ -83,7 +83,7 @@ Authorization: Bearer <your-jwt-token>
 ```
 
 ### 4. 구독 해지
-**DELETE** `/api/newsletters/subscription/{id}`
+**DELETE** `/api/newsletters/subscription/{subscriptionId}`
 
 구독을 해지합니다.
 

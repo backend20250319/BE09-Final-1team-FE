@@ -1,7 +1,7 @@
 // 구독 정보 조회 API
 export async function GET(request, { params }) {
   try {
-    const { id } = params
+    const { subscriptionId } = params
     const authHeader = request.headers.get('authorization')
 
     if (!authHeader) {
@@ -12,7 +12,7 @@ export async function GET(request, { params }) {
     }
 
     // 백엔드 API 호출
-    const response = await fetch(`http://localhost:8085/api/newsletter/subscription/${id}`, {
+    const response = await fetch(`http://localhost:8085/api/newsletter/subscription/${subscriptionId}`, {
       method: 'GET',
       headers: {
         'Authorization': authHeader,
@@ -42,7 +42,7 @@ export async function GET(request, { params }) {
 // 구독 해지 API
 export async function DELETE(request, { params }) {
   try {
-    const { id } = params
+    const { subscriptionId } = params
     const authHeader = request.headers.get('authorization')
 
     if (!authHeader) {
@@ -53,7 +53,7 @@ export async function DELETE(request, { params }) {
     }
 
     // 백엔드 API 호출
-    const response = await fetch(`http://localhost:8085/api/newsletter/subscription/${id}`, {
+    const response = await fetch(`http://localhost:8085/api/newsletter/subscription/${subscriptionId}`, {
       method: 'DELETE',
       headers: {
         'Authorization': authHeader,
