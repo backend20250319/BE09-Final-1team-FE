@@ -32,7 +32,6 @@ export default function Header() {
 
   const navigation = [
     { name: "홈", href: "/" },
-    { name: "커뮤니티", href: "/community" },
     { name: "뉴스레터", href: "/newsletter" },
     { name: "마이페이지", href: "/mypage" },
   ];
