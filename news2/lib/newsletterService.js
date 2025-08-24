@@ -187,9 +187,28 @@ export const newsletterService = {
         headers['Authorization'] = `Bearer ${token}`
       }
       
+      // 카테고리 매핑 (프론트엔드 → 백엔드)
+      const categoryMapping = {
+        '정치': 'POLITICS',
+        '경제': 'ECONOMY', 
+        '사회': 'SOCIETY',
+        '생활': 'LIFE',
+        '세계': 'INTERNATIONAL',
+        'IT/과학': 'IT_SCIENCE',
+        '자동차/교통': 'VEHICLE',
+        '여행/음식': 'TRAVEL_FOOD',
+        '예술': 'ART'
+      }
+
+      const backendCategory = categoryMapping[category]
+      if (!backendCategory) {
+        throw new Error('지원하지 않는 카테고리입니다.')
+      }
+      
       const requestBody = {
-        category,
         email,
+        frequency: 'DAILY',
+        preferredCategories: [backendCategory]
       }
       
       console.log('구독 요청 전송:', {
@@ -293,6 +312,143 @@ export const newsletterService = {
       return await response.json()
     } catch (error) {
       console.error('사용자 구독 목록 조회 실패:', error)
+      throw error
+    }
+  },
+
+  // 구독 정보 조회
+  async getSubscription(id) {
+    try {
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+      
+      // 인증 토큰 가져오기
+      const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null
+      
+      const headers = {
+        'Content-Type': 'application/json',
+      }
+      
+      // 토큰이 있으면 인증 헤더 추가
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+      
+      const response = await fetch(`${baseUrl}/api/newsletters/subscription/${id}`, {
+        method: 'GET',
+        headers,
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+      }
+      
+      return await response.json()
+    } catch (error) {
+      console.error('구독 정보 조회 실패:', error)
+      throw error
+    }
+  },
+
+  // 내 구독 목록 조회
+  async getMySubscriptions() {
+    try {
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+      
+      // 인증 토큰 가져오기
+      const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null
+      
+      const headers = {
+        'Content-Type': 'application/json',
+      }
+      
+      // 토큰이 있으면 인증 헤더 추가
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+      
+      const response = await fetch(`${baseUrl}/api/newsletters/subscription/my`, {
+        method: 'GET',
+        headers,
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+      }
+      
+      return await response.json()
+    } catch (error) {
+      console.error('내 구독 목록 조회 실패:', error)
+      throw error
+    }
+  },
+
+  // 활성 구독 목록 조회
+  async getActiveSubscriptions() {
+    try {
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+      
+      // 인증 토큰 가져오기
+      const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null
+      
+      const headers = {
+        'Content-Type': 'application/json',
+      }
+      
+      // 토큰이 있으면 인증 헤더 추가
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+      
+      const response = await fetch(`${baseUrl}/api/newsletters/subscription/active`, {
+        method: 'GET',
+        headers,
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+      }
+      
+      return await response.json()
+    } catch (error) {
+      console.error('활성 구독 목록 조회 실패:', error)
+      throw error
+    }
+  },
+
+  // 구독 상태 변경
+  async updateSubscriptionStatus(subscriptionId, status) {
+    try {
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+      
+      // 인증 토큰 가져오기
+      const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null
+      
+      const headers = {
+        'Content-Type': 'application/json',
+      }
+      
+      // 토큰이 있으면 인증 헤더 추가
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+      
+      const response = await fetch(`${baseUrl}/api/newsletters/subscription/${subscriptionId}/status`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ status }),
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+      }
+      
+      return await response.json()
+    } catch (error) {
+      console.error('구독 상태 변경 실패:', error)
       throw error
     }
   },

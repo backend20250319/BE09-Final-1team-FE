@@ -94,3 +94,72 @@ export function useUnsubscribeNewsletter() {
     }
   })
 }
+
+// 구독 정보 조회 훅
+export function useSubscription(id) {
+  return useQuery({
+    queryKey: ['subscription', id],
+    queryFn: () => newsletterService.getSubscription(id),
+    enabled: !!id,
+    staleTime: 2 * 60 * 1000, // 2분간 fresh 상태 유지
+    cacheTime: 10 * 60 * 1000, // 10분간 캐시 유지
+  })
+}
+
+// 내 구독 목록 조회 훅
+export function useMySubscriptions(options = {}) {
+  return useQuery({
+    queryKey: ['my-subscriptions'],
+    queryFn: newsletterService.getMySubscriptions,
+    staleTime: 2 * 60 * 1000, // 2분간 fresh 상태 유지
+    cacheTime: 10 * 60 * 1000, // 10분간 캐시 유지
+    enabled: !!options.enabled, // 로그인한 사용자만 활성화
+    ...options,
+  })
+}
+
+// 활성 구독 목록 조회 훅
+export function useActiveSubscriptions(options = {}) {
+  return useQuery({
+    queryKey: ['active-subscriptions'],
+    queryFn: newsletterService.getActiveSubscriptions,
+    staleTime: 2 * 60 * 1000, // 2분간 fresh 상태 유지
+    cacheTime: 10 * 60 * 1000, // 10분간 캐시 유지
+    enabled: !!options.enabled, // 로그인한 사용자만 활성화
+    ...options,
+  })
+}
+
+// 구독 상태 변경 훅
+export function useUpdateSubscriptionStatus() {
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+
+  return useMutation({
+    mutationFn: ({ subscriptionId, status }) => 
+      newsletterService.updateSubscriptionStatus(subscriptionId, status),
+    
+    onSuccess: (data, variables) => {
+      // 캐시 무효화하여 최신 데이터 가져오기
+      queryClient.invalidateQueries(['subscription', variables.subscriptionId])
+      queryClient.invalidateQueries(['my-subscriptions'])
+      queryClient.invalidateQueries(['active-subscriptions'])
+      queryClient.invalidateQueries(['user-subscriptions'])
+      
+      toast({
+        title: "상태 변경 완료",
+        description: "구독 상태가 변경되었습니다.",
+        icon: <CheckCircle className="h-4 w-4 text-green-500" />
+      })
+    },
+    
+    onError: (error) => {
+      toast({
+        title: "상태 변경 실패",
+        description: error.message || "일시적인 오류가 발생했습니다.",
+        variant: "destructive",
+        icon: <AlertCircle className="h-4 w-4 text-red-500" />
+      })
+    }
+  })
+}
