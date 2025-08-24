@@ -163,3 +163,19 @@ export function useUpdateSubscriptionStatus() {
     }
   })
 }
+
+// 카테고리별 기사 조회 훅
+export function useCategoryArticles(category, limit = 5) {
+  return useQuery({
+    queryKey: ['category-articles', category, limit],
+    queryFn: () => newsletterService.getCategoryArticles(category, limit),
+    enabled: !!category,
+    staleTime: 5 * 60 * 1000, // 5분간 fresh 상태 유지
+    cacheTime: 15 * 60 * 1000, // 15분간 캐시 유지
+    retry: 1, // 재시도 횟수 제한
+    retryDelay: 1000, // 재시도 간격
+    onError: (error) => {
+      console.warn(`카테고리 ${category} 기사 조회 실패:`, error.message)
+    }
+  })
+}

@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import { getUserRole, getUserInfo } from "@/lib/auth"
 import Header from "@/components/header"
-import { useNewsletters, useUserSubscriptions, useSubscribeNewsletter, useUnsubscribeNewsletter } from "@/hooks/useNewsletter"
+import { useNewsletters, useUserSubscriptions, useSubscribeNewsletter, useUnsubscribeNewsletter, useCategoryArticles } from "@/hooks/useNewsletter"
 
 // 카테고리별 주제 생성 함수
 const generateTopicsForCategory = (category) => {
@@ -30,23 +30,46 @@ const generateTopicsForCategory = (category) => {
     "생활": ["건강", "요리", "패션", "육아", "취미", "라이프스타일"],
     "세계": ["국제정치", "글로벌경제", "외교", "분쟁", "협력", "문화교류"],
     "IT/과학": ["인공지능", "블록체인", "클라우드", "모바일", "연구개발", "스타트업"],
-    "자동차/교통": ["전기차", "자율주행", "대중교통", "도로교통", "친환경", "모빌리티"],
-    "여행/음식": ["해외여행", "국내여행", "맛집", "요리", "호텔", "항공"],
-    "예술": ["영화", "음악", "미술", "문학", "공연", "디자인"]
+    "자동차/교통": ["전기차", "자율주행", "대중교통", "도로교통", "친환경", "모빌리티", "자동차시장", "교통정책"],
+    "여행/음식": ["해외여행", "국내여행", "맛집", "요리", "호텔", "항공", "관광지", "음식문화"],
+    "예술": ["영화", "음악", "미술", "문학", "공연", "디자인", "전시회", "문화행사"]
   };
   return topicsMap[category] || ["주요뉴스", "핫이슈", "트렌드", "분석"];
 };
 
 // 최근 헤드라인 생성 함수
 const generateRecentHeadlines = (category) => {
-  const headlines = [
+  const headlinesMap = {
+    "자동차/교통": [
+      { title: "전기차 시장 급성장, 올해 판매량 전년 대비 150% 증가", time: "2시간 전", views: "2.1K" },
+      { title: "자율주행 기술 발전, 도로교통법 개정안 발표", time: "4시간 전", views: "1.8K" },
+      { title: "친환경 모빌리티 솔루션, 도시 교통 혁신 가져올까", time: "6시간 전", views: "1.5K" },
+      { title: "자동차 반도체 부족 현상, 글로벌 공급망 영향", time: "1일 전", views: "2.3K" },
+      { title: "대중교통 개편안 발표, 시민 편의성 대폭 개선", time: "2일 전", views: "1.9K" }
+    ],
+    "여행/음식": [
+      { title: "해외여행 수요 급증, 항공권 예약률 전년 대비 200% 증가", time: "1시간 전", views: "3.2K" },
+      { title: "신규 관광지 발굴, 숨겨진 보물 같은 여행지 소개", time: "3시간 전", views: "2.8K" },
+      { title: "미식가들이 주목하는 올해의 트렌드 음식", time: "5시간 전", views: "2.1K" },
+      { title: "호텔 업계 디지털 전환, AI 기반 맞춤 서비스 도입", time: "1일 전", views: "1.7K" },
+      { title: "지역별 특색 음식 문화, 전통과 현대의 조화", time: "2일 전", views: "2.4K" }
+    ],
+    "예술": [
+      { title: "올해의 주목할 예술가, 젊은 작가들의 혁신적 작품", time: "2시간 전", views: "1.9K" },
+      { title: "디지털 아트 전시회, 메타버스와 예술의 만남", time: "4시간 전", views: "2.2K" },
+      { title: "클래식 음악 페스티벌, 세계적 연주자들의 축제", time: "6시간 전", views: "1.6K" },
+      { title: "영화계 신기술 도입, VR/AR 기반 새로운 경험", time: "1일 전", views: "2.8K" },
+      { title: "공공미술 프로젝트, 도시를 예술로 물들이다", time: "2일 전", views: "1.4K" }
+    ]
+  };
+  
+  return headlinesMap[category] || [
     { title: `${category} 관련 주요 소식이 업데이트되었습니다`, time: "2시간 전", views: "1.2K" },
     { title: `${category} 분야의 새로운 동향과 전망`, time: "5시간 전", views: "856" },
     { title: `${category} 전문가들의 인사이트와 분석`, time: "1일 전", views: "2.1K" },
     { title: `${category} 관련 정책 변화와 영향`, time: "2일 전", views: "1.5K" },
     { title: `${category} 업계의 최신 트렌드 리포트`, time: "3일 전", views: "987" }
   ];
-  return headlines;
 };
 
 export default function NewsletterPageClient({ initialNewsletters }) {
@@ -81,6 +104,13 @@ export default function NewsletterPageClient({ initialNewsletters }) {
     retryDelay: 1000,
   })
 
+  // 카테고리별 기사 데이터 조회 - 실제로 필요한 카테고리만 조회 (백엔드 서버가 없을 때를 대비)
+  const allCategories = ["정치", "경제", "사회", "생활", "세계", "IT/과학", "자동차/교통", "여행/음식", "예술"]
+  const categories = ["전체", ...allCategories]
+  
+  // 백엔드 서버가 실행 중일 때만 카테고리별 기사 조회 (임시로 비활성화)
+  const categoryArticlesQueries = [] // allCategories.map(category => useCategoryArticles(category, 5))
+
   // 뮤테이션 훅들
   const subscribeMutation = useSubscribeNewsletter()
   const unsubscribeMutation = useUnsubscribeNewsletter()
@@ -103,12 +133,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
       const serverCategories = new Set();
       
       userSubscriptions.forEach(sub => {
-        // 카테고리 직접 매칭
-        if (sub.category) {
-          serverCategories.add(sub.category);
-        }
-        
-        // preferredCategories 배열 처리
+        // preferredCategories 배열 처리 (백엔드에서 이 필드로 카테고리 정보를 제공)
         if (sub.preferredCategories && Array.isArray(sub.preferredCategories)) {
           sub.preferredCategories.forEach(prefCat => {
             // 백엔드 카테고리명을 프론트엔드 카테고리명으로 변환
@@ -124,17 +149,20 @@ export default function NewsletterPageClient({ initialNewsletters }) {
               'ART': '예술'
             };
             
-            const frontendCategory = categoryMapping[prefCat] || prefCat;
-            serverCategories.add(frontendCategory);
+            const frontendCategory = categoryMapping[prefCat];
+            if (frontendCategory) {
+              serverCategories.add(frontendCategory);
+            }
           });
         }
       });
       
+      console.log('서버 구독 목록 동기화:', Array.from(serverCategories));
       setLocalSubscriptions(serverCategories);
     }
   }, [userSubscriptions]);
 
-  const categories = ["전체", "정치", "경제", "사회", "생활", "세계", "IT/과학", "자동차/교통", "여행/음식", "예술"]
+
 
   // 카드 확장/축소 토글
   const toggleCardExpansion = (newsletterId) => {
@@ -175,7 +203,8 @@ export default function NewsletterPageClient({ initialNewsletters }) {
               'TRAVEL_FOOD': '여행/음식',
               'ART': '예술'
             };
-            return categoryMapping[prefCat] === category || prefCat === category;
+            const frontendCategory = categoryMapping[prefCat];
+            return frontendCategory === category;
           });
         }
         
@@ -273,9 +302,6 @@ export default function NewsletterPageClient({ initialNewsletters }) {
       
       // 해당 카테고리의 구독을 찾아서 해제
       const sub = (userSubscriptions || []).find(s => {
-        // 카테고리 직접 매칭
-        if (s.category === newsletter.category) return true;
-        
         // preferredCategories 배열에서 확인
         if (s.preferredCategories && Array.isArray(s.preferredCategories)) {
           const categoryMapping = {
@@ -291,7 +317,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
           };
           
           return s.preferredCategories.some(prefCat => {
-            const frontendCategory = categoryMapping[prefCat] || prefCat;
+            const frontendCategory = categoryMapping[prefCat];
             return frontendCategory === newsletter.category;
           });
         }
@@ -470,6 +496,19 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                 enhancedNewsletters.map((newsletter, index) => {
                   const isSubscribed = isSubscribedByCategory(newsletter.category);
                   const isExpanded = expandedCards.has(newsletter.id);
+                  
+                  // 미리 조회한 카테고리별 기사 데이터 사용 (백엔드 서버가 없을 때는 기본값 사용)
+                  const categoryIndex = allCategories.indexOf(newsletter.category);
+                  const categoryData = categoryIndex >= 0 && categoryArticlesQueries[categoryIndex] 
+                    ? categoryArticlesQueries[categoryIndex].data 
+                    : null;
+                  
+                  // 실제 기사 데이터가 있으면 사용, 없으면 기본값 사용
+                  const articles = categoryData?.articles || [];
+                  const trendingKeywords = categoryData?.trendingKeywords || generateTopicsForCategory(newsletter.category);
+                  const mainTopics = categoryData?.mainTopics || generateTopicsForCategory(newsletter.category);
+                  const totalArticles = categoryData?.totalArticles || newsletter.stats?.totalArticles || 20;
+                  
                   return (
                     <Card
                       key={newsletter.id}
@@ -546,7 +585,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                               <Hash className="h-3 w-3 text-blue-500 mr-1" />
                               <span className="text-xs text-gray-500">총 기사</span>
                             </div>
-                            <div className="font-semibold text-sm">{newsletter.stats?.totalArticles}</div>
+                            <div className="font-semibold text-sm">{totalArticles}</div>
                           </div>
                           <div className="text-center">
                             <div className="flex items-center justify-center mb-1">
@@ -571,7 +610,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                             주요 주제
                           </h4>
                           <div className="flex flex-wrap gap-1">
-                            {newsletter.topics?.slice(0, isExpanded ? newsletter.topics.length : 4).map((topic, idx) => (
+                            {mainTopics?.slice(0, isExpanded ? mainTopics.length : 4).map((topic, idx) => (
                               <Badge 
                                 key={idx} 
                                 className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs px-2 py-1 rounded-full shadow-sm hover:shadow-md transition-shadow cursor-pointer"
@@ -579,9 +618,9 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                                 #{topic}
                               </Badge>
                             ))}
-                            {!isExpanded && newsletter.topics?.length > 4 && (
+                            {!isExpanded && mainTopics?.length > 4 && (
                               <Badge className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
-                                +{newsletter.topics.length - 4}개
+                                +{mainTopics.length - 4}개
                               </Badge>
                             )}
                           </div>
@@ -596,21 +635,42 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                             </h4>
                             <ScrollArea className="h-32">
                               <div className="space-y-2">
-                                {newsletter.recentHeadlines?.map((headline, idx) => (
-                                  <div key={idx} className="flex items-start space-x-2 text-xs">
-                                    <div className="w-1 h-1 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                                    <div className="flex-1">
-                                      <p className="text-gray-700 leading-relaxed">{headline.title}</p>
-                                      <div className="flex items-center space-x-2 mt-1">
-                                        <span className="text-gray-400">{headline.time}</span>
-                                        <div className="flex items-center space-x-1 text-gray-400">
-                                          <Eye className="h-2.5 w-2.5" />
-                                          <span>{headline.views}</span>
+                                {articles.length > 0 ? (
+                                  articles.map((article, idx) => (
+                                    <div key={article.id || idx} className="flex items-start space-x-2 text-xs">
+                                      <div className="w-1 h-1 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                                      <div className="flex-1">
+                                        <p className="text-gray-700 leading-relaxed">{article.title}</p>
+                                        <div className="flex items-center space-x-2 mt-1">
+                                          <span className="text-gray-400">
+                                            {article.publishedAt ? new Date(article.publishedAt).toLocaleDateString() : '최근'}
+                                          </span>
+                                          {article.summary && (
+                                            <div className="flex items-center space-x-1 text-gray-400">
+                                              <span className="truncate">{article.summary.substring(0, 30)}...</span>
+                                            </div>
+                                          )}
                                         </div>
                                       </div>
                                     </div>
-                                  </div>
-                                ))}
+                                  ))
+                                ) : (
+                                  newsletter.recentHeadlines?.map((headline, idx) => (
+                                    <div key={idx} className="flex items-start space-x-2 text-xs">
+                                      <div className="w-1 h-1 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                                      <div className="flex-1">
+                                        <p className="text-gray-700 leading-relaxed">{headline.title}</p>
+                                        <div className="flex items-center space-x-2 mt-1">
+                                          <span className="text-gray-400">{headline.time}</span>
+                                          <div className="flex items-center space-x-1 text-gray-400">
+                                            <Eye className="h-2.5 w-2.5" />
+                                            <span>{headline.views}</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))
+                                )}
                               </div>
                             </ScrollArea>
                           </div>
@@ -771,12 +831,14 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                                       'TRAVEL_FOOD': '여행/음식',
                                       'ART': '예술'
                                     };
-                                    const frontendCategory = categoryMapping[cat] || cat;
-                                    setLocalSubscriptions(prev => {
-                                      const newSet = new Set(prev);
-                                      newSet.delete(frontendCategory);
-                                      return newSet;
-                                    });
+                                    const frontendCategory = categoryMapping[cat];
+                                    if (frontendCategory) {
+                                      setLocalSubscriptions(prev => {
+                                        const newSet = new Set(prev);
+                                        newSet.delete(frontendCategory);
+                                        return newSet;
+                                      });
+                                    }
                                   });
                                   
                                   unsubscribeMutation.mutate(subscription.id, {
@@ -794,8 +856,10 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                                           'TRAVEL_FOOD': '여행/음식',
                                           'ART': '예술'
                                         };
-                                        const frontendCategory = categoryMapping[cat] || cat;
-                                        setLocalSubscriptions(prev => new Set([...prev, frontendCategory]));
+                                        const frontendCategory = categoryMapping[cat];
+                                        if (frontendCategory) {
+                                          setLocalSubscriptions(prev => new Set([...prev, frontendCategory]));
+                                        }
                                       });
                                     }
                                   });

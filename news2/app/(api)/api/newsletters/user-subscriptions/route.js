@@ -28,13 +28,20 @@ export async function GET(request) {
     // 백엔드 응답을 프론트엔드 형식으로 변환
     const userSubscriptions = data.data?.map(subscription => ({
       id: subscription.id,
-      title: `${subscription.preferredCategories?.join(', ') || '뉴스레터'} 구독`,
-      category: subscription.preferredCategories?.[0] || '일반',
-      frequency: subscription.frequency === 'DAILY' ? '매일' : 
-                 subscription.frequency === 'WEEKLY' ? '주간' : 
-                 subscription.frequency === 'MONTHLY' ? '월간' : '기타',
+      userId: subscription.userId,
+      email: subscription.email,
       status: subscription.status,
-      subscribedAt: subscription.subscribedAt
+      frequency: subscription.frequency,
+      preferredCategories: subscription.preferredCategories || [],
+      keywords: subscription.keywords || [],
+      sendTime: subscription.sendTime,
+      isPersonalized: subscription.personalized,
+      subscribedAt: subscription.subscribedAt,
+      lastSentAt: subscription.lastSentAt,
+      createdAt: subscription.createdAt,
+      // 기존 호환성을 위한 필드들
+      title: `${subscription.preferredCategories?.join(', ') || '뉴스레터'} 구독`,
+      category: subscription.preferredCategories?.[0] || '일반'
     })) || []
 
     return Response.json(userSubscriptions)

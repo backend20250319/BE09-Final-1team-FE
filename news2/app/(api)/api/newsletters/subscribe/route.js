@@ -22,7 +22,7 @@ export async function POST(request) {
       body: JSON.stringify({
         email,
         frequency: frequency || 'DAILY',
-        preferredCategories
+        preferredCategories: Array.isArray(preferredCategories) ? preferredCategories : [preferredCategories]
       })
     })
 
