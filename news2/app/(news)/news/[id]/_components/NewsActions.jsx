@@ -8,28 +8,29 @@ import { useRouter } from 'next/navigation';
 import FontSizeButton from "./FontSizeButton";
 import FontSizeSelector from "./FontSizeSelector";
 import { useScrap } from "@/contexts/ScrapContext";
+import ReportModal from './ReportModal'; // 신고 모달 컴포넌트 import
+import LoginConfirmModal from '@/components/auth/LoginConfirmModal'; // 로그인 확인 모달 import
 
 const NewsActions = ({ newsData, onSummaryOpen, onShareOpen, isFontSizeSelectorOpen, onFontSizeSelectorToggle, fontSize, onFontSizeChange }) => {
   const { addScrap } = useScrap();
   const router = useRouter();
 
-  const [isLoading, setIsLoading] = useState({ scrap: false, report: false });
+  const [isScrapLoading, setIsScrapLoading] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false); // 신고 모달 상태
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false); // 로그인 확인 모달 상태
 
-  const handleAction = async (actionType) => {
-    setIsLoading(prev => ({ ...prev, [actionType]: true }));
-
+  const handleScrap = async () => {
     const authToken = localStorage.getItem('accessToken');
 
     if (!authToken) {
-      if (window.confirm("로그인이 필요한 서비스입니다. 로그인 페이지로 이동하시겠습니까?")) {
-        router.push("/auth");
-      }
-      setIsLoading(prev => ({ ...prev, [actionType]: false }));
+      setIsLoginModalOpen(true);
       return;
     }
 
+    setIsScrapLoading(true);
+
     try {
-      const response = await fetch(`/api/news/${newsData.newsId}/${actionType}`, {
+      const response = await fetch(`/api/news/${newsData.newsId}/scrap`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authToken}`,
@@ -38,12 +39,8 @@ const NewsActions = ({ newsData, onSummaryOpen, onShareOpen, isFontSizeSelectorO
       });
 
       if (response.ok) {
-        if (actionType === 'scrap') {
-          addScrap(newsData);
-          toast.success("기사가 스크랩되었습니다.");
-        } else if (actionType === 'report') {
-          toast.success("기사가 정상적으로 신고되었습니다.");
-        }
+        addScrap(newsData);
+        toast.success("기사가 스크랩되었습니다.");
       } else {
         const errorData = await response.json().catch(() => ({ message: "서버 응답을 파싱할 수 없습니다." }));
 
@@ -57,10 +54,19 @@ const NewsActions = ({ newsData, onSummaryOpen, onShareOpen, isFontSizeSelectorO
         }
       }
     } catch (error) {
-      console.error(`Error during ${actionType}:`, error);
+      console.error(`Error during scrap:`, error);
       toast.error("네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
     } finally {
-      setIsLoading(prev => ({ ...prev, [actionType]: false }));
+      setIsScrapLoading(false);
+    }
+  };
+
+  const handleReportClick = () => {
+    const authToken = localStorage.getItem('accessToken');
+    if (!authToken) {
+      setIsLoginModalOpen(true);
+    } else {
+      setIsReportModalOpen(true);
     }
   };
 
@@ -68,12 +74,12 @@ const NewsActions = ({ newsData, onSummaryOpen, onShareOpen, isFontSizeSelectorO
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <button
-              onClick={() => handleAction("scrap")}
-              disabled={isLoading.scrap}
+              onClick={handleScrap}
+              disabled={isScrapLoading}
               className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg transition-colors text-sm disabled:opacity-50"
           >
             <Bookmark size={18} />
-            <span>{isLoading.scrap ? "처리중..." : "스크랩"}</span>
+            <span>{"스크랩"}</span>
           </button>
 
           <button
@@ -107,13 +113,25 @@ const NewsActions = ({ newsData, onSummaryOpen, onShareOpen, isFontSizeSelectorO
           </button>
 
           <button
-              onClick={() => handleAction("report")}
-              disabled={isLoading.report}
-              className="p-2 hover:bg-gray-100 rounded-full transition-all duration-200 disabled:opacity-50"
+              onClick={handleReportClick}
+              className="p-2 hover:bg-gray-100 rounded-full transition-all duration-200"
           >
             <Siren className="w-6 h-6 text-red-500" />
           </button>
         </div>
+
+        {/* 신고 모달 렌더링 */}
+        <ReportModal
+            isOpen={isReportModalOpen}
+            onClose={() => setIsReportModalOpen(false)}
+            newsId={newsData.newsId}
+        />
+
+        {/* 로그인 확인 모달 렌더링 */}
+        <LoginConfirmModal
+            isOpen={isLoginModalOpen}
+            onClose={() => setIsLoginModalOpen(false)}
+        />
       </div>
   );
 };

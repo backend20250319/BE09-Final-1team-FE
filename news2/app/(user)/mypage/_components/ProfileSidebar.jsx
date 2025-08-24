@@ -70,7 +70,7 @@ export default function ProfileSidebar() {
       </Card>
     );
   }
-  
+
   // --- 사용자 가입일 포맷팅 ---
   // 사용자 가입일을 'YYYY.MM.DD' 형식으로 변환
   const userCreatedAt = userData?.createdAt

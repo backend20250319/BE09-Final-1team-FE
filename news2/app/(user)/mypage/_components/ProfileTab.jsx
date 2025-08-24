@@ -43,7 +43,7 @@ export default function ProfileTab() {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
         // 1. 전체 관심사 목록 가져오기
-        const interestsResponse = await fetch(`${apiUrl}/api/users/categories`);
+        const interestsResponse = await authenticatedFetch(`${apiUrl}/api/users/categories`);
         if (!interestsResponse.ok) throw new Error("관심사 목록 로딩 실패");
         const interestsData = await interestsResponse.json();
         setInterests(interestsData.data);
@@ -106,7 +106,6 @@ export default function ProfileTab() {
         }
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
       const requestBody = {
         letterOk: newsletterEnabled,
         hobbies: selectedInterests, // ✨ 수정된 부분: selectedInterests를 그대로 사용
@@ -119,9 +118,7 @@ export default function ProfileTab() {
         // requestBody.confirmPassword = confirmPassword;
       }
 
-      const response = await authenticatedFetch(
-        `${apiUrl}/api/users/myupdate`,
-        {
+      const response = await authenticatedFetch("/api/users/myupdate", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(requestBody),

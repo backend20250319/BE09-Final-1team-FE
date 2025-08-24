@@ -28,7 +28,7 @@ const CommentSection = ({ newsId }) => {
 
     // TODO: 다음 단계에서 실제 댓글 목록을 불러오는 API 호출 로직이 여기에 추가해야됨.
 
-  }, [newsId]); // newsId가 바뀔 때마다 댓글을 다시 불러와야 함.
+  }, [newsId]);
 
   const handleCommentSubmit = () => {
     if (!isLoggedIn) {
@@ -41,7 +41,6 @@ const CommentSection = ({ newsId }) => {
     }
 
     // TODO: 다음 단계에서 실제 백엔드 API로 댓글을 전송하는 로직으로 교체.
-    // 현재는 프론트엔드에만 임시로 추가.
     const comment = {
       id: Date.now(),
       author: userInfo.name,
