@@ -32,42 +32,83 @@ export default function MainPage() {
   // 페이지당 아이템 수
   const itemsPerPage = 21
 
-  // 인기 뉴스 가져오기
+  // 🔁 기존 "인기 뉴스" 로더 → "트렌딩 뉴스" 로더로 교체
   useEffect(() => {
-    const fetchPopularNews = async () => {
-      console.log('🔥 인기 뉴스 로딩...')
+    const fetchTrendingBanner = async () => {
+      console.log('⚡ 트렌딩 뉴스(24h) 로딩...')
       setPopularNewsLoading(true)
-      
+
       try {
-        const response = await fetch('/api/news/popular?page=0&size=1')
-        const data = await response.json()
+        // news-service 프록시 경유
+        const res = await fetch('/api/news/trending?hours=24&limit=1')
         
-        console.log('🔥 인기 뉴스 데이터:', data)
+        if (!res.ok) {
+          console.error('❌ 트렌딩 API 응답 오류:', res.status, res.statusText)
+          // 폴백: 기존 인기 뉴스 API 사용
+          console.log('🔄 기존 인기 뉴스 API로 폴백...')
+          const fallbackRes = await fetch('/api/news/popular?page=0&size=1')
+          if (!fallbackRes.ok) {
+            throw new Error(`폴백 API도 실패: ${fallbackRes.status}`)
+          }
+          const fallbackData = await fallbackRes.json()
+          
+          if (fallbackData.content && fallbackData.content.length > 0) {
+            const news = fallbackData.content[0]
+            setPopularNews({
+              id: news.newsId,
+              title: news.title,
+              content: news.content || news.summary || "내용을 불러올 수 없습니다.",
+              source: news.press,
+              publishedAt: news.publishedAt,
+              category: news.categoryName,
+              image: news.imageUrl || "/placeholder.jpg",
+              views: news.viewCount || 0
+            })
+          }
+          return
+        }
         
-        if (data.content && data.content.length > 0) {
-          const news = data.content[0]
-          console.log('🔥 인기 뉴스 상세 데이터:', news)
+        const data = await res.json()
+        console.log('📄 트렌딩 뉴스 응답:', data)
+
+        // 에러 응답 체크
+        if (data.error) {
+          console.error('❌ API 에러:', data.error)
+          throw new Error(data.error)
+        }
+
+        // newsletter-service의 ApiResponse<T> 가정: { data: [...] }
+        const list = data.data || data.content || []
+        if (list.length > 0) {
+          const news = list[0]
+          console.log('📰 트렌딩 뉴스 상세:', news)
+          
+          // sourceUrl → hostname 폴백
+          const source =
+            news.source ||
+            (news.sourceUrl ? (() => { try { return new URL(news.sourceUrl).hostname } catch { return '알 수 없음' } })() : '알 수 없음')
+
           setPopularNews({
-            id: news.newsId,
+            id: news.id,                                // ✅ id 필드 사용
             title: news.title,
             content: news.content || news.summary || "내용을 불러올 수 없습니다.",
-            source: news.press,
+            source,                                      // ✅ press → source/hostname
             publishedAt: news.publishedAt,
-            category: news.categoryName,
+            category: news.category,                     // ✅ categoryName → category
             image: news.imageUrl || "/placeholder.jpg",
-            views: news.viewCount || 0
+            views: news.viewCount || 0                   // 없으면 0
           })
         } else {
-          console.log('🔥 인기 뉴스 데이터가 없습니다:', data)
+          console.log('⚡ 트렌딩 뉴스 결과 없음:', data)
         }
-        setPopularNewsLoading(false)
-      } catch (error) {
-        console.error('❌ 인기 뉴스 로딩 실패:', error)
+      } catch (e) {
+        console.error('❌ 트렌딩 뉴스 로딩 실패:', e)
+      } finally {
         setPopularNewsLoading(false)
       }
     }
 
-    fetchPopularNews()
+    fetchTrendingBanner()
   }, [])
 
   // 카테고리별 필터링 및 페이지네이션
@@ -239,7 +280,7 @@ export default function MainPage() {
                       {/* 텍스트 오버레이 */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent p-4 md:p-6 flex flex-col justify-end text-white">
                         <Badge className="bg-red-600 text-white px-4 py-1 rounded-full shadow-lg font-bold tracking-wider mb-3 w-fit">
-                          인기 뉴스
+                          트렌딩 (24시간)
                         </Badge>
                         <h2 className="text-lg lg:text-xl font-bold mb-2 line-clamp-2">
                           {popularNews.title}

@@ -3,12 +3,17 @@
 import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
-import { Mail, Clock, Users, Star, TrendingUp, Bell, Zap, Filter, CheckCircle, AlertCircle, ArrowRight, User, RefreshCw } from "lucide-react"
+import { 
+  Mail, Clock, Users, Star, TrendingUp, Bell, Zap, Filter, CheckCircle, 
+  AlertCircle, ArrowRight, User, RefreshCw, ExternalLink, Calendar,
+  Hash, Eye, ChevronDown, ChevronUp
+} from "lucide-react"
 import { TextWithTooltips } from "@/components/tooltip"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
@@ -16,10 +21,39 @@ import { getUserRole, getUserInfo } from "@/lib/auth"
 import Header from "@/components/header"
 import { useNewsletters, useUserSubscriptions, useSubscribeNewsletter, useUnsubscribeNewsletter } from "@/hooks/useNewsletter"
 
+// 카테고리별 주제 생성 함수
+const generateTopicsForCategory = (category) => {
+  const topicsMap = {
+    "정치": ["국정감사", "정책발표", "여야갈등", "외교정책", "선거", "국회"],
+    "경제": ["주식시장", "부동산", "금리", "환율", "기업실적", "투자"],
+    "사회": ["교육", "의료", "환경", "교통", "범죄", "복지"],
+    "생활": ["건강", "요리", "패션", "육아", "취미", "라이프스타일"],
+    "세계": ["국제정치", "글로벌경제", "외교", "분쟁", "협력", "문화교류"],
+    "IT/과학": ["인공지능", "블록체인", "클라우드", "모바일", "연구개발", "스타트업"],
+    "자동차/교통": ["전기차", "자율주행", "대중교통", "도로교통", "친환경", "모빌리티"],
+    "여행/음식": ["해외여행", "국내여행", "맛집", "요리", "호텔", "항공"],
+    "예술": ["영화", "음악", "미술", "문학", "공연", "디자인"]
+  };
+  return topicsMap[category] || ["주요뉴스", "핫이슈", "트렌드", "분석"];
+};
+
+// 최근 헤드라인 생성 함수
+const generateRecentHeadlines = (category) => {
+  const headlines = [
+    { title: `${category} 관련 주요 소식이 업데이트되었습니다`, time: "2시간 전", views: "1.2K" },
+    { title: `${category} 분야의 새로운 동향과 전망`, time: "5시간 전", views: "856" },
+    { title: `${category} 전문가들의 인사이트와 분석`, time: "1일 전", views: "2.1K" },
+    { title: `${category} 관련 정책 변화와 영향`, time: "2일 전", views: "1.5K" },
+    { title: `${category} 업계의 최신 트렌드 리포트`, time: "3일 전", views: "987" }
+  ];
+  return headlines;
+};
+
 export default function NewsletterPageClient({ initialNewsletters }) {
   const [selectedCategory, setSelectedCategory] = useState("전체")
   const [isLoaded, setIsLoaded] = useState(false)
-  const [localSubscriptions, setLocalSubscriptions] = useState(new Set()) // 로컬 구독 상태
+  const [localSubscriptions, setLocalSubscriptions] = useState(new Set())
+  const [expandedCards, setExpandedCards] = useState(new Set()) // 확장된 카드 상태
 
   const [userRole, setUserRole] = useState(null)
   const [isClient, setIsClient] = useState(false)
@@ -32,8 +66,8 @@ export default function NewsletterPageClient({ initialNewsletters }) {
     error: newslettersError,
     refetch: refetchNewsletters 
   } = useNewsletters({
-    initialData: initialNewsletters || [], // SSR 데이터를 초기값으로 사용
-    staleTime: 0, // 즉시 stale로 설정하여 클라이언트에서 재검증
+    initialData: initialNewsletters || [],
+    staleTime: 0,
   })
 
   const { 
@@ -42,9 +76,9 @@ export default function NewsletterPageClient({ initialNewsletters }) {
     error: subscriptionsError,
     refetch: refetchSubscriptions 
   } = useUserSubscriptions({
-    enabled: !!userRole, // 로그인한 사용자만 활성화
-    retry: 1, // 재시도 횟수 제한
-    retryDelay: 1000, // 재시도 간격
+    enabled: !!userRole,
+    retry: 1,
+    retryDelay: 1000,
   })
 
   // 뮤테이션 훅들
@@ -52,16 +86,12 @@ export default function NewsletterPageClient({ initialNewsletters }) {
   const unsubscribeMutation = useUnsubscribeNewsletter()
 
   useEffect(() => {
-    // 클라이언트에서 마운트된 후에만 로딩 상태를 true로 설정
     const timer = setTimeout(() => {
       setIsLoaded(true)
     }, 100)
     
-    // 사용자 역할 확인
     const role = getUserRole()
     setUserRole(role)
-    
-    // 클라이언트 사이드 렌더링 확인
     setIsClient(true)
     
     return () => clearTimeout(timer)
@@ -83,19 +113,29 @@ export default function NewsletterPageClient({ initialNewsletters }) {
 
   const categories = ["전체", "정치", "경제", "사회", "생활", "세계", "IT/과학", "자동차/교통", "여행/음식", "예술"]
 
-  // ✅ 카드/토글에서 사용할 공통: 카테고리 기준 구독 여부 판단 (로컬 상태 포함)
+  // 카드 확장/축소 토글
+  const toggleCardExpansion = (newsletterId) => {
+    setExpandedCards(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(newsletterId)) {
+        newSet.delete(newsletterId);
+      } else {
+        newSet.add(newsletterId);
+      }
+      return newSet;
+    });
+  };
+
+  // 구독 여부 판단
   const isSubscribedByCategory = (category) => {
-    // 로컬 상태에서 먼저 확인
     if (localSubscriptions.has(category)) return true;
-    
-    // 서버 상태에서 확인
     return Array.isArray(userSubscriptions) &&
       userSubscriptions.some(sub =>
         sub.category === category || sub.preferredCategories?.includes(category)
       );
   };
 
-  // ✅ onCheckedChange 인자(checked)를 사용하고, category 기준으로 구독/해제
+  // 구독/해제 처리
   const handleToggleSubscribe = async (newsletter, checked) => {
     if (!userRole) {
       toast({
@@ -119,19 +159,20 @@ export default function NewsletterPageClient({ initialNewsletters }) {
     }
 
     if (checked) {
-      // ✅ 즉시 로컬 상태 업데이트
       setLocalSubscriptions(prev => new Set([...prev, newsletter.category]));
       
-      // ✅ 카테고리 기반 구독
       subscribeMutation.mutate(
         { category: newsletter.category, email: userInfo.email },
         {
           onSuccess: () => {
-            // 구독 성공 후 구독 목록 새로고침
             refetchSubscriptions();
+            toast({
+              title: "구독 완료",
+              description: `${newsletter.category} 카테고리를 구독했습니다.`,
+              icon: <CheckCircle className="h-4 w-4 text-green-500" />
+            });
           },
           onError: () => {
-            // 실패 시 로컬 상태 롤백
             setLocalSubscriptions(prev => {
               const newSet = new Set(prev);
               newSet.delete(newsletter.category);
@@ -141,39 +182,58 @@ export default function NewsletterPageClient({ initialNewsletters }) {
         }
       );
     } else {
-      // ✅ 즉시 로컬 상태 업데이트
       setLocalSubscriptions(prev => {
         const newSet = new Set(prev);
         newSet.delete(newsletter.category);
         return newSet;
       });
       
-      // ✅ 카테고리 기반 구독 해제 (해당 카테고리 구독 레코드 찾기)
       const sub = (userSubscriptions || []).find(s =>
         s.category === newsletter.category || s.preferredCategories?.includes(newsletter.category)
       );
       if (!sub) return;
       unsubscribeMutation.mutate(sub.id, {
-        onSuccess: () => refetchSubscriptions(),
+        onSuccess: () => {
+          refetchSubscriptions();
+          toast({
+            title: "구독 해제",
+            description: `${newsletter.category} 카테고리 구독을 해제했습니다.`,
+            icon: <CheckCircle className="h-4 w-4 text-blue-500" />
+          });
+        },
         onError: () => {
-          // 실패 시 로컬 상태 롤백
           setLocalSubscriptions(prev => new Set([...prev, newsletter.category]));
         }
       });
     }
   };
 
-  // ✅ 카테고리 필터까지 적용한 원본 목록
+  // 필터링된 뉴스레터
   const filteredNewsletters = useMemo(() => {
     if (!Array.isArray(newsletters)) return [];
     if (selectedCategory === "전체") return newsletters;
     return newsletters.filter(n => n.category === selectedCategory);
   }, [newsletters, selectedCategory]);
 
-  // 로딩 상태
+  // 향상된 뉴스레터 데이터 (카테고리별 여러 주제 포함)
+  const enhancedNewsletters = useMemo(() => {
+    return filteredNewsletters.map(newsletter => ({
+      ...newsletter,
+      // 카테고리별 여러 주제 생성
+      topics: generateTopicsForCategory(newsletter.category),
+      // 최근 뉴스 헤드라인 시뮬레이션
+      recentHeadlines: generateRecentHeadlines(newsletter.category),
+      // 통계 정보
+      stats: {
+        totalArticles: Math.floor(Math.random() * 50) + 20,
+        weeklyGrowth: Math.floor(Math.random() * 15) + 1,
+        averageReadTime: Math.floor(Math.random() * 5) + 3
+      }
+    }));
+  }, [filteredNewsletters]);
+
   const isLoading = newslettersLoading || (userRole && subscriptionsLoading)
 
-  // 클라이언트 사이드에서만 렌더링
   if (!isClient) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
@@ -258,15 +318,14 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                   </Button>
                 ))}
               </div>
-              {/* ✅ 필터 결과 개수 문구 */}
               <div className="mt-2 text-sm text-gray-500">
                 {selectedCategory === "전체"
-                  ? `전체 ${filteredNewsletters.length}개의 뉴스레터`
-                  : `${selectedCategory} 카테고리 ${filteredNewsletters.length}개의 뉴스레터`}
+                  ? `전체 ${enhancedNewsletters.length}개의 뉴스레터`
+                  : `${selectedCategory} 카테고리 ${enhancedNewsletters.length}개의 뉴스레터`}
               </div>
             </div>
 
-            {/* ✅ 그리드 영역: 요구하신 형태로 단순화 */}
+            {/* Enhanced Newsletter Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {isLoading ? (
                 // 스켈레톤
@@ -283,108 +342,200 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                   </Card>
                 ))
               ) : (
-                filteredNewsletters.map((newsletter, index) => {
+                enhancedNewsletters.map((newsletter, index) => {
                   const isSubscribed = isSubscribedByCategory(newsletter.category);
+                  const isExpanded = expandedCards.has(newsletter.id);
                   return (
                     <Card
                       key={newsletter.id}
-                      className={`glass hover-lift animate-slide-in ${isLoaded ? 'opacity-100' : 'opacity-0'} ${
-                        isSubscribed ? 'ring-2 ring-blue-500 bg-blue-50/30' : ''
+                      className={`glass hover-lift animate-slide-in transition-all duration-300 ${
+                        isLoaded ? 'opacity-100' : 'opacity-0'
+                      } ${isSubscribed ? 'ring-2 ring-blue-500 bg-blue-50/30' : ''} ${
+                        isExpanded ? 'md:col-span-2' : ''
                       }`}
                       style={{ animationDelay: `${(index + 1) * 0.1}s` }}
                     >
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <Badge className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full shadow">
-                              {newsletter.category}
-                            </Badge>
-                            <Badge className="bg-green-600 text-white text-xs px-3 py-1 rounded-full shadow">
-                              {newsletter.frequency}
-                            </Badge>
-                            {isSubscribed && (
-                              <Badge className="bg-purple-600 text-white text-xs px-3 py-1 rounded-full shadow animate-pulse">
-                                구독 중
+                      <CardHeader>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <Badge className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full shadow">
+                                {newsletter.category}
+                              </Badge>
+                              <Badge className="bg-green-600 text-white text-xs px-3 py-1 rounded-full shadow">
+                                {newsletter.frequency}
+                              </Badge>
+                              {isSubscribed && (
+                                <Badge className="bg-purple-600 text-white text-xs px-3 py-1 rounded-full shadow animate-pulse">
+                                  구독 중
+                                </Badge>
+                              )}
+                            </div>
+                            
+                            <CardTitle className="text-lg mb-2 flex items-center justify-between">
+                              <TextWithTooltips text={newsletter.title} />
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleCardExpansion(newsletter.id)}
+                                className="ml-2 h-6 w-6 p-0 hover:bg-gray-100 rounded-full"
+                              >
+                                {isExpanded ? (
+                                  <ChevronUp className="h-4 w-4" />
+                                ) : (
+                                  <ChevronDown className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </CardTitle>
+                            
+                            <CardDescription className="line-clamp-2">
+                              <TextWithTooltips text={newsletter.description} />
+                            </CardDescription>
+                          </div>
+
+                          {/* 구독 토글 */}
+                          <div className="flex items-center space-x-2 ml-4">
+                            <Switch
+                              checked={isSubscribed}
+                              onCheckedChange={(checked) => handleToggleSubscribe(newsletter, checked)}
+                              disabled={subscribeMutation.isPending || unsubscribeMutation.isPending}
+                              className="data-[state=checked]:bg-blue-600"
+                            />
+                            <Label
+                              className={`text-xs font-medium whitespace-nowrap ${
+                                isSubscribed ? "text-blue-600" : "text-gray-600"
+                              }`}
+                            >
+                              {subscribeMutation.isPending || unsubscribeMutation.isPending ? "처리 중..." :
+                               isSubscribed ? "구독 중" : "구독"}
+                            </Label>
+                          </div>
+                        </div>
+                      </CardHeader>
+
+                      <CardContent>
+                        {/* 주요 통계 */}
+                        <div className="grid grid-cols-3 gap-4 mb-4 p-3 bg-gray-50/50 rounded-lg">
+                          <div className="text-center">
+                            <div className="flex items-center justify-center mb-1">
+                              <Hash className="h-3 w-3 text-blue-500 mr-1" />
+                              <span className="text-xs text-gray-500">총 기사</span>
+                            </div>
+                            <div className="font-semibold text-sm">{newsletter.stats?.totalArticles}</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="flex items-center justify-center mb-1">
+                              <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
+                              <span className="text-xs text-gray-500">주간 성장</span>
+                            </div>
+                            <div className="font-semibold text-sm text-green-600">+{newsletter.stats?.weeklyGrowth}%</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="flex items-center justify-center mb-1">
+                              <Clock className="h-3 w-3 text-orange-500 mr-1" />
+                              <span className="text-xs text-gray-500">읽기 시간</span>
+                            </div>
+                            <div className="font-semibold text-sm">{newsletter.stats?.averageReadTime}분</div>
+                          </div>
+                        </div>
+
+                        {/* 카테고리별 주제들 */}
+                        <div className="mb-4">
+                          <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                            <Zap className="h-3 w-3 mr-1" />
+                            주요 주제
+                          </h4>
+                          <div className="flex flex-wrap gap-1">
+                            {newsletter.topics?.slice(0, isExpanded ? newsletter.topics.length : 4).map((topic, idx) => (
+                              <Badge 
+                                key={idx} 
+                                className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs px-2 py-1 rounded-full shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                              >
+                                #{topic}
+                              </Badge>
+                            ))}
+                            {!isExpanded && newsletter.topics?.length > 4 && (
+                              <Badge className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
+                                +{newsletter.topics.length - 4}개
                               </Badge>
                             )}
                           </div>
-                          <CardTitle className="text-lg mb-2">
-                            <TextWithTooltips text={newsletter.title} />
-                          </CardTitle>
-                          <CardDescription className="line-clamp-2">
-                            <TextWithTooltips text={newsletter.description} />
-                          </CardDescription>
-
-                          {/* ✅ 명시적으로 표시: 이 토글은 해당 '카테고리' 구독 */}
-                          <p className="mt-2 text-xs text-gray-500">
-                            {isSubscribed ? (
-                              <>
-                                <span className="font-medium text-blue-600">'{newsletter.category}'</span> 카테고리를 구독하고 있습니다.
-                              </>
-                            ) : (
-                              <>
-                                이 토글은 <span className="font-medium text-gray-700">'{newsletter.category}'</span> 카테고리 구독을 전환합니다.
-                              </>
-                            )}
-                          </p>
                         </div>
 
-                        {/* 카드 우측: 뉴스레터 단위 토글(=카테고리 구독 토글) */}
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            checked={isSubscribed}
-                            onCheckedChange={(checked) => handleToggleSubscribe(newsletter, checked)}
-                            disabled={subscribeMutation.isPending || unsubscribeMutation.isPending}
-                            className="data-[state=checked]:bg-blue-600"
-                          />
-                          <Label
-                            className={`text-xs font-medium ${
-                              isSubscribed ? "text-blue-600" : "text-gray-600"
-                            }`}
-                          >
-                            {subscribeMutation.isPending || unsubscribeMutation.isPending ? "처리 중..." :
-                             isSubscribed ? "구독 중" : "구독"}
-                          </Label>
+                        {/* 확장 시 최근 헤드라인 표시 */}
+                        {isExpanded && (
+                          <div className="mb-4 border-t pt-4">
+                            <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                              <Calendar className="h-3 w-3 mr-1" />
+                              최근 헤드라인
+                            </h4>
+                            <ScrollArea className="h-32">
+                              <div className="space-y-2">
+                                {newsletter.recentHeadlines?.map((headline, idx) => (
+                                  <div key={idx} className="flex items-start space-x-2 text-xs">
+                                    <div className="w-1 h-1 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                                    <div className="flex-1">
+                                      <p className="text-gray-700 leading-relaxed">{headline.title}</p>
+                                      <div className="flex items-center space-x-2 mt-1">
+                                        <span className="text-gray-400">{headline.time}</span>
+                                        <div className="flex items-center space-x-1 text-gray-400">
+                                          <Eye className="h-2.5 w-2.5" />
+                                          <span>{headline.views}</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </ScrollArea>
+                          </div>
+                        )}
+
+                        <Separator className="mb-4" />
+
+                        {/* 기존 Tags */}
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {newsletter.tags.map((tag) => (
+                            <Badge key={tag} className="bg-indigo-100 text-indigo-800 text-xs px-3 py-1 rounded-full">
+                              #{tag}
+                            </Badge>
+                          ))}
                         </div>
-                      </div>
-                    </CardHeader>
 
-                    <CardContent>
-                      {/* Tags */}
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {newsletter.tags.map((tag) => (
-                          <Badge key={tag} className="bg-purple-600 text-white text-xs px-3 py-1 rounded-full shadow">
-                            #{tag}
-                          </Badge>
-                        ))}
-                      </div>
-
-                      {/* Stats */}
-                      <div className="flex items-center justify-between text-sm text-gray-500">
-                        <div className="flex items-center space-x-4">
-                          <div className="flex items-center space-x-1">
-                            <Users className="h-3 w-3" />
-                            <span>{newsletter.subscribers?.toLocaleString() || "0"}</span>
+                        {/* Stats */}
+                        <div className="flex items-center justify-between text-sm text-gray-500">
+                          <div className="flex items-center space-x-4">
+                            <div className="flex items-center space-x-1">
+                              <Users className="h-3 w-3" />
+                              <span>{newsletter.subscribers?.toLocaleString() || "0"}</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <Clock className="h-3 w-3" />
+                              <span>{newsletter.lastSent}</span>
+                            </div>
                           </div>
                           <div className="flex items-center space-x-1">
-                            <Clock className="h-3 w-3" />
-                            <span>{newsletter.lastSent}</span>
+                            <Star className="h-3 w-3 fill-current text-yellow-400" />
+                            <span>4.8</span>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-1">
-                          <Star className="h-3 w-3" />
-                          <span>4.8</span>
+
+                        {/* 구독 상태 안내 */}
+                        <div className="mt-3 p-2 bg-blue-50/50 rounded text-xs text-gray-600">
+                          {isSubscribed ? (
+                            <span className="font-medium text-blue-600">'{newsletter.category}' 카테고리를 구독하고 있습니다.</span>
+                          ) : (
+                            <span>이 토글은 <span className="font-medium">'{newsletter.category}'</span> 카테고리 구독을 전환합니다.</span>
+                          )}
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
+                      </CardContent>
+                    </Card>
+                  );
                 })
               )}
 
               {/* 결과 없음 처리 */}
-              {!isLoading && filteredNewsletters.length === 0 && (
+              {!isLoading && enhancedNewsletters.length === 0 && (
                 <div className="col-span-2 text-center py-12">
                   <Mail className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -405,10 +556,10 @@ export default function NewsletterPageClient({ initialNewsletters }) {
             </div>
           </div>
 
-          {/* Sidebar */}
+          {/* Sidebar - 기존 사이드바 유지 */}
           <div className="lg:col-span-1">
             <div className="space-y-6">
-              {/* My Subscriptions - 로그인한 사용자만 표시 */}
+              {/* My Subscriptions */}
               {userRole && (
                 <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.3s' }}>
                   <CardHeader>
@@ -473,7 +624,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                 </Card>
               )}
 
-              {/* 로그인하지 않은 사용자를 위한 로그인 안내 */}
+              {/* 로그인 안내 */}
               {!userRole && (
                 <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.3s' }}>
                   <CardHeader>
@@ -500,7 +651,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                 </Card>
               )}
 
-              {/* Newsletter Preferences - 로그인한 사용자만 표시 */}
+              {/* Newsletter Preferences */}
               {userRole && (
                 <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.4s' }}>
                   <CardHeader>
@@ -565,8 +716,6 @@ export default function NewsletterPageClient({ initialNewsletters }) {
           </div>
         </div>
       </div>
-
-
     </>
   )
 }
