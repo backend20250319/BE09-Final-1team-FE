@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import { getUserRole, getUserInfo } from "@/lib/auth"
 import Header from "@/components/header"
-import { useNewsletters, useUserSubscriptions, useSubscribeNewsletter, useUnsubscribeNewsletter, useCategoryArticles } from "@/hooks/useNewsletter"
+import { useNewsletters, useUserSubscriptions, useSubscribeNewsletter, useUnsubscribeNewsletter, useCategoryArticles, useTrendingKeywords } from "@/hooks/useNewsletter"
 
 // 카테고리별 주제 생성 함수
 const generateTopicsForCategory = (category) => {
@@ -108,8 +108,11 @@ export default function NewsletterPageClient({ initialNewsletters }) {
   const allCategories = ["정치", "경제", "사회", "생활", "세계", "IT/과학", "자동차/교통", "여행/음식", "예술"]
   const categories = ["전체", ...allCategories]
   
-  // 백엔드 서버가 실행 중일 때만 카테고리별 기사 조회 (임시로 비활성화)
-  const categoryArticlesQueries = [] // allCategories.map(category => useCategoryArticles(category, 5))
+  // 백엔드 서버가 실행 중일 때만 카테고리별 기사 조회
+  const categoryArticlesQueries = allCategories.map(category => useCategoryArticles(category, 5))
+  
+  // 카테고리별 트렌드 키워드 조회
+  const trendingKeywordsQueries = allCategories.map(category => useTrendingKeywords(category, 8))
 
   // 뮤테이션 훅들
   const subscribeMutation = useSubscribeNewsletter()
@@ -505,8 +508,14 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                   
                   // 실제 기사 데이터가 있으면 사용, 없으면 기본값 사용
                   const articles = categoryData?.articles || [];
-                  const trendingKeywords = categoryData?.trendingKeywords || generateTopicsForCategory(newsletter.category);
-                  const mainTopics = categoryData?.mainTopics || generateTopicsForCategory(newsletter.category);
+                  
+                  // 트렌드 키워드 데이터 조회
+                  const trendingKeywordsData = categoryIndex >= 0 && trendingKeywordsQueries[categoryIndex] 
+                    ? trendingKeywordsQueries[categoryIndex].data 
+                    : null;
+                  
+                  // 백엔드에서 트렌드 키워드를 우선 사용, 없으면 기본값 사용
+                  const mainTopics = trendingKeywordsData?.keywords || categoryData?.trendingKeywords || categoryData?.mainTopics || generateTopicsForCategory(newsletter.category);
                   const totalArticles = categoryData?.totalArticles || newsletter.stats?.totalArticles || 20;
                   
                   return (

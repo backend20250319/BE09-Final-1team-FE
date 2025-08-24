@@ -179,3 +179,19 @@ export function useCategoryArticles(category, limit = 5) {
     }
   })
 }
+
+// 카테고리별 트렌드 키워드 조회 훅
+export function useTrendingKeywords(category, limit = 8) {
+  return useQuery({
+    queryKey: ['trending-keywords', category, limit],
+    queryFn: () => newsletterService.getTrendingKeywords(category, limit),
+    enabled: !!category,
+    staleTime: 10 * 60 * 1000, // 10분간 fresh 상태 유지 (트렌드는 자주 변경되지 않음)
+    cacheTime: 30 * 60 * 1000, // 30분간 캐시 유지
+    retry: 1, // 재시도 횟수 제한
+    retryDelay: 1000, // 재시도 간격
+    onError: (error) => {
+      console.warn(`카테고리 ${category} 트렌드 키워드 조회 실패:`, error.message)
+    }
+  })
+}

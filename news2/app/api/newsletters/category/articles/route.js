@@ -1,8 +1,8 @@
-// 카테고리별 기사 조회 API
-export async function GET(request, { params }) {
+// 카테고리별 기사 조회 API (쿼리 파라미터 방식)
+export async function GET(request) {
   try {
-    const { category } = params;
     const { searchParams } = new URL(request.url);
+    const category = searchParams.get('category');
     const limit = searchParams.get('limit') || 5;
     
     if (!category) {

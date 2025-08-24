@@ -646,4 +646,27 @@ export const newsletterService = {
     }
   },
 
+  // 카테고리별 트렌드 키워드 조회
+  async getTrendingKeywords(category, limit = 8) {
+    try {
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+      const response = await fetch(`${baseUrl}/api/newsletter/category/${encodeURIComponent(category)}/trending-keywords?limit=${limit}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      return data.success ? data.data : null
+    } catch (error) {
+      console.error('트렌드 키워드 조회 실패:', error)
+      return null
+    }
+  },
+
 }
