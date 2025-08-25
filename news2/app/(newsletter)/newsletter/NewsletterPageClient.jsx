@@ -77,6 +77,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
   const [isLoaded, setIsLoaded] = useState(false)
   const [localSubscriptions, setLocalSubscriptions] = useState(new Set())
   const [expandedCards, setExpandedCards] = useState(new Set()) // 확장된 카드 상태
+  const [expandedTopics, setExpandedTopics] = useState(new Set()) // 확장된 주제 섹션 상태
 
   const [userRole, setUserRole] = useState(null)
   const [isClient, setIsClient] = useState(false)
@@ -170,6 +171,19 @@ export default function NewsletterPageClient({ initialNewsletters }) {
   // 카드 확장/축소 토글
   const toggleCardExpansion = (newsletterId) => {
     setExpandedCards(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(newsletterId)) {
+        newSet.delete(newsletterId);
+      } else {
+        newSet.add(newsletterId);
+      }
+      return newSet;
+    });
+  };
+
+  // 주제 섹션 확장/축소 토글
+  const toggleTopicsExpansion = (newsletterId) => {
+    setExpandedTopics(prev => {
       const newSet = new Set(prev);
       if (newSet.has(newsletterId)) {
         newSet.delete(newsletterId);
@@ -504,6 +518,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                 enhancedNewsletters.map((newsletter, index) => {
                   const isSubscribed = isSubscribedByCategory(newsletter.category);
                   const isExpanded = expandedCards.has(newsletter.id);
+                  const isTopicsExpanded = expandedTopics.has(newsletter.id);
                   
                   // 미리 조회한 카테고리별 기사 데이터 사용 (백엔드 서버가 없을 때는 기본값 사용)
                   const categoryIndex = allCategories.indexOf(newsletter.category);
@@ -624,7 +639,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                             주요 주제
                           </h4>
                           <div className="flex flex-wrap gap-1">
-                            {mainTopics?.slice(0, isExpanded ? mainTopics.length : 4).map((topic, idx) => (
+                            {mainTopics?.slice(0, isTopicsExpanded ? mainTopics.length : 4).map((topic, idx) => (
                               <Badge 
                                 key={idx} 
                                 className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs px-2 py-1 rounded-full shadow-sm hover:shadow-md transition-shadow cursor-pointer"
@@ -632,9 +647,20 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                                 #{topic}
                               </Badge>
                             ))}
-                            {!isExpanded && mainTopics?.length > 4 && (
-                              <Badge className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
+                            {!isTopicsExpanded && mainTopics?.length > 4 && (
+                              <Badge 
+                                className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full hover:bg-gray-200 cursor-pointer transition-colors"
+                                onClick={() => toggleTopicsExpansion(newsletter.id)}
+                              >
                                 +{mainTopics.length - 4}개
+                              </Badge>
+                            )}
+                            {isTopicsExpanded && mainTopics?.length > 4 && (
+                              <Badge 
+                                className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full hover:bg-gray-200 cursor-pointer transition-colors"
+                                onClick={() => toggleTopicsExpansion(newsletter.id)}
+                              >
+                                접기
                               </Badge>
                             )}
                           </div>
