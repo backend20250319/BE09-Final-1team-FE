@@ -520,7 +520,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                     : null;
                   
                   // 백엔드에서 트렌드 키워드를 우선 사용, 없으면 기본값 사용
-                  const mainTopics = trendingKeywordsData?.keywords || categoryData?.trendingKeywords || categoryData?.mainTopics || generateTopicsForCategory(newsletter.category);
+                  const mainTopics = trendingKeywordsData?.map(item => item.keyword) || categoryData?.trendingKeywords || categoryData?.mainTopics || generateTopicsForCategory(newsletter.category);
                   const totalArticles = categoryData?.totalArticles || newsletter.stats?.totalArticles || 20;
                   
                   return (
