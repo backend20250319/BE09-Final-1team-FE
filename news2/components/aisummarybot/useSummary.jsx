@@ -14,8 +14,8 @@ export default function useSummary(newsId) {
         setError(null);
 
         try {
-            const res = await fetch(`/api/news/${newsId}/summary`,);
-            const data = await res.text();
+            const res = await fetch(`/api/news/${newsId}/summary`, { method: "POST" }); // 백엔드 계약에 맞게 POST 권장
+            const data = await res.json();  //
             setSummary(data.summary_text);
         } catch (err) {
             const text = await err?.response?.text?.();
