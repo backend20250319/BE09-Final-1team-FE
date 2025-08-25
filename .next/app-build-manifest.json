@@ -16,15 +16,15 @@
       "static/chunks/main-app.js",
       "static/chunks/app/api/news/trending-keywords/route.js"
     ],
-    "/api/news/trending/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/news/trending/route.js"
-    ],
     "/api/news/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/api/news/route.js"
+    ],
+    "/api/news/trending/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/news/trending/route.js"
     ],
     "/api/subscriber-count/route": [
       "static/chunks/webpack.js",
@@ -50,11 +50,6 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/api/newsletter/category/headlines/route.js"
-    ],
-    "/_not-found/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/_not-found/page.js"
     ]
   }
 }
