@@ -6,19 +6,25 @@
  */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Settings, AlertCircle } from "lucide-react";
+import { Mail, Bell, Settings, AlertCircle } from "lucide-react";
 import { authenticatedFetch } from "@/lib/auth";
 
 export default function SettingsTab() {
+  const [newsletterEnabled, setNewsletterEnabled] = useState(true);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   // 회원 탈퇴 관련 상태
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   // 회원 탈퇴 처리  함수
   const handleDeleteAccount = async () => {
@@ -70,7 +76,44 @@ export default function SettingsTab() {
 
   return (
     <div className="space-y-6">
-      {/* 계정 설정 카드 */}
+      {/* 알림 설정 카드 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Bell className="h-5 w-5 mr-2" />
+            알림 설정
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* 브라우저 알림 설정 */}
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="notifications">브라우저 알림</Label>
+              <p className="text-sm text-gray-600">
+                중요한 뉴스가 있을 때 알림을 받습니다
+              </p>
+            </div>
+            <Switch
+              id="notifications"
+              checked={notificationsEnabled}
+              onCheckedChange={setNotificationsEnabled}
+            />
+          </div>
+
+          {/* 속보 알림 설정 */}
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="breaking-news">속보 알림</Label>
+              <p className="text-sm text-gray-600">
+                속보 뉴스를 즉시 알림으로 받습니다
+              </p>
+            </div>
+            <Switch id="breaking-news" />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 계정 관리 카드 */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
