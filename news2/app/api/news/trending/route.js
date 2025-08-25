@@ -1,57 +1,58 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
-export async function GET(request) {
+const BASE = process.env.NEWS_BASE_URL || 'http://localhost:8082'
+
+export async function GET(req) {
   try {
-    const { searchParams } = new URL(request.url)
-    const limit = searchParams.get('limit') || '10'
-    const period = searchParams.get('period') || '24h'
+    console.log('🔧 환경 변수 NEWS_BASE_URL:', process.env.NEWS_BASE_URL)
+    console.log('🔧 기본값 BASE:', BASE)
     
-    // 임시로 더미 트렌딩 뉴스 데이터 반환
-    // 실제로는 백엔드 API에서 가져와야 함
-    const mockTrendingNews = [
-      {
-        id: 1,
-        title: "인공지능 기술 발전으로 일자리 변화 예상",
-        content: "최신 AI 기술 발전으로 다양한 산업 분야에서 일자리 변화가 예상됩니다...",
-        source: "기술뉴스",
-        publishedAt: "2025-01-01T10:00:00",
-        category: "IT_SCIENCE",
-        image: "/placeholder.jpg",
-        views: 15420,
-        trend: "up"
-      },
-      {
-        id: 2,
-        title: "부동산 시장 동향 분석 리포트",
-        content: "최근 부동산 시장의 변화와 향후 전망에 대한 전문가 분석...",
-        source: "경제일보",
-        publishedAt: "2025-01-01T09:30:00",
-        category: "ECONOMY",
-        image: "/placeholder.jpg",
-        views: 12350,
-        trend: "down"
-      },
-      {
-        id: 3,
-        title: "주식 시장 급등락, 투자자 주의 필요",
-        content: "최근 주식 시장의 급등락으로 투자자들의 신중한 접근이 필요합니다...",
-        source: "투자뉴스",
-        publishedAt: "2025-01-01T09:00:00",
-        category: "ECONOMY",
-        image: "/placeholder.jpg",
-        views: 9870,
-        trend: "up"
-      }
-    ]
+    const { search } = new URL(req.url)
+    const url = `${BASE}/api/news/trending${search}`
     
-    console.log('🔥 트렌딩 뉴스 요청:', { limit, period })
-    console.log('✅ 트렌딩 뉴스 응답:', mockTrendingNews)
+    console.log('🔗 프록시 요청 URL:', url)
     
-    return NextResponse.json(mockTrendingNews)
+    const resp = await fetch(url, { 
+      headers: { 'Content-Type': 'application/json' }, 
+      cache: 'no-store' 
+    })
+    
+    console.log('📡 응답 상태:', resp.status, resp.statusText)
+    
+    if (!resp.ok) {
+      console.error('❌ API 응답 오류:', resp.status, resp.statusText)
+      return NextResponse.json(
+        { error: `API 요청 실패: ${resp.status} ${resp.statusText}` },
+        { status: resp.status }
+      )
+    }
+    
+    const text = await resp.text()
+    console.log('📄 응답 텍스트:', text)
+    
+    if (!text) {
+      console.warn('⚠️ 빈 응답')
+      return NextResponse.json({ data: [] })
+    }
+    
+    let data
+    try {
+      data = JSON.parse(text)
+    } catch (parseError) {
+      console.error('❌ JSON 파싱 오류:', parseError)
+      return NextResponse.json(
+        { error: '유효하지 않은 JSON 응답' },
+        { status: 500 }
+      )
+    }
+    
+    console.log('✅ 파싱된 데이터:', data)
+    return NextResponse.json(data, { status: 200 })
+    
   } catch (error) {
-    console.error('❌ 트렌딩 뉴스 조회 실패:', error)
+    console.error('❌ 프록시 오류:', error)
     return NextResponse.json(
-      { error: '트렌딩 뉴스를 불러오는데 실패했습니다.' },
+      { error: '서버 오류가 발생했습니다' },
       { status: 500 }
     )
   }

@@ -22,7 +22,6 @@ export default function Footer() {
                 <h3 className="font-semibold mb-4">서비스</h3>
                 <ul className="space-y-2">
                   <li><Link href="/news" className="text-gray-400 hover:text-white">뉴스</Link></li>
-                  <li><Link href="/community" className="text-gray-400 hover:text-white">커뮤니티</Link></li>
                   <li><Link href="/newsletter" className="text-gray-400 hover:text-white">뉴스레터</Link></li>
                 </ul>
               </div>

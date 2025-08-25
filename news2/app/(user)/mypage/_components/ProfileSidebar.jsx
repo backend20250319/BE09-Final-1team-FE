@@ -22,6 +22,7 @@ export default function ProfileSidebar() {
     const fetchUserData = async () => {
       try {
         setIsLoading(true);
+        // 실제 백엔드 API 사용
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
         const response = await authenticatedFetch(`${apiUrl}/api/users/mypage`);
 
