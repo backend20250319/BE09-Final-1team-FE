@@ -1,6 +1,7 @@
 // 뉴스 데이터 관리 서비스
 import { safeApiCall, diagnoseCorsIssue } from "./api-utils";
 import { getApiUrl } from "./config";
+import { authenticatedFetch } from "./auth";
 
 // 뉴스 카테고리 상수 (백엔드 Category enum과 일치)
 export const NEWS_CATEGORIES = {
@@ -228,47 +229,56 @@ class NewsService {
     if (cached) return cached;
 
     try {
-      // 백엔드 API 호출
-      const item = await safeApiCall(`/api/news/${id}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+      const data = await safeApiCall(`/api/news/${id}`);
+      const newsItem = createNewsItem(data.data);
+      this.setCachedData(cacheKey, newsItem);
+
+      // 사용자가 뉴스를 조회했으므로, 조회 기록을 서버에 보냅니다.
+      this.recordNewsView(id).catch((err) => {
+        console.error("Failed to record news view in background:", err);
       });
 
-      console.log("🔍 백엔드 응답 원본:", item);
-
-      // 백엔드 응답 구조에 맞게 변환
-      const newsItem = {
-        id: item.newsId || item.id,
-        title: item.title,
-        summary: item.summary || item.content?.substring(0, 200) + "...",
-        content: item.content,
-        category: item.categoryName || item.category,
-        source: item.press || item.source,
-        author: item.reporterName || item.author,
-        publishedAt: item.publishedAt,
-        updatedAt: item.updatedAt,
-        views: item.viewCount || 0,
-        likes: item.likes || 0,
-        image: item.imageUrl || "/placeholder.svg",
-        tags: item.tags || [],
-        isPublished: true,
-        isFeatured: false,
-        link: item.link,
-        trusted: item.trusted,
-        dedupState: item.dedupState,
-        dedupStateDescription: item.dedupStateDescription,
-        oidAid: item.oidAid,
-      };
-
-      console.log("🔄 변환된 뉴스 아이템:", newsItem);
-
-      this.setCachedData(cacheKey, newsItem);
       return newsItem;
     } catch (error) {
-      console.error("뉴스 상세 로딩 실패:", error);
-      throw error;
+      console.error(`Error fetching news by ID ${id}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * 사용자가 조회한 뉴스 기록을 저장합니다.
+   * @param {string} newsId - 조회한 뉴스의 ID
+   */
+  async recordNewsView(newsId) {
+    if (!newsId) {
+      console.warn("newsId is required to record news view");
+      return;
+    }
+
+    try {
+      const apiUrl = getApiUrl();
+      const response = await authenticatedFetch(
+        `${apiUrl}/api/users/mypage/history/${newsId}`,
+        {
+          method: "POST",
+        }
+      );
+
+      if (response.ok) {
+        console.log(`Successfully recorded view for news ${newsId}`);
+        return await response.json();
+      } else if (response.status !== 401) {
+        // 401은 authenticatedFetch에서 처리하므로, 그 외의 에러만 처리
+        const errorData = await response
+          .json()
+          .catch(() => ({ message: "조회 기록 저장에 실패했습니다." }));
+        console.error(
+          `Failed to record view for news ${newsId}:`,
+          errorData.message
+        );
+      }
+    } catch (error) {
+      console.error("Error recording news view:", error);
     }
   }
 
