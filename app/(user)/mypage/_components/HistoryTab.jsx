@@ -13,15 +13,22 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Clock, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { newsService } from "@/lib/newsService";
 import { getApiUrl } from "@/lib/config";
-import { apiConfig } from "@/lib/api-utils";
 import { authenticatedFetch } from "@/lib/auth";
+import { useMypageContext } from "@/contexts/MypageContext";
 
 export default function HistoryTab() {
   const [readingHistory, setReadingHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Context에서 읽은 기사 개수 관리
+  const { setReadArticleCount } = useMypageContext();
+
+  // 페이지네이션 파라미터
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(10);
+  const [sort, setSort] = useState("updatedAt,DESC");
 
   // 읽기 기록 데이터 가져오기
   const fetchReadingHistory = async () => {
@@ -29,18 +36,16 @@ export default function HistoryTab() {
       setIsLoading(true);
       setError(null);
 
-      // 1. 읽기 기록 가져오기 (뉴스 ID와 날짜) - authenticatedFetch 사용
-      const historyResponse = await authenticatedFetch(
-        getApiUrl("/api/users/mypage/history/index"),
-        {
-          method: "GET",
-          headers: {
-            ...apiConfig.headers,
-          },
-          mode: apiConfig.mode,
-          credentials: apiConfig.credentials,
-        }
-      );
+      // URL과 파라미터 분리
+      const baseUrl = "/api/users/mypage/history/index";
+      const params = new URLSearchParams({
+        page: page.toString(),
+        size: size.toString(),
+        sort: sort,
+      });
+      const historyUrl = getApiUrl(`${baseUrl}?${params.toString()}`);
+
+      const historyResponse = await authenticatedFetch(historyUrl);
 
       // authenticatedFetch에서 인증 실패한 경우 (객체 형태로 반환)
       if (historyResponse.success === false) {
@@ -56,90 +61,26 @@ export default function HistoryTab() {
 
       const historyData = await historyResponse.json();
 
-      // 2. 각 뉴스 ID에 대해 뉴스 상세 정보 가져오기 (토큰 불필요)
-      // API 응답은 data.content 배열 형태
-      const enrichedHistory = await Promise.all(
-        historyData.data.content.map(async (item) => {
-          try {
-            console.log(`뉴스 ${item.newsId} 정보를 가져오는 중...`);
-            const newsUrl = getApiUrl(`/api/news/${item.newsId}`);
-            console.log(`뉴스 API URL: ${newsUrl}`);
+      // 총 읽은 기사 개수를 Context에 저장
+      if (historyData.data && historyData.data.totalElements !== undefined) {
+        setReadArticleCount(historyData.data.totalElements);
+      }
 
-            const newsResponse = await fetch(newsUrl, {
-              method: "GET",
-              headers: {
-                ...apiConfig.headers,
-              },
-              mode: apiConfig.mode,
-              credentials: apiConfig.credentials,
-            });
-
-            console.log(
-              `뉴스 ${item.newsId} 응답 상태:`,
-              newsResponse.status,
-              newsResponse.statusText
-            );
-
-            if (newsResponse.ok) {
-              const newsData = await newsResponse.json();
-              console.log(`뉴스 ${item.newsId} 데이터:`, newsData);
-              return {
-                id: item.newsId,
-                title: newsData.data?.title || "제목 없음",
-                category: newsData.data?.category || "분류 없음",
-                readAt: new Date(item.updatedAt).toLocaleString("ko-KR", {
-                  year: "numeric",
-                  month: "2-digit",
-                  day: "2-digit",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }),
-                readTime: "읽음", // readTime 필드가 없으므로 기본값
-              };
-            } else {
-              console.log(
-                `뉴스 ${item.newsId} 가져오기 실패:`,
-                newsResponse.status,
-                newsResponse.statusText
-              );
-              const errorText = await newsResponse.text();
-              console.log(`뉴스 ${item.newsId} 에러 응답:`, errorText);
-              // 뉴스 정보를 가져올 수 없는 경우 기본값 사용
-              return {
-                id: item.newsId,
-                title: "삭제된 뉴스",
-                category: "알 수 없음",
-                readAt: new Date(item.updatedAt).toLocaleString("ko-KR", {
-                  year: "numeric",
-                  month: "2-digit",
-                  day: "2-digit",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }),
-                readTime: "읽음",
-              };
-            }
-          } catch (newsError) {
-            console.error(
-              `뉴스 ${item.newsId} 정보를 가져오는데 실패:`,
-              newsError
-            );
-            return {
-              id: item.newsId,
-              title: "정보를 불러올 수 없음",
-              category: "알 수 없음",
-              readAt: new Date(item.updatedAt).toLocaleString("ko-KR", {
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-              }),
-              readTime: "읽음",
-            };
-          }
-        })
-      );
+      // API 응답에서 newsTitle과 categoryName이 이미 포함되어 있으므로
+      // 별도의 뉴스 상세 정보 요청 없이 바로 사용
+      const enrichedHistory = historyData.data.content.map((item) => ({
+        id: item.newsId,
+        title: item.newsTitle || "제목 없음",
+        category: item.categoryName || "분류 없음",
+        readAt: new Date(item.updatedAt).toLocaleString("ko-KR", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        readTime: "읽음", // readTime 필드가 없으므로 기본값
+      }));
 
       setReadingHistory(enrichedHistory);
     } catch (error) {
@@ -152,7 +93,7 @@ export default function HistoryTab() {
 
   useEffect(() => {
     fetchReadingHistory();
-  }, []);
+  }, [page, size, sort]); // 페이지네이션 파라미터가 변경될 때마다 데이터 다시 가져오기
 
   if (isLoading) {
     return (
