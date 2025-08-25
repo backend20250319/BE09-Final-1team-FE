@@ -2,9 +2,12 @@
 export const config = {
   // API 설정
   api: {
-    baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080",
-    backendUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080",
+    // 클라이언트용 (브라우저에서 접근 가능)
+    baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000", // 게이트웨이
     newsServiceUrl: process.env.NEXT_PUBLIC_NEWS_SERVICE_URL || "http://localhost:8082",
+    
+    // 서버 전용 (BFF에서 사용)
+    backendUrl: process.env.BACKEND_URL || "http://localhost:8000", // 게이트웨이
   },
 
   // 인증 설정
@@ -23,14 +26,14 @@ export const config = {
   env: process.env.NODE_ENV || "development",
 };
 
-// API URL 생성 헬퍼 함수
+// API URL 생성 헬퍼 함수 (클라이언트용)
 export const getApiUrl = (endpoint) => {
   const baseUrl = config.api.baseUrl.replace(/\/$/, ""); // 끝의 슬래시 제거
   const cleanEndpoint = endpoint.replace(/^\//, ""); // 시작의 슬래시 제거
   return `${baseUrl}/${cleanEndpoint}`;
 };
 
-// 백엔드 URL 생성 헬퍼 함수
+// 백엔드 URL 생성 헬퍼 함수 (서버 전용 - BFF에서 사용)
 export const getBackendUrl = (endpoint) => {
   const baseUrl = config.api.backendUrl.replace(/\/$/, ""); // 끝의 슬래시 제거
   const cleanEndpoint = endpoint.replace(/^\//, ""); // 시작의 슬래시 제거

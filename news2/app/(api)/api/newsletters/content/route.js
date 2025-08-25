@@ -1,8 +1,13 @@
 import NewsletterContentService from '@/lib/services/NewsletterContentService'
 
 /**
- * 뉴스레터 콘텐츠 API
- * JSON 형태로 뉴스레터 콘텐츠를 반환
+ * 뉴스레터 콘텐츠 API (BFF)
+ * 
+ * 클라이언트 요청을 받아 백엔드로 프록시하고 응답을 표준화합니다.
+ * - 입력 검증
+ * - 백엔드 호출
+ * - 에러 처리 및 표준화
+ * - 응답 포맷 통일
  */
 export async function GET(request) {
   try {
@@ -18,7 +23,11 @@ export async function GET(request) {
     // 입력 검증
     if (personalized && !userId) {
       return Response.json(
-        { error: '개인화된 뉴스레터를 위해서는 userId가 필요합니다.' },
+        { 
+          code: 'MISSING_USER_ID',
+          message: '개인화된 뉴스레터를 위해서는 userId가 필요합니다.',
+          details: 'personalized=true일 때 userId는 필수입니다.'
+        },
         { status: 400 }
       )
     }
@@ -50,13 +59,14 @@ export async function GET(request) {
       )
     }
 
-    // JSON 형태로 반환
+    // 표준화된 응답 반환
     return Response.json({
       success: true,
       data: content.toJSON(),
       metadata: {
         generatedAt: new Date().toISOString(),
-        version: "1.0"
+        version: "1.0",
+        source: "BFF"
       }
     })
 
@@ -65,7 +75,8 @@ export async function GET(request) {
     
     return Response.json(
       { 
-        error: '뉴스레터 콘텐츠 생성에 실패했습니다.',
+        code: 'CONTENT_GENERATION_FAILED',
+        message: '뉴스레터 콘텐츠 생성에 실패했습니다.',
         details: error.message 
       },
       { status: 500 }
@@ -94,7 +105,11 @@ export async function POST(request) {
     // 입력 검증
     if (personalized && !userId) {
       return Response.json(
-        { error: '개인화된 뉴스레터를 위해서는 userId가 필요합니다.' },
+        { 
+          code: 'MISSING_USER_ID',
+          message: '개인화된 뉴스레터를 위해서는 userId가 필요합니다.',
+          details: 'personalized=true일 때 userId는 필수입니다.'
+        },
         { status: 400 }
       )
     }
@@ -126,13 +141,14 @@ export async function POST(request) {
       )
     }
 
-    // JSON 형태로 반환
+    // 표준화된 응답 반환
     return Response.json({
       success: true,
       data: content.toJSON(),
       metadata: {
         generatedAt: new Date().toISOString(),
-        version: "1.0"
+        version: "1.0",
+        source: "BFF"
       }
     })
 
@@ -141,7 +157,8 @@ export async function POST(request) {
     
     return Response.json(
       { 
-        error: '뉴스레터 콘텐츠 생성에 실패했습니다.',
+        code: 'CONTENT_GENERATION_FAILED',
+        message: '뉴스레터 콘텐츠 생성에 실패했습니다.',
         details: error.message 
       },
       { status: 500 }

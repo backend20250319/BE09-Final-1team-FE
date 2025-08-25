@@ -40,6 +40,7 @@ export default function ProfileTab() {
       setIsLoading(true);
       setError("");
       try {
+        // 실제 백엔드 API 사용
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
         // 1. 전체 관심사 목록 가져오기

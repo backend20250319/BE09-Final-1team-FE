@@ -26,9 +26,90 @@ export default function MainPage() {
   const [totalElements, setTotalElements] = useState(0)
   const [newsItems, setNewsItems] = useState([])
   const [loading, setLoading] = useState(true)
+  const [popularNews, setPopularNews] = useState(null)
+  const [popularNewsLoading, setPopularNewsLoading] = useState(true)
 
   // 페이지당 아이템 수
   const itemsPerPage = 21
+
+  // 🔁 기존 "인기 뉴스" 로더 → "트렌딩 뉴스" 로더로 교체
+  useEffect(() => {
+    const fetchTrendingBanner = async () => {
+      console.log('⚡ 트렌딩 뉴스(24h) 로딩...')
+      setPopularNewsLoading(true)
+
+      try {
+        // news-service 프록시 경유
+        const res = await fetch('/api/news/trending?hours=24&limit=1')
+        
+        if (!res.ok) {
+          console.error('❌ 트렌딩 API 응답 오류:', res.status, res.statusText)
+          // 폴백: 기존 인기 뉴스 API 사용
+          console.log('🔄 기존 인기 뉴스 API로 폴백...')
+          const fallbackRes = await fetch('/api/news/popular?page=0&size=1')
+          if (!fallbackRes.ok) {
+            throw new Error(`폴백 API도 실패: ${fallbackRes.status}`)
+          }
+          const fallbackData = await fallbackRes.json()
+          
+          if (fallbackData.content && fallbackData.content.length > 0) {
+            const news = fallbackData.content[0]
+            setPopularNews({
+              id: news.newsId,
+              title: news.title,
+              content: news.content || news.summary || "내용을 불러올 수 없습니다.",
+              source: news.press,
+              publishedAt: news.publishedAt,
+              category: news.categoryName,
+              image: news.imageUrl || "/placeholder.jpg",
+              views: news.viewCount || 0
+            })
+          }
+          return
+        }
+        
+        const data = await res.json()
+        console.log('📄 트렌딩 뉴스 응답:', data)
+
+        // 에러 응답 체크
+        if (data.error) {
+          console.error('❌ API 에러:', data.error)
+          throw new Error(data.error)
+        }
+
+        // newsletter-service의 ApiResponse<T> 가정: { data: [...] }
+        const list = data.data || data.content || []
+        if (list.length > 0) {
+          const news = list[0]
+          console.log('📰 트렌딩 뉴스 상세:', news)
+          
+          // sourceUrl → hostname 폴백
+          const source =
+            news.source ||
+            (news.sourceUrl ? (() => { try { return new URL(news.sourceUrl).hostname } catch { return '알 수 없음' } })() : '알 수 없음')
+
+          setPopularNews({
+            id: news.id,                                // ✅ id 필드 사용
+            title: news.title,
+            content: news.content || news.summary || "내용을 불러올 수 없습니다.",
+            source,                                      // ✅ press → source/hostname
+            publishedAt: news.publishedAt,
+            category: news.category,                     // ✅ categoryName → category
+            image: news.imageUrl || "/placeholder.jpg",
+            views: news.viewCount || 0                   // 없으면 0
+          })
+        } else {
+          console.log('⚡ 트렌딩 뉴스 결과 없음:', data)
+        }
+      } catch (e) {
+        console.error('❌ 트렌딩 뉴스 로딩 실패:', e)
+      } finally {
+        setPopularNewsLoading(false)
+      }
+    }
+
+    fetchTrendingBanner()
+  }, [])
 
   // 카테고리별 필터링 및 페이지네이션
   useEffect(() => {
@@ -114,7 +195,7 @@ export default function MainPage() {
     }
   }, [selectedCategory, isLoaded])
 
-  const categories = ["전체", "POLITICS", "ECONOMY", "SOCIETY", "CULTURE", "INTERNATIONAL", "IT_SCIENCE", "VEHICLE", "TRAVEL_FOOD", "ART"]
+  const categories = ["전체", "POLITICS", "ECONOMY", "SOCIETY", "LIFE", "INTERNATIONAL", "IT_SCIENCE", "VEHICLE", "TRAVEL_FOOD", "ART"]
   
   // 카테고리 표시명 매핑 (백엔드 Category enum과 일치)
   const categoryDisplayNames = {
@@ -122,7 +203,7 @@ export default function MainPage() {
     "POLITICS": "정치",
     "ECONOMY": "경제", 
     "SOCIETY": "사회",
-    "CULTURE": "생활",
+    "LIFE": "생활",
     "INTERNATIONAL": "세계",
     "IT_SCIENCE": "IT/과학",
     "VEHICLE": "자동차/교통",
@@ -178,47 +259,80 @@ export default function MainPage() {
           <div className="flex flex-col lg:flex-row items-start gap-6">
             {/* Left: Featured News */}
             <div className="w-full lg:w-2/3">
-              <Card className="relative overflow-hidden glass hover-lift animate-slide-in h-[560px] rounded-xl">
-                {/* 이미지 영역 */}
-                <img
-                  src="/placeholder.jpg"
-                  alt="Featured news"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.src = "/placeholder.jpg"
-                  }}
-                />
-
-                {/* 텍스트 오버레이 */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent p-4 md:p-6 flex flex-col justify-end text-white">
-                  <Badge className="bg-red-600 text-white px-4 py-1 rounded-full shadow-lg font-bold tracking-wider mb-3 w-fit">
-                    속보
-                  </Badge>
-                  <h2 className="text-lg lg:text-xl font-bold mb-2 line-clamp-2">
-                    주요 경제 정책 발표, 시장에 미치는 파급효과 분석
-                  </h2>
-                  <p className="text-sm mb-4 line-clamp-2">
-                    <TextWithTooltips text="정부가 발표한 새로운 경제 정책이 금융시장과 실물경제에 미칠 영향에 대해 전문가들이 다양한 분석을 내놓고 있습니다..." />
-                  </p>
-
-                  {/* 하단 메타정보 */}
-                  <div className="flex items-center justify-between text-xs text-gray-300">
-                    <span>경제신문 • 1시간 전</span>
-                    <div className="flex items-center space-x-4">
-                      <span className="flex items-center">
-                        <Eye className="h-4 w-4 mr-1" />
-                        2,345
-                      </span>
-                      <Button variant="ghost" size="sm" className="hover-glow text-white">
-                        <Share2 className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="hover-glow text-white">
-                        <Bookmark className="h-4 w-4" />
-                      </Button>
+              <Link href={`/news/${popularNews?.id}`}>
+                <Card className="relative overflow-hidden glass hover-lift animate-slide-in h-[560px] rounded-xl cursor-pointer">
+                  {popularNewsLoading ? (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
                     </div>
-                  </div>
-                </div>
-              </Card>
+                  ) : popularNews ? (
+                    <>
+                      {/* 이미지 영역 */}
+                      <img
+                        src={popularNews.image}
+                        alt={popularNews.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.src = "/placeholder.jpg"
+                        }}
+                      />
+
+                      {/* 텍스트 오버레이 */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent p-4 md:p-6 flex flex-col justify-end text-white">
+                        <Badge className="bg-red-600 text-white px-4 py-1 rounded-full shadow-lg font-bold tracking-wider mb-3 w-fit">
+                          트렌딩 (24시간)
+                        </Badge>
+                        <h2 className="text-lg lg:text-xl font-bold mb-2 line-clamp-2">
+                          {popularNews.title}
+                        </h2>
+                        <p className="text-sm mb-4 line-clamp-2">
+                          <TextWithTooltips text={
+                            popularNews.content && popularNews.content.length > 150 
+                              ? popularNews.content.substring(0, 150) + "..." 
+                              : popularNews.content || "내용을 불러올 수 없습니다."
+                          } />
+                        </p>
+
+                        {/* 하단 메타정보 */}
+                        <div className="flex items-center justify-between text-xs text-gray-300">
+                          <span>{popularNews.source} • {new Date(popularNews.publishedAt).toLocaleDateString('ko-KR', { 
+                            month: 'short', 
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}</span>
+                          <div className="flex items-center space-x-4">
+                            <span className="flex items-center">
+                              <Eye className="h-4 w-4 mr-1" />
+                              {popularNews.views.toLocaleString()}
+                            </span>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="hover-glow text-white"
+                              onClick={(e) => e.preventDefault()}
+                            >
+                              <Share2 className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="hover-glow text-white"
+                              onClick={(e) => e.preventDefault()}
+                            >
+                              <Bookmark className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-500">
+                      인기 뉴스를 불러올 수 없습니다.
+                    </div>
+                  )}
+                </Card>
+              </Link>
             </div>
 
             {/* Right: Sidebar */}

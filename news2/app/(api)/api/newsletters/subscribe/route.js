@@ -1,45 +1,45 @@
 // 뉴스레터 구독 API
 export async function POST(request) {
   try {
-    const { newsletterId, email } = await request.json()
+    const body = await request.json()
+    const { email, frequency, preferredCategories } = body
+    const authHeader = request.headers.get('authorization')
 
-    // 입력 검증
-    if (!newsletterId || !email) {
+    if (!email || !preferredCategories) {
       return Response.json(
-        { error: '뉴스레터 ID와 이메일 주소가 필요합니다.' },
+        { success: false, error: '이메일과 선호 카테고리가 필요합니다.' },
         { status: 400 }
       )
     }
 
-    // 이메일 형식 검증
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-      return Response.json(
-        { error: '올바른 이메일 형식이 아닙니다.' },
-        { status: 400 }
-      )
-    }
-
-    // 실제 환경에서는 데이터베이스에 구독 정보를 저장해야 합니다
-    // 여기서는 시뮬레이션을 위해 성공 응답을 반환합니다
-    
-    console.log(`뉴스레터 구독: ID=${newsletterId}, Email=${email}`)
-
-    // 구독 성공 응답
-    return Response.json({
-      success: true,
-      message: '뉴스레터 구독이 완료되었습니다.',
-      data: {
-        newsletterId,
+    // 백엔드 API 호출
+    const response = await fetch('http://localhost:8085/api/newsletter/subscribe', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authHeader && { 'Authorization': authHeader })
+      },
+      body: JSON.stringify({
         email,
-        subscribedAt: new Date().toISOString()
-      }
+        frequency: frequency || 'DAILY',
+        preferredCategories: Array.isArray(preferredCategories) ? preferredCategories : [preferredCategories]
+      })
     })
 
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const data = await response.json()
+    return Response.json(data)
   } catch (error) {
     console.error('뉴스레터 구독 실패:', error)
     return Response.json(
-      { error: '뉴스레터 구독에 실패했습니다.' },
+      { 
+        success: false,
+        error: '뉴스레터 구독에 실패했습니다.',
+        details: error.message 
+      },
       { status: 500 }
     )
   }

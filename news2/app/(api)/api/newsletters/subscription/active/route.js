@@ -1,15 +1,7 @@
-// 뉴스레터 구독 해제 API
-export async function POST(request) {
+// 활성 구독 목록 조회 API
+export async function GET(request) {
   try {
-    const { subscriptionId } = await request.json()
     const authHeader = request.headers.get('authorization')
-
-    if (!subscriptionId) {
-      return Response.json(
-        { success: false, error: '구독 ID가 필요합니다.' },
-        { status: 400 }
-      )
-    }
 
     if (!authHeader) {
       return Response.json(
@@ -19,8 +11,8 @@ export async function POST(request) {
     }
 
     // 백엔드 API 호출
-    const response = await fetch(`http://localhost:8085/api/newsletter/subscription/${subscriptionId}`, {
-      method: 'DELETE',
+    const response = await fetch('http://localhost:8085/api/newsletter/subscription/active', {
+      method: 'GET',
       headers: {
         'Authorization': authHeader,
         'Content-Type': 'application/json',
@@ -34,11 +26,11 @@ export async function POST(request) {
     const data = await response.json()
     return Response.json(data)
   } catch (error) {
-    console.error('뉴스레터 구독 해제 실패:', error)
+    console.error('활성 구독 목록 조회 실패:', error)
     return Response.json(
       { 
         success: false,
-        error: '뉴스레터 구독 해제에 실패했습니다.',
+        error: '활성 구독 목록을 조회하는데 실패했습니다.',
         details: error.message 
       },
       { status: 500 }
