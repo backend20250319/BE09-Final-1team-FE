@@ -213,7 +213,7 @@ export default function NewsPage() {
           // 조회 기록 저장 실패는 전체 페이지 로딩에 영향을 주지 않도록 합니다.
         }
       } catch (err) {
-        console.error("❌ 뉴스 상세 데이터 로딩 실패:", err);
+        console.error("❌ 뉴스 상세 데이터 로딩 실패:", err); 
         setError(err.message || "뉴스를 불러올 수 없습니다.");
         setNewsData(null);
       } finally {

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { authenticatedFetch } from "@/lib/auth"; // 인증된 요청을 위한 헬퍼 함수
+import { useMypageContext } from "@/contexts/MypageContext";
 
 /**
  * 프로필 사이드바 컴포넌트
@@ -16,6 +17,9 @@ export default function ProfileSidebar() {
   const [userData, setUserData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Context에서 읽은 기사 개수와 스크랩 개수 가져오기
+  const { readArticleCount, scrapCount } = useMypageContext();
 
   // --- 데이터 로딩 ---
   useEffect(() => {
@@ -71,7 +75,7 @@ export default function ProfileSidebar() {
       </Card>
     );
   }
-  
+
   // --- 사용자 가입일 포맷팅 ---
   // 사용자 가입일을 'YYYY.MM.DD' 형식으로 변환
   const userCreatedAt = userData?.createdAt
@@ -124,11 +128,11 @@ export default function ProfileSidebar() {
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-600">읽은 기사</span>
-            <span className="text-sm font-medium">127개</span>
+            <span className="text-sm font-medium">{readArticleCount}개</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-600">스크랩</span>
-            <span className="text-sm font-medium">23개</span>
+            <span className="text-sm font-medium">{scrapCount}개</span>
           </div>
         </div>
       </CardContent>
