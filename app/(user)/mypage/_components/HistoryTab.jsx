@@ -15,29 +15,7 @@ import { Clock } from "lucide-react";
 
 export default function HistoryTab() {
   // 읽기 기록 데이터 (실제로는 props나 API에서 가져올 데이터)
-  const readingHistory = [
-    {
-      id: 1,
-      title: "스타트업 투자 동향 분석",
-      category: "경제",
-      readAt: "2024-01-15 14:30",
-      readTime: "3분",
-    },
-    {
-      id: 2,
-      title: "새로운 교육 정책 발표",
-      category: "사회",
-      readAt: "2024-01-15 10:15",
-      readTime: "5분",
-    },
-    {
-      id: 3,
-      title: "기후변화 대응 기술 개발",
-      category: "IT/과학",
-      readAt: "2024-01-14 16:45",
-      readTime: "4분",
-    },
-  ];
+  const readingHistory = [];
 
   return (
     <Card>
