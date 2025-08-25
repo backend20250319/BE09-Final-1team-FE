@@ -68,6 +68,39 @@ export async function GET() {
         lastSent: "3시간 전",
         tags: ["세계", "국제", "외교", "글로벌"],
         isSubscribed: false
+      },
+      {
+        id: 7,
+        title: "자동차 & 모빌리티 인사이드",
+        description: "전기차, 자율주행, 친환경 모빌리티 등 자동차와 교통 분야의 최신 트렌드를 다룹니다.",
+        category: "자동차/교통",
+        frequency: "주 3회",
+        subscribers: 8750,
+        lastSent: "1일 전",
+        tags: ["자동차", "전기차", "자율주행", "모빌리티"],
+        isSubscribed: false
+      },
+      {
+        id: 8,
+        title: "여행 & 푸드 가이드",
+        description: "국내외 여행 정보와 맛집 소개, 음식 문화를 다루는 종합 가이드입니다.",
+        category: "여행/음식",
+        frequency: "주 2회",
+        subscribers: 12340,
+        lastSent: "2일 전",
+        tags: ["여행", "음식", "맛집", "관광"],
+        isSubscribed: false
+      },
+      {
+        id: 9,
+        title: "아트 & 컬처 스토리",
+        description: "영화, 음악, 미술, 문학 등 다양한 예술 분야의 소식과 문화 이벤트를 전합니다.",
+        category: "예술",
+        frequency: "주 2회",
+        subscribers: 6540,
+        lastSent: "3일 전",
+        tags: ["예술", "문화", "영화", "음악"],
+        isSubscribed: false
       }
     ]
 
