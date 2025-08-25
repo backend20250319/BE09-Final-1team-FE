@@ -338,9 +338,14 @@ export default function NewsletterPageClient({ initialNewsletters }) {
         return;
       }
       
-      unsubscribeMutation.mutate(sub.id, {
+      unsubscribeMutation.mutate(newsletter.category, {
         onSuccess: () => {
-          // 성공 시 서버에서 최신 구독 정보를 가져옴
+          // 성공 시 로컬 상태에서 즉시 제거하고 서버에서 최신 구독 정보를 가져옴
+          setLocalSubscriptions(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(newsletter.category);
+            return newSet;
+          });
           refetchSubscriptions();
           toast({
             title: "구독 해제",
