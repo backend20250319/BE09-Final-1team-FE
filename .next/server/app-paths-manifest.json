@@ -1,11 +1,10 @@
 {
-  "/api/news/trending-keywords/route": "app/api/news/trending-keywords/route.js",
-  "/api/news/route": "app/api/news/route.js",
-  "/api/news/trending/route": "app/api/news/trending/route.js",
   "/api/subscriber-count/route": "app/api/subscriber-count/route.js",
-  "/api/newsletters/category/articles/route": "app/api/newsletters/category/articles/route.js",
-  "/api/newsletter/category/trending-keywords/route": "app/api/newsletter/category/trending-keywords/route.js",
-  "/api/newsletter/category/headlines/route": "app/api/newsletter/category/headlines/route.js",
+  "/api/news/trending-keywords/route": "app/api/news/trending-keywords/route.js",
+  "/_not-found/page": "app/_not-found/page.js",
   "/page": "app/page.js",
-  "/(newsletter)/newsletter/page": "app/(newsletter)/newsletter/page.js"
+  "/(newsletter)/newsletter/page": "app/(newsletter)/newsletter/page.js",
+  "/(auth)/auth/page": "app/(auth)/auth/page.js",
+  "/(news)/news/[id]/page": "app/(news)/news/[id]/page.js",
+  "/(newsletter)/newsletter/dashboard/page": "app/(newsletter)/newsletter/dashboard/page.js"
 }

@@ -1,14 +1,14 @@
 {
-  "node_modules/@tanstack/query-devtools/build/dev.js -> ./DevtoolsComponent/EDEL3XIZ.js": {
-    "id": "node_modules/@tanstack/query-devtools/build/dev.js -> ./DevtoolsComponent/EDEL3XIZ.js",
+  "node_modules/.pnpm/@tanstack+query-devtools@5.84.0/node_modules/@tanstack/query-devtools/build/dev.js -> ./DevtoolsComponent/EDEL3XIZ.js": {
+    "id": "node_modules/.pnpm/@tanstack+query-devtools@5.84.0/node_modules/@tanstack/query-devtools/build/dev.js -> ./DevtoolsComponent/EDEL3XIZ.js",
     "files": [
-      "static/chunks/_app-pages-browser_node_modules_tanstack_query-devtools_build_DevtoolsComponent_EDEL3XIZ_js.js"
+      "static/chunks/_app-pages-browser_node_modules_pnpm_tanstack_query-devtools_5_84_0_node_modules_tanstack_que-bc933c.js"
     ]
   },
-  "node_modules/@tanstack/query-devtools/build/dev.js -> ./DevtoolsPanelComponent/RN252AT2.js": {
-    "id": "node_modules/@tanstack/query-devtools/build/dev.js -> ./DevtoolsPanelComponent/RN252AT2.js",
+  "node_modules/.pnpm/@tanstack+query-devtools@5.84.0/node_modules/@tanstack/query-devtools/build/dev.js -> ./DevtoolsPanelComponent/RN252AT2.js": {
+    "id": "node_modules/.pnpm/@tanstack+query-devtools@5.84.0/node_modules/@tanstack/query-devtools/build/dev.js -> ./DevtoolsPanelComponent/RN252AT2.js",
     "files": [
-      "static/chunks/_app-pages-browser_node_modules_tanstack_query-devtools_build_DevtoolsPanelComponent_RN252AT2_js.js"
+      "static/chunks/_app-pages-browser_node_modules_pnpm_tanstack_query-devtools_5_84_0_node_modules_tanstack_que-6852f3.js"
     ]
   }
 }

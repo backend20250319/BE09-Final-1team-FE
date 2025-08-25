@@ -1,10 +1,50 @@
 {
   "pages": {
+    "/api/subscriber-count/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/subscriber-count/route.js"
+    ],
     "/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
+    ],
+    "/(newsletter)/newsletter/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(newsletter)/newsletter/page.js"
+    ],
+    "/api/newsletters/category/articles/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/newsletters/category/articles/route.js"
+    ],
+    "/api/newsletter/category/trending-keywords/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/newsletter/category/trending-keywords/route.js"
+    ],
+    "/api/newsletter/category/headlines/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/newsletter/category/headlines/route.js"
+    ],
+    "/api/newsletter/category/stats/subscribers/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/newsletter/category/stats/subscribers/route.js"
+    ],
+    "/(api)/api/newsletters/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(api)/api/newsletters/route.js"
+    ],
+    "/(api)/api/newsletters/user-subscriptions/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(api)/api/newsletters/user-subscriptions/route.js"
     ],
     "/page": [
       "static/chunks/webpack.js",
@@ -26,30 +66,55 @@
       "static/chunks/main-app.js",
       "static/chunks/app/api/news/trending/route.js"
     ],
-    "/api/subscriber-count/route": [
+    "/(news)/loading": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/api/subscriber-count/route.js"
+      "static/chunks/app/(news)/loading.js"
     ],
-    "/(newsletter)/newsletter/page": [
+    "/(news)/news/[id]/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(newsletter)/newsletter/page.js"
+      "static/chunks/app/(news)/news/[id]/page.js"
     ],
-    "/api/newsletters/category/articles/route": [
+    "/api/news-detail/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/api/newsletters/category/articles/route.js"
+      "static/chunks/app/api/news-detail/route.js"
     ],
-    "/api/newsletter/category/trending-keywords/route": [
+    "/(auth)/auth/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/api/newsletter/category/trending-keywords/route.js"
+      "static/chunks/app/(auth)/auth/page.js"
     ],
-    "/api/newsletter/category/headlines/route": [
+    "/search/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/api/newsletter/category/headlines/route.js"
+      "static/chunks/app/search/page.js"
+    ],
+    "/api/news/popular/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/news/popular/route.js"
+    ],
+    "/api/auth/login/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/auth/login/route.js"
+    ],
+    "/(api)/api/newsletters/subscribe/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(api)/api/newsletters/subscribe/route.js"
+    ],
+    "/(newsletter)/newsletter/dashboard/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(newsletter)/newsletter/dashboard/page.js"
+    ],
+    "/_not-found/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/_not-found/page.js"
     ]
   }
 }
