@@ -23,7 +23,8 @@ const nanumBrush = Nanum_Brush_Script({
 export const metadata = {
   title: "뉴스포털",
   description: "최신 뉴스를 실시간으로 확인하세요",
-}
+};
+
 
 export default function RootLayout({ children }) {
   return (
@@ -31,13 +32,11 @@ export default function RootLayout({ children }) {
       <body className={`${inter.className} ${nanumGothic.variable} ${nanumMyeongjo.variable} ${nanumBrush.variable}`}>
         <Providers>
           <div className="flex flex-col min-h-screen">
-            <main className="flex-1">
-              {children}
-            </main>
+            <main className="flex-1">{children}</main>
             <Footer />
           </div>
         </Providers>
       </body>
     </html>
-  )
+  );
 }

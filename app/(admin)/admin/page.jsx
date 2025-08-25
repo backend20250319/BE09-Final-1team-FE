@@ -17,17 +17,17 @@ export default function AdminPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            {/* <TabsTrigger value="dashboard">대시보드</TabsTrigger> */}
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="dashboard">대시보드</TabsTrigger>
             <TabsTrigger value="users">회원 관리</TabsTrigger>
             <TabsTrigger value="newsletter">뉴스레터</TabsTrigger>
             <TabsTrigger value="settings">설정</TabsTrigger>
           </TabsList>
 
-          {/* Dashboard Tab
+          {/* Dashboard Tab */}
           <TabsContent value="dashboard">
             <AdminDashboard />
-          </TabsContent> */}
+          </TabsContent>
 
           {/* Users Management Tab */}
           <TabsContent value="users">
