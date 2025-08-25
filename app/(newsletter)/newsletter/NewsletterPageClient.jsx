@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import { getUserRole, getUserInfo } from "@/lib/auth"
 import Header from "@/components/header"
-import { useNewsletters, useUserSubscriptions, useSubscribeNewsletter, useUnsubscribeNewsletter, useCategoryArticles, useTrendingKeywords } from "@/hooks/useNewsletter"
+import { useNewsletters, useUserSubscriptions, useSubscribeNewsletter, useUnsubscribeNewsletter, useCategoryArticles, useTrendingKeywords, useCategoryHeadlines } from "@/hooks/useNewsletter"
 
 // 카테고리별 주제 생성 함수
 const generateTopicsForCategory = (category) => {
@@ -77,6 +77,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
   const [isLoaded, setIsLoaded] = useState(false)
   const [localSubscriptions, setLocalSubscriptions] = useState(new Set())
   const [expandedCards, setExpandedCards] = useState(new Set()) // 확장된 카드 상태
+  const [expandedTopics, setExpandedTopics] = useState(new Set()) // 확장된 주제 섹션 상태
 
   const [userRole, setUserRole] = useState(null)
   const [isClient, setIsClient] = useState(false)
@@ -113,6 +114,9 @@ export default function NewsletterPageClient({ initialNewsletters }) {
   
   // 카테고리별 트렌드 키워드 조회
   const trendingKeywordsQueries = allCategories.map(category => useTrendingKeywords(category, 8))
+  
+  // 카테고리별 헤드라인 조회
+  const headlinesQueries = allCategories.map(category => useCategoryHeadlines(category, 5))
 
   // 뮤테이션 훅들
   const subscribeMutation = useSubscribeNewsletter()
@@ -170,6 +174,19 @@ export default function NewsletterPageClient({ initialNewsletters }) {
   // 카드 확장/축소 토글
   const toggleCardExpansion = (newsletterId) => {
     setExpandedCards(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(newsletterId)) {
+        newSet.delete(newsletterId);
+      } else {
+        newSet.add(newsletterId);
+      }
+      return newSet;
+    });
+  };
+
+  // 주제 섹션 확장/축소 토글
+  const toggleTopicsExpansion = (newsletterId) => {
+    setExpandedTopics(prev => {
       const newSet = new Set(prev);
       if (newSet.has(newsletterId)) {
         newSet.delete(newsletterId);
@@ -338,9 +355,14 @@ export default function NewsletterPageClient({ initialNewsletters }) {
         return;
       }
       
-      unsubscribeMutation.mutate(sub.id, {
+      unsubscribeMutation.mutate(newsletter.category, {
         onSuccess: () => {
-          // 성공 시 서버에서 최신 구독 정보를 가져옴
+          // 성공 시 로컬 상태에서 즉시 제거하고 서버에서 최신 구독 정보를 가져옴
+          setLocalSubscriptions(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(newsletter.category);
+            return newSet;
+          });
           refetchSubscriptions();
           toast({
             title: "구독 해제",
@@ -499,6 +521,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                 enhancedNewsletters.map((newsletter, index) => {
                   const isSubscribed = isSubscribedByCategory(newsletter.category);
                   const isExpanded = expandedCards.has(newsletter.id);
+                  const isTopicsExpanded = expandedTopics.has(newsletter.id);
                   
                   // 미리 조회한 카테고리별 기사 데이터 사용 (백엔드 서버가 없을 때는 기본값 사용)
                   const categoryIndex = allCategories.indexOf(newsletter.category);
@@ -514,8 +537,16 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                     ? trendingKeywordsQueries[categoryIndex].data 
                     : null;
                   
+                  // 헤드라인 데이터 조회
+                  const headlinesData = categoryIndex >= 0 && headlinesQueries[categoryIndex] 
+                    ? headlinesQueries[categoryIndex].data 
+                    : null;
+                  
+                  // 헤드라인 데이터 디버깅
+                  console.log(`헤드라인 데이터 (${newsletter.category}):`, headlinesData);
+                  
                   // 백엔드에서 트렌드 키워드를 우선 사용, 없으면 기본값 사용
-                  const mainTopics = trendingKeywordsData?.keywords || categoryData?.trendingKeywords || categoryData?.mainTopics || generateTopicsForCategory(newsletter.category);
+                  const mainTopics = trendingKeywordsData?.map(item => item.keyword) || categoryData?.trendingKeywords || categoryData?.mainTopics || generateTopicsForCategory(newsletter.category);
                   const totalArticles = categoryData?.totalArticles || newsletter.stats?.totalArticles || 20;
                   
                   return (
@@ -619,7 +650,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                             주요 주제
                           </h4>
                           <div className="flex flex-wrap gap-1">
-                            {mainTopics?.slice(0, isExpanded ? mainTopics.length : 4).map((topic, idx) => (
+                            {mainTopics?.slice(0, isTopicsExpanded ? mainTopics.length : 4).map((topic, idx) => (
                               <Badge 
                                 key={idx} 
                                 className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs px-2 py-1 rounded-full shadow-sm hover:shadow-md transition-shadow cursor-pointer"
@@ -627,9 +658,20 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                                 #{topic}
                               </Badge>
                             ))}
-                            {!isExpanded && mainTopics?.length > 4 && (
-                              <Badge className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
+                            {!isTopicsExpanded && mainTopics?.length > 4 && (
+                              <Badge 
+                                className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full hover:bg-gray-200 cursor-pointer transition-colors"
+                                onClick={() => toggleTopicsExpansion(newsletter.id)}
+                              >
                                 +{mainTopics.length - 4}개
+                              </Badge>
+                            )}
+                            {isTopicsExpanded && mainTopics?.length > 4 && (
+                              <Badge 
+                                className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full hover:bg-gray-200 cursor-pointer transition-colors"
+                                onClick={() => toggleTopicsExpansion(newsletter.id)}
+                              >
+                                접기
                               </Badge>
                             )}
                           </div>
@@ -644,7 +686,23 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                             </h4>
                             <ScrollArea className="h-32">
                               <div className="space-y-2">
-                                {articles.length > 0 ? (
+                                {(headlinesData && headlinesData.length > 0) ? (
+                                  headlinesData.map((headline, idx) => (
+                                    <div key={idx} className="flex items-start space-x-2 text-xs">
+                                      <div className="w-1 h-1 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                                      <div className="flex-1">
+                                        <p className="text-gray-700 leading-relaxed">{headline.title}</p>
+                                        <div className="flex items-center space-x-2 mt-1">
+                                          <span className="text-gray-400">{headline.time}</span>
+                                          <div className="flex items-center space-x-1 text-gray-400">
+                                            <Eye className="h-2.5 w-2.5" />
+                                            <span>{headline.views}</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))
+                                ) : articles.length > 0 ? (
                                   articles.map((article, idx) => (
                                     <div key={article.id || idx} className="flex items-start space-x-2 text-xs">
                                       <div className="w-1 h-1 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>

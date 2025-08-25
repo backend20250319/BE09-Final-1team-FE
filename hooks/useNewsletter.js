@@ -69,8 +69,8 @@ export function useUnsubscribeNewsletter() {
   const { toast } = useToast()
 
   return useMutation({
-    mutationFn: (subscriptionId) => 
-      newsletterService.unsubscribeNewsletter(subscriptionId),
+    mutationFn: (category) => 
+      newsletterService.unsubscribeNewsletter(category),
     
     onSuccess: (data, variables) => {
       // 캐시 무효화하여 최신 데이터 가져오기
@@ -186,12 +186,32 @@ export function useTrendingKeywords(category, limit = 8) {
     queryKey: ['trending-keywords', category, limit],
     queryFn: () => newsletterService.getTrendingKeywords(category, limit),
     enabled: !!category,
-    staleTime: 10 * 60 * 1000, // 10분간 fresh 상태 유지 (트렌드는 자주 변경되지 않음)
-    cacheTime: 30 * 60 * 1000, // 30분간 캐시 유지
-    retry: 1, // 재시도 횟수 제한
-    retryDelay: 1000, // 재시도 간격
+    staleTime: 30 * 60 * 1000, // 30분간 fresh 상태 유지 (트렌드는 자주 변경되지 않음)
+    cacheTime: 60 * 60 * 1000, // 1시간간 캐시 유지
+    retry: 2, // 재시도 횟수 증가
+    retryDelay: 2000, // 재시도 간격 증가
+    refetchOnWindowFocus: false, // 윈도우 포커스 시 재요청 방지
+    refetchOnMount: false, // 컴포넌트 마운트 시 재요청 방지
     onError: (error) => {
       console.warn(`카테고리 ${category} 트렌드 키워드 조회 실패:`, error.message)
+    }
+  })
+}
+
+// 카테고리별 헤드라인 조회 훅
+export function useCategoryHeadlines(category, limit = 5) {
+  return useQuery({
+    queryKey: ['category-headlines', category, limit],
+    queryFn: () => newsletterService.getCategoryHeadlines(category, limit),
+    enabled: !!category,
+    staleTime: 10 * 60 * 1000, // 10분간 fresh 상태 유지
+    cacheTime: 30 * 60 * 1000, // 30분간 캐시 유지
+    retry: 2, // 재시도 횟수
+    retryDelay: 2000, // 재시도 간격
+    refetchOnWindowFocus: false, // 윈도우 포커스 시 재요청 방지
+    refetchOnMount: false, // 컴포넌트 마운트 시 재요청 방지
+    onError: (error) => {
+      console.warn(`카테고리 ${category} 헤드라인 조회 실패:`, error.message)
     }
   })
 }
