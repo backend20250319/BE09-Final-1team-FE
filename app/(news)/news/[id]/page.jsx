@@ -4,22 +4,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 import Header from "@/components/header";
 import { useScrap } from "@/contexts/ScrapContext";
+import { newsService } from "@/lib/newsService";
 
 import Link from "next/link";
-import {
-  Bookmark,
-  Bot,
-  Share,
-  X,
-  User,
-  Clock,
-  Siren,
-} from "lucide-react";
+import { Bookmark, Bot, Share, X, User, Clock, Siren } from "lucide-react";
 import { Toaster, toast } from "sonner";
-
-
-
-
 
 // ✨ 1. '가가' 모양의 최신 네이버 스타일 아이콘 버튼 컴포넌트
 const NaverFontButtonV2 = ({ onClick }) => {
@@ -37,7 +26,6 @@ const NaverFontButtonV2 = ({ onClick }) => {
     </button>
   );
 };
-
 
 const fontSizes = [
   { id: "sm", label: "작게", value: 14 },
@@ -61,7 +49,7 @@ const FontSizeSelector = ({ currentValue, onSelect, onClose }) => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [selectorRef, onClose]);
-  
+
   return (
     <div
       ref={selectorRef}
@@ -115,18 +103,17 @@ const FontSizeSelector = ({ currentValue, onSelect, onClose }) => {
   );
 };
 
-
 export default function NewsPage() {
   const params = useParams();
   const articleId = params?.id;
-  
-  console.log('🔍 뉴스 상세 페이지 파라미터:', { params, articleId });
-  
+
+  console.log("🔍 뉴스 상세 페이지 파라미터:", { params, articleId });
+
   const { addScrap } = useScrap();
   const [newsData, setNewsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   const [fontSize, setFontSize] = useState(18);
   const [isFontSizeSelectorOpen, setFontSizeSelectorOpen] = useState(false);
 
@@ -150,7 +137,7 @@ export default function NewsPage() {
   ]);
   const [newComment, setNewComment] = useState("");
   const [readingProgress, setReadingProgress] = useState(0);
-  
+
   // 관련 뉴스 데이터 (실제 API에서 가져올 예정)
   const [relatedNews, setRelatedNews] = useState([]);
   const [headlineNews, setHeadlineNews] = useState([]);
@@ -172,29 +159,33 @@ export default function NewsPage() {
         setLoading(true);
         setError(null);
 
-        
-        console.log('🔄 뉴스 데이터 로딩 시작:', articleId);
-        
+        console.log("🔄 뉴스 데이터 로딩 시작:", articleId);
+
         // 새로운 API 호출 (기존 API에 503 오류가 있어서 임시로 변경)
         const response = await fetch(`/api/news-detail?id=${articleId}`);
-        console.log('📡 API 응답 상태:', response.status, response.statusText);
-        
+        console.log("📡 API 응답 상태:", response.status, response.statusText);
+
         if (!response.ok) {
-          console.error('❌ API 응답 오류:', response.status, response.statusText);
+          console.error(
+            "❌ API 응답 오류:",
+            response.status,
+            response.statusText
+          );
           throw new Error(`뉴스를 불러올 수 없습니다. (${response.status})`);
         }
-        
+
         const data = await response.json();
-        console.log('✅ 받은 뉴스 데이터:', data);
-        
+        console.log("✅ 받은 뉴스 데이터:", data);
+
         if (!data || !data.title) {
-          throw new Error('뉴스 데이터가 올바르지 않습니다.');
+          throw new Error("뉴스 데이터가 올바르지 않습니다.");
         }
-        
+
         // 백엔드 응답을 프론트엔드 형식으로 변환
         const rawCategory = data.category || "일반";
-        const convertedCategory = backendToFrontendCategory[rawCategory] || rawCategory;
-        
+        const convertedCategory =
+          backendToFrontendCategory[rawCategory] || rawCategory;
+
         const transformedData = {
           ...data,
           category: convertedCategory,
@@ -204,17 +195,25 @@ export default function NewsPage() {
           views: data.views || data.viewCount || 0,
           publishedAt: data.publishedAt,
           content: data.content || "내용이 없습니다.",
-          tags: data.tags || [convertedCategory]
+          tags: data.tags || [convertedCategory],
         };
-        
+
         setNewsData(transformedData);
         setError(null);
-        
-        // 실제 데이터 로드 완료 알림
-        console.log('✅ 뉴스 데이터 로드 완료');
 
+        // 실제 데이터 로드 완료 알림
+        console.log("✅ 뉴스 데이터 로드 완료");
+
+        // 사용자가 뉴스를 조회했으므로, 조회 기록을 서버에 저장합니다.
+        try {
+          await newsService.recordNewsView(articleId);
+          console.log("📝 뉴스 조회 기록이 저장되었습니다.");
+        } catch (viewError) {
+          console.error("❌ 뉴스 조회 기록 저장 실패:", viewError);
+          // 조회 기록 저장 실패는 전체 페이지 로딩에 영향을 주지 않도록 합니다.
+        }
       } catch (err) {
-        console.error('❌ 뉴스 상세 데이터 로딩 실패:', err);
+        console.error("❌ 뉴스 상세 데이터 로딩 실패:", err);
         setError(err.message || "뉴스를 불러올 수 없습니다.");
         setNewsData(null);
       } finally {
@@ -262,8 +261,18 @@ export default function NewsPage() {
               <div className="text-center">
                 <div className="mb-6">
                   <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    <svg
+                      className="w-8 h-8 text-red-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                      />
                     </svg>
                   </div>
                   <h1 className="text-2xl font-bold text-gray-800 mb-2">
@@ -271,7 +280,7 @@ export default function NewsPage() {
                   </h1>
                   <p className="text-gray-600 mb-6">{error}</p>
                 </div>
-                
+
                 <div className="space-y-4">
                   <button
                     onClick={() => window.location.reload()}
@@ -279,7 +288,7 @@ export default function NewsPage() {
                   >
                     다시 시도하기
                   </button>
-                  
+
                   <Link
                     href="/"
                     className="block w-full px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-300 font-semibold"
@@ -287,7 +296,7 @@ export default function NewsPage() {
                     메인으로 돌아가기
                   </Link>
                 </div>
-                
+
                 <div className="mt-6 text-sm text-gray-500">
                   <p>문제가 지속되면 잠시 후 다시 시도해주세요.</p>
                 </div>
@@ -319,31 +328,36 @@ export default function NewsPage() {
             <header className="pb-6">
               <div className="flex items-center space-x-2 mb-4">
                 <span className="text-lg font-bold text-gray-700">
-                  {newsData.source || '알 수 없음'}
+                  {newsData.source || "알 수 없음"}
                 </span>
                 <span className="text-gray-400">•</span>
                 <span className="bg-indigo-100 text-indigo-700 text-sm font-bold px-2 py-0.5 rounded-full">
-                  {newsData.category || '일반'}
+                  {newsData.category || "일반"}
                 </span>
               </div>
               <h1 className="text-3xl md:text-4xl font-bold leading-tight mb-4">
-                {newsData.title || '제목 없음'}
+                {newsData.title || "제목 없음"}
               </h1>
               <div className="flex justify-between items-center text-gray-600 text-sm">
                 <p className="flex items-center">
                   <User className="w-4 h-4 mr-1.5" />
-                  {newsData.reporterName || '알 수 없음'} 기자
+                  {newsData.reporterName || "알 수 없음"} 기자
                 </p>
                 <div className="flex items-center space-x-4">
                   <span className="flex items-center text-sm mr-2 text-black">
                     <Clock className="h-4 w-4 mr-1" />
-                    {newsData.publishedAt ? new Date(newsData.publishedAt).toLocaleDateString("ko-KR", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit"
-                    }) : '날짜 없음'}
+                    {newsData.publishedAt
+                      ? new Date(newsData.publishedAt).toLocaleDateString(
+                          "ko-KR",
+                          {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
+                        )
+                      : "날짜 없음"}
                   </span>
                 </div>
               </div>
@@ -374,10 +388,11 @@ export default function NewsPage() {
                 </button>
               </div>
               <div className="flex items-center gap-2">
-                
                 {/* ✨ 2. 글자 크기 버튼을 '가가' 모양의 최종 버전으로 교체 */}
                 <div className="relative">
-                  <NaverFontButtonV2 onClick={() => setFontSizeSelectorOpen((prev) => !prev)} />
+                  <NaverFontButtonV2
+                    onClick={() => setFontSizeSelectorOpen((prev) => !prev)}
+                  />
                   {isFontSizeSelectorOpen && (
                     <FontSizeSelector
                       currentValue={fontSize}
@@ -406,10 +421,10 @@ export default function NewsPage() {
               <div className="my-6">
                 <img
                   src={newsData.image}
-                  alt={newsData.title || '뉴스 이미지'}
+                  alt={newsData.title || "뉴스 이미지"}
                   className="w-full max-h-[400px] object-cover rounded-xl mx-auto"
                   onError={(e) => {
-                    e.target.src = "/placeholder.jpg"
+                    e.target.src = "/placeholder.jpg";
                   }}
                 />
               </div>
@@ -419,7 +434,11 @@ export default function NewsPage() {
               className="prose prose-lg max-w-none text-lg leading-relaxed text-gray-800"
               style={{ fontSize: `${fontSize}px` }}
             >
-              <div dangerouslySetInnerHTML={{ __html: newsData.content || '내용이 없습니다.' }} />
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: newsData.content || "내용이 없습니다.",
+                }}
+              />
             </article>
 
             {newsData.tags && newsData.tags.length > 0 && (
@@ -464,8 +483,7 @@ export default function NewsPage() {
 
             <section className="mt-12 pt-8 border-t">
               <h2 className="text-2xl font-bold mb-6">
-                댓글{" "}
-                <span className="text-indigo-600">{comments.length}</span>
+                댓글 <span className="text-indigo-600">{comments.length}</span>
               </h2>
               <div className="space-y-6">
                 <div className="flex items-start gap-4">
