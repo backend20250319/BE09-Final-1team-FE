@@ -828,4 +828,56 @@ export const newsletterService = {
     }
   },
 
+  // 카테고리별 헤드라인 조회
+  async getCategoryHeadlines(category, limit = 5) {
+    try {
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+      
+      // 인증 토큰 가져오기
+      const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null
+      
+      const headers = {
+        'Content-Type': 'application/json',
+      }
+      
+      // 토큰이 있으면 인증 헤더 추가
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+      
+      console.log('🔍 헤드라인 조회 요청:', { category, limit })
+      
+      const response = await fetch(`${baseUrl}/api/newsletter/category/headlines?category=${encodeURIComponent(category)}&limit=${limit}`, {
+        method: 'GET',
+        headers,
+        credentials: 'include', // 쿠키 포함
+      })
+      
+      if (!response.ok) {
+        console.warn(`헤드라인 조회 실패 (${response.status}): ${category}`)
+        // 401 오류나 기타 오류 시 빈 배열 반환
+        return []
+      }
+      
+      const data = await response.json()
+      console.log('✅ 헤드라인 응답:', data)
+      
+      // 응답 구조 확인 및 처리
+      if (data.success && data.data && Array.isArray(data.data)) {
+        return data.data
+      } else if (Array.isArray(data)) {
+        return data
+      } else if (data.data && Array.isArray(data.data)) {
+        return data.data
+      } else {
+        console.warn('헤드라인 응답 구조가 예상과 다름:', data)
+        return []
+      }
+    } catch (error) {
+      console.error('헤드라인 조회 실패:', error)
+      // 에러 발생 시 빈 배열 반환
+      return []
+    }
+  },
+
 }

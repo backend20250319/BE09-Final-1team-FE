@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import { getUserRole, getUserInfo } from "@/lib/auth"
 import Header from "@/components/header"
-import { useNewsletters, useUserSubscriptions, useSubscribeNewsletter, useUnsubscribeNewsletter, useCategoryArticles, useTrendingKeywords } from "@/hooks/useNewsletter"
+import { useNewsletters, useUserSubscriptions, useSubscribeNewsletter, useUnsubscribeNewsletter, useCategoryArticles, useTrendingKeywords, useCategoryHeadlines } from "@/hooks/useNewsletter"
 
 // 카테고리별 주제 생성 함수
 const generateTopicsForCategory = (category) => {
@@ -114,6 +114,9 @@ export default function NewsletterPageClient({ initialNewsletters }) {
   
   // 카테고리별 트렌드 키워드 조회
   const trendingKeywordsQueries = allCategories.map(category => useTrendingKeywords(category, 8))
+  
+  // 카테고리별 헤드라인 조회
+  const headlinesQueries = allCategories.map(category => useCategoryHeadlines(category, 5))
 
   // 뮤테이션 훅들
   const subscribeMutation = useSubscribeNewsletter()
@@ -534,6 +537,14 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                     ? trendingKeywordsQueries[categoryIndex].data 
                     : null;
                   
+                  // 헤드라인 데이터 조회
+                  const headlinesData = categoryIndex >= 0 && headlinesQueries[categoryIndex] 
+                    ? headlinesQueries[categoryIndex].data 
+                    : null;
+                  
+                  // 헤드라인 데이터 디버깅
+                  console.log(`헤드라인 데이터 (${newsletter.category}):`, headlinesData);
+                  
                   // 백엔드에서 트렌드 키워드를 우선 사용, 없으면 기본값 사용
                   const mainTopics = trendingKeywordsData?.map(item => item.keyword) || categoryData?.trendingKeywords || categoryData?.mainTopics || generateTopicsForCategory(newsletter.category);
                   const totalArticles = categoryData?.totalArticles || newsletter.stats?.totalArticles || 20;
@@ -675,7 +686,23 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                             </h4>
                             <ScrollArea className="h-32">
                               <div className="space-y-2">
-                                {articles.length > 0 ? (
+                                {(headlinesData && headlinesData.length > 0) ? (
+                                  headlinesData.map((headline, idx) => (
+                                    <div key={idx} className="flex items-start space-x-2 text-xs">
+                                      <div className="w-1 h-1 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                                      <div className="flex-1">
+                                        <p className="text-gray-700 leading-relaxed">{headline.title}</p>
+                                        <div className="flex items-center space-x-2 mt-1">
+                                          <span className="text-gray-400">{headline.time}</span>
+                                          <div className="flex items-center space-x-1 text-gray-400">
+                                            <Eye className="h-2.5 w-2.5" />
+                                            <span>{headline.views}</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))
+                                ) : articles.length > 0 ? (
                                   articles.map((article, idx) => (
                                     <div key={article.id || idx} className="flex items-start space-x-2 text-xs">
                                       <div className="w-1 h-1 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>

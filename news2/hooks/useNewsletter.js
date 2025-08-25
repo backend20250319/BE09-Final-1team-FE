@@ -197,3 +197,21 @@ export function useTrendingKeywords(category, limit = 8) {
     }
   })
 }
+
+// 카테고리별 헤드라인 조회 훅
+export function useCategoryHeadlines(category, limit = 5) {
+  return useQuery({
+    queryKey: ['category-headlines', category, limit],
+    queryFn: () => newsletterService.getCategoryHeadlines(category, limit),
+    enabled: !!category,
+    staleTime: 10 * 60 * 1000, // 10분간 fresh 상태 유지
+    cacheTime: 30 * 60 * 1000, // 30분간 캐시 유지
+    retry: 2, // 재시도 횟수
+    retryDelay: 2000, // 재시도 간격
+    refetchOnWindowFocus: false, // 윈도우 포커스 시 재요청 방지
+    refetchOnMount: false, // 컴포넌트 마운트 시 재요청 방지
+    onError: (error) => {
+      console.warn(`카테고리 ${category} 헤드라인 조회 실패:`, error.message)
+    }
+  })
+}
