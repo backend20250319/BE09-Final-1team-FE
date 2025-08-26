@@ -1,5 +1,7 @@
 {
-  "/api/subscriber-count/route": "app/api/subscriber-count/route.js",
-  "/(newsletter)/newsletter/page": "app/(newsletter)/newsletter/page.js",
-  "/page": "app/page.js"
+  "/api/newsletter/category/trending-keywords/route": "app/api/newsletter/category/trending-keywords/route.js",
+  "/api/newsletter/stats/subscribers/route": "app/api/newsletter/stats/subscribers/route.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/page": "app/page.js",
+  "/(newsletter)/newsletter/page": "app/(newsletter)/newsletter/page.js"
 }

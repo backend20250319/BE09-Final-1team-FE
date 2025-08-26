@@ -1,6 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { Suspense } from "react"
+
+// 동적 렌더링 설정
+export const dynamic = 'force-dynamic'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -54,7 +58,7 @@ export default function NewsletterDashboard() {
     setIsLoaded(true)
     const role = getUserRole()
     setUserRole(role)
-  }, [userRole])
+  }, [])
 
   // 대시보드 통계 계산
   const dashboardStats = {

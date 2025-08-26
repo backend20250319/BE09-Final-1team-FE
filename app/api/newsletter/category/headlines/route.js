@@ -48,27 +48,29 @@ export async function GET(request) {
     // Authorization 헤더나 쿠키에서 토큰을 찾지 못한 경우
     if (!authHeader && !cookieToken) {
       console.log('❌ 인증 토큰이 없음 (헤더와 쿠키 모두)');
-      // 인증이 없으면 빈 배열 반환
-      return Response.json({
-        success: true,
-        data: []
-      })
+      // 인증이 없어도 백엔드 호출 시도 (토큰 없이)
+      console.log('🔄 인증 없이 백엔드 호출 시도');
     }
 
     // 사용할 토큰 결정 (헤더 우선, 없으면 쿠키)
     const token = authHeader ? authHeader.replace('Bearer ', '') : cookieToken
-    const authHeaderValue = `Bearer ${token}`
+    const authHeaderValue = token ? `Bearer ${token}` : null
 
     const backendUrl = `http://localhost:8085/api/newsletter/category/${backendCategory}/headlines?limit=${limit}`;
     console.log('🌐 백엔드 API 호출:', backendUrl);
 
-    // 백엔드 API 호출
+    // 백엔드 API 호출 (토큰이 있으면 헤더에 포함, 없으면 제외)
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (authHeaderValue) {
+      headers['Authorization'] = authHeaderValue;
+    }
+
     const response = await fetch(backendUrl, {
       method: 'GET',
-      headers: {
-        'Authorization': authHeaderValue,
-        'Content-Type': 'application/json',
-      }
+      headers
     })
 
     console.log('📡 백엔드 응답 상태:', response.status, response.statusText);
@@ -97,19 +99,30 @@ export async function GET(request) {
       })
     }
     
-    // 백엔드에서 헤드라인 데이터를 받았지만 조회수가 없는 경우, 구독자 통계를 가져와서 조회수로 설정
-    let headlinesData = data.data;
+    // 백엔드 데이터를 프론트엔드 형식으로 변환
+    let headlinesData = data.data.map(headline => ({
+      ...headline,
+      // publishedAt을 time으로 변환
+      time: formatTimeAgo(headline.publishedAt),
+      // 기존 publishedAt도 유지
+      publishedAt: headline.publishedAt
+    }));
     if (Array.isArray(headlinesData) && headlinesData.length > 0 && !headlinesData[0].views) {
       console.log('🔄 헤드라인에 조회수 정보가 없어 구독자 통계를 조회수로 설정');
       
       try {
         // 구독자 통계 API 호출
+        const statsHeaders = {
+          'Content-Type': 'application/json',
+        };
+        
+        if (authHeaderValue) {
+          statsHeaders['Authorization'] = authHeaderValue;
+        }
+        
         const statsResponse = await fetch(`http://localhost:8085/api/newsletter/stats/subscribers/category/${backendCategory}`, {
           method: 'GET',
-          headers: {
-            'Authorization': authHeaderValue,
-            'Content-Type': 'application/json',
-          }
+          headers: statsHeaders
         });
         
         if (statsResponse.ok) {
@@ -147,6 +160,30 @@ export async function GET(request) {
 }
 
 
+
+// 시간 포맷팅 함수 (몇 시간/일 전)
+function formatTimeAgo(dateString) {
+  if (!dateString) return '최근';
+  
+  try {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMs = now - date;
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    const diffInDays = Math.floor(diffInHours / 24);
+    
+    if (diffInDays > 0) {
+      return `${diffInDays}일 전`;
+    } else if (diffInHours > 0) {
+      return `${diffInHours}시간 전`;
+    } else {
+      return '방금 전';
+    }
+  } catch (error) {
+    console.warn('시간 포맷팅 실패:', error);
+    return '최근';
+  }
+}
 
 // 구독자 수 포맷팅 함수
 function formatSubscriberCount(count) {

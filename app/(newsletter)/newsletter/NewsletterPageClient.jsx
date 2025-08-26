@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo, useRef } from "react"
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -19,22 +19,37 @@ import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import { getUserRole, getUserInfo } from "@/lib/auth"
 import Header from "@/components/header"
-import { useNewsletters, useUserSubscriptions, useSubscribeNewsletter, useUnsubscribeNewsletter, useCategoryArticles, useTrendingKeywords, useCategoryHeadlines } from "@/hooks/useNewsletter"
+import { useNewsletters, useUserSubscriptions, useSubscribeNewsletter, useUnsubscribeNewsletter, useCategoryArticles, useCategoryHeadlines } from "@/hooks/useNewsletter"
 
 // 카테고리별 구독자 수를 한 번에 가져오는 커스텀 훅
 const useCategorySubscriberCounts = (categories) => {
-  const [counts, setCounts] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [state, setState] = useState({
+    counts: {},
+    loading: true,
+    hasData: false
+  });
   const hasInitializedRef = useRef(false);
+  const isFetchingRef = useRef(false);
 
   useEffect(() => {
-    if (hasInitializedRef.current) {
+    // 이미 초기화되었거나 현재 fetch 중이면 중단
+    if (hasInitializedRef.current || isFetchingRef.current) {
+      return;
+    }
+
+    // 카테고리가 없으면 로딩 완료
+    if (!categories || categories.length === 0) {
+      setState(prev => ({
+        ...prev,
+        loading: false
+      }));
+      hasInitializedRef.current = true;
       return;
     }
 
     const fetchAllCategoryCounts = async () => {
       console.log('🔄 카테고리별 구독자 수 로딩 시작');
-      setLoading(true);
+      isFetchingRef.current = true;
       
       try {
         // 기본값을 즉시 설정하여 UI 반응성 향상
@@ -54,7 +69,13 @@ const useCategorySubscriberCounts = (categories) => {
         categories.forEach(category => {
           initialCounts[category] = categoryDefaults[category] || 10000;
         });
-        setCounts(initialCounts);
+        
+        // 상태를 한 번에 업데이트 (배치화)
+        setState(prev => ({
+          ...prev,
+          counts: initialCounts,
+          hasData: true
+        }));
         
         // API 호출 (백그라운드에서 실행)
         const response = await fetch('/api/newsletter/stats/subscribers');
@@ -69,7 +90,12 @@ const useCategorySubscriberCounts = (categories) => {
                 newCounts[category] = data.data[category];
               }
             });
-            setCounts(newCounts);
+            
+            // 최종 상태를 한 번에 업데이트
+            setState(prev => ({
+              ...prev,
+              counts: newCounts
+            }));
             console.log('✅ 카테고리별 구독자 수 설정 완료:', newCounts);
           } else {
             console.warn("전체 통계 API 응답 오류:", response.status);
@@ -81,20 +107,23 @@ const useCategorySubscriberCounts = (categories) => {
         console.error("카테고리별 구독자 수 로딩 실패:", error);
       } finally {
         console.log('🏁 카테고리별 구독자 수 로딩 완료');
-        setLoading(false);
+        setState(prev => ({
+          ...prev,
+          loading: false
+        }));
         hasInitializedRef.current = true;
+        isFetchingRef.current = false;
       }
     };
 
-    if (categories && categories.length > 0) {
-      fetchAllCategoryCounts();
-    } else {
-      setLoading(false);
-      hasInitializedRef.current = true;
-    }
-  }, []); // 빈 의존성 배열로 한 번만 실행
+    fetchAllCategoryCounts();
+  }, [categories]); // categories를 의존성으로 추가
 
-  return { counts, loading };
+  return { 
+    counts: state.counts, 
+    loading: state.loading, 
+    hasData: state.hasData 
+  };
 };
 
 // 카테고리별 주제 생성 함수
@@ -148,7 +177,7 @@ const generateRecentHeadlines = (category) => {
   ];
 };
 
-export default function NewsletterPageClient({ initialNewsletters }) {
+const NewsletterPageClient = React.memo(function NewsletterPageClient({ initialNewsletters }) {
   const [selectedCategory, setSelectedCategory] = useState("전체")
   const [isLoaded, setIsLoaded] = useState(false)
   const [localSubscriptions, setLocalSubscriptions] = useState(new Set())
@@ -201,8 +230,8 @@ export default function NewsletterPageClient({ initialNewsletters }) {
   const travelFoodData = useCategoryArticles("여행/음식", 5);
   const artData = useCategoryArticles("예술", 5);
   
-  // 카테고리별 데이터 맵 생성
-  const categoryDataMap = {
+  // 카테고리별 데이터 맵 생성 (메모이제이션)
+  const categoryDataMap = useMemo(() => ({
     "정치": politicsData.data,
     "경제": economyData.data,
     "사회": societyData.data,
@@ -212,31 +241,90 @@ export default function NewsletterPageClient({ initialNewsletters }) {
     "자동차/교통": vehicleData.data,
     "여행/음식": travelFoodData.data,
     "예술": artData.data
-  };
+  }), [
+    politicsData.data,
+    economyData.data,
+    societyData.data,
+    lifeData.data,
+    worldData.data,
+    itScienceData.data,
+    vehicleData.data,
+    travelFoodData.data,
+    artData.data
+  ]);
   
-  // 각 카테고리별 트렌딩 키워드 조회 (개별 훅으로 분리)
-  const politicsKeywords = useTrendingKeywords("정치", 8);
-  const economyKeywords = useTrendingKeywords("경제", 8);
-  const societyKeywords = useTrendingKeywords("사회", 8);
-  const lifeKeywords = useTrendingKeywords("생활", 8);
-  const worldKeywords = useTrendingKeywords("세계", 8);
-  const itScienceKeywords = useTrendingKeywords("IT/과학", 8);
-  const vehicleKeywords = useTrendingKeywords("자동차/교통", 8);
-  const travelFoodKeywords = useTrendingKeywords("여행/음식", 8);
-  const artKeywords = useTrendingKeywords("예술", 8);
+  // 각 카테고리별 트렌딩 키워드 조회 (최적화된 버전)
+  const [keywordsState, setKeywordsState] = useState({
+    categoryKeywordsMap: {},
+    loading: true
+  });
+  const keywordsFetchedRef = useRef(false);
+
+  // 트렌드 키워드를 한 번에 가져오는 함수
+  const fetchAllTrendingKeywords = useCallback(async () => {
+    if (keywordsFetchedRef.current) return;
+    
+    console.log('🔄 모든 카테고리 트렌드 키워드 로딩 시작');
+    keywordsFetchedRef.current = true;
+    
+    try {
+      const categories = ["정치", "경제", "사회", "생활", "세계", "IT/과학", "자동차/교통", "여행/음식", "예술"];
+      const keywordsMap = {};
+      
+      // 병렬로 모든 카테고리의 트렌드 키워드 조회
+      const promises = categories.map(async (category) => {
+        try {
+          const response = await fetch(`/api/newsletter/category/trending-keywords?category=${encodeURIComponent(category)}&limit=8`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            return { category, data: data.success ? data.data : [] };
+          } else {
+            console.warn(`트렌드 키워드 조회 실패 (${response.status}): ${category}`);
+            return { category, data: [] };
+          }
+        } catch (error) {
+          console.error(`트렌드 키워드 조회 오류 (${category}):`, error);
+          return { category, data: [] };
+        }
+      });
+      
+      const results = await Promise.all(promises);
+      
+      results.forEach(({ category, data }) => {
+        keywordsMap[category] = data;
+      });
+      
+      // 상태를 한 번에 업데이트 (배치화)
+      setKeywordsState(prev => ({
+        ...prev,
+        categoryKeywordsMap: keywordsMap,
+        loading: false
+      }));
+      console.log('✅ 모든 카테고리 트렌드 키워드 로딩 완료');
+    } catch (error) {
+      console.error('트렌드 키워드 로딩 실패:', error);
+      setKeywordsState(prev => ({
+        ...prev,
+        loading: false
+      }));
+    }
+  }, []);
+
+  // 컴포넌트 마운트 시 한 번만 실행
+  useEffect(() => {
+    fetchAllTrendingKeywords();
+  }, [fetchAllTrendingKeywords]);
   
-  // 카테고리별 트렌딩 키워드 맵 생성
-  const categoryKeywordsMap = {
-    "정치": politicsKeywords.data,
-    "경제": economyKeywords.data,
-    "사회": societyKeywords.data,
-    "생활": lifeKeywords.data,
-    "세계": worldKeywords.data,
-    "IT/과학": itScienceKeywords.data,
-    "자동차/교통": vehicleKeywords.data,
-    "여행/음식": travelFoodKeywords.data,
-    "예술": artKeywords.data
-  };
+  // 카테고리별 트렌딩 키워드 맵 추출
+  const categoryKeywordsMap = keywordsState.categoryKeywordsMap;
+  const keywordsLoading = keywordsState.loading;
   
   // 선택된 카테고리의 데이터 (현재 선택된 카테고리용)
   const selectedCategoryData = selectedCategory === "전체" ? null : categoryDataMap[selectedCategory];
@@ -248,14 +336,16 @@ export default function NewsletterPageClient({ initialNewsletters }) {
   const headlinesQuery = useCategoryHeadlines(selectedCategory === "전체" ? null : selectedCategory, 5)
 
   // 카테고리별 구독자 수 조회
-  const { counts: categorySubscriberCounts, loading: categoryCountsLoading } = useCategorySubscriberCounts(allCategories)
+  const { counts: categorySubscriberCounts, loading: categoryCountsLoading, hasData: hasSubscriberData } = useCategorySubscriberCounts(allCategories)
   
-  // 디버깅용 로그
-  console.log('카테고리 구독자 수 상태:', {
-    counts: categorySubscriberCounts,
-    loading: categoryCountsLoading,
-    hasData: Object.keys(categorySubscriberCounts).length > 0
-  });
+  // 디버깅용 로그 (개발 환경에서만)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('카테고리 구독자 수 상태:', {
+      counts: categorySubscriberCounts,
+      loading: categoryCountsLoading,
+      hasData: hasSubscriberData
+    });
+  }
 
   // 뮤테이션 훅들
   const subscribeMutation = useSubscribeNewsletter()
@@ -1261,4 +1351,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
       </div> 
     </>
   )
-}
+})
+
+export default NewsletterPageClient
+

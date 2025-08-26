@@ -35,7 +35,7 @@ export async function GET(request) {
     let category = searchParams.get('category')
     
     
-    let backendUrl = `${getNewsServiceUrl('api/news')}?page=${page - 1}&size=${size}`
+    let backendUrl = `${getNewsServiceUrl('api/news')}?page=${page}&size=${size}`
     if (category && category !== "전체") {
       backendUrl += `&category=${category}`
     }
@@ -64,7 +64,7 @@ export async function GET(request) {
         content: data.content || [],
         totalElements: data.totalElements || 0,
         totalPages: data.totalPages || 1,
-        currentPage: data.number + 1, // Spring Boot는 0-based pagination 사용
+        currentPage: data.number, // Spring Boot는 0-based pagination 사용하지만 이미 올바른 값
         size: data.size || size,
         isMock: false
       }

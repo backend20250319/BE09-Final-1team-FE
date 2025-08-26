@@ -13,10 +13,6 @@ import { TextWithTooltips } from "@/components/tooltip"
 import { getUserRole } from "@/lib/auth"
 import RealTimeKeywordWidget from "@/components/RealTimeKeywordWidget"
 
-
-
-
-
 export default function MainPage() {
   const [selectedCategory, setSelectedCategory] = useState("전체")
   const [isLoaded, setIsLoaded] = useState(false)
@@ -26,7 +22,17 @@ export default function MainPage() {
   const [totalElements, setTotalElements] = useState(0)
   const [newsItems, setNewsItems] = useState([])
   const [loading, setLoading] = useState(true)
-  const [popularNews, setPopularNews] = useState(null)
+  const [error, setError] = useState(null)
+  const [popularNews, setPopularNews] = useState({
+    id: 1,
+    title: "뉴스를 불러오는 중...",
+    content: "잠시만 기다려주세요.",
+    source: "시스템",
+    publishedAt: new Date().toISOString(),
+    category: "GENERAL",
+    image: "/placeholder.jpg",
+    views: 0
+  })
   const [popularNewsLoading, setPopularNewsLoading] = useState(true)
 
   // 페이지당 아이템 수
@@ -46,7 +52,7 @@ export default function MainPage() {
           console.error('❌ 트렌딩 API 응답 오류:', res.status, res.statusText)
           // 폴백: 기존 인기 뉴스 API 사용
           console.log('🔄 기존 인기 뉴스 API로 폴백...')
-          const fallbackRes = await fetch('/api/news/popular?page=0&size=1')
+          const fallbackRes = await fetch('/api/news?page=0&size=1')
           if (!fallbackRes.ok) {
             throw new Error(`폴백 API도 실패: ${fallbackRes.status}`)
           }
@@ -77,24 +83,22 @@ export default function MainPage() {
           throw new Error(data.error)
         }
 
-        // newsletter-service의 ApiResponse<T> 가정: { data: [...] }
-        const list = data.data || data.content || []
+        // 백엔드 응답 구조에 맞게 수정
+        const list = data.content || data.data || []
         if (list.length > 0) {
           const news = list[0]
           console.log('📰 트렌딩 뉴스 상세:', news)
           
           // sourceUrl → hostname 폴백
-          const source =
-            news.source ||
-            (news.sourceUrl ? (() => { try { return new URL(news.sourceUrl).hostname } catch { return '알 수 없음' } })() : '알 수 없음')
+          const source = news.press || '알 수 없음'
 
           setPopularNews({
-            id: news.id,                                // ✅ id 필드 사용
+            id: news.newsId,                             // ✅ newsId 필드 사용
             title: news.title,
             content: news.content || news.summary || "내용을 불러올 수 없습니다.",
-            source,                                      // ✅ press → source/hostname
+            source,                                      // ✅ press 필드 사용
             publishedAt: news.publishedAt,
-            category: news.category,                     // ✅ categoryName → category
+            category: news.categoryName,                 // ✅ categoryName 필드 사용
             image: news.imageUrl || "/placeholder.jpg",
             views: news.viewCount || 0                   // 없으면 0
           })
@@ -103,6 +107,17 @@ export default function MainPage() {
         }
       } catch (e) {
         console.error('❌ 트렌딩 뉴스 로딩 실패:', e)
+        // 에러 시 더미 데이터 설정
+        setPopularNews({
+          id: 1,
+          title: "트렌딩 뉴스를 불러올 수 없습니다",
+          content: "현재 트렌딩 뉴스를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.",
+          source: "시스템",
+          publishedAt: new Date().toISOString(),
+          category: "GENERAL",
+          image: "/placeholder.jpg",
+          views: 0
+        })
       } finally {
         setPopularNewsLoading(false)
       }
@@ -116,15 +131,21 @@ export default function MainPage() {
     const fetchNews = async () => {
       console.log('🔄 뉴스 데이터 로딩...', { selectedCategory, currentPage })
       setLoading(true)
+      setError(null)
       
       try {
-        // 백엔드 API 호출
-        // Next.js API 라우트를 통해 프록시 사용
+        // 백엔드 API 호출 (0-based pagination 사용)
+        const backendPage = currentPage - 1 // 프론트엔드는 1-based, 백엔드는 0-based
         const categoryParam = selectedCategory === "전체" ? "" : `&category=${selectedCategory}`
-        const response = await fetch(`/api/news?page=${currentPage - 1}&size=${itemsPerPage}${categoryParam}`)
-        const data = await response.json()
+        const response = await fetch(`/api/news?page=${backendPage}&size=${itemsPerPage}${categoryParam}`)
         
-        console.log('📰 뉴스 데이터:', data.content)
+        if (!response.ok) {
+          throw new Error(`API 응답 오류: ${response.status} ${response.statusText}`)
+        }
+        
+        const data = await response.json()
+        console.log('📰 뉴스 데이터:', data)
+        
         // 백엔드 API 응답 구조에 맞게 데이터 매핑
         const mappedNews = (data.content || []).map(news => ({
           id: news.newsId,
@@ -151,6 +172,8 @@ export default function MainPage() {
           stack: error.stack,
           url: `/api/news?page=${currentPage - 1}&size=${itemsPerPage}&category=${selectedCategory}`
         })
+        
+        setError(error.message)
         
         // 임시 더미 데이터 사용
         const dummyData = [
@@ -214,7 +237,25 @@ export default function MainPage() {
   // 백엔드 API에서 이미 필터링된 데이터를 사용하므로 그대로 반환
   const filteredNewsItems = newsItems
 
-  
+  // 에러가 발생한 경우 에러 화면 표시
+  if (error && !isLoaded) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
+        <Card className="glass hover-lift shadow-lg border-0 px-8 py-12 text-center max-w-md">
+          <div className="text-6xl mb-4">⚠️</div>
+          <h3 className="text-2xl font-bold text-gray-800 mb-4">오류가 발생했습니다</h3>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <Button 
+            onClick={() => window.location.reload()} 
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            새로고침
+          </Button>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <Header />
@@ -403,7 +444,7 @@ export default function MainPage() {
                   </div>
                 </Card>
               ))
-            ) : (
+            ) : filteredNewsItems.length > 0 ? (
               filteredNewsItems.map((news, index) => (
                 <Link 
                   key={`main-news-${news.id || index}-${index}`} 
@@ -484,11 +525,25 @@ export default function MainPage() {
               </Card>
                 </Link>
               ))
+            ) : (
+              // 데이터가 없을 때 표시할 메시지
+              <div className="col-span-full flex flex-col items-center justify-center py-20">
+                <Card className="glass hover-lift shadow-lg border-0 px-8 py-12 text-center">
+                  <div className="text-6xl mb-4">📰</div>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-4">뉴스를 불러올 수 없습니다</h3>
+                  <p className="text-gray-600 mb-6">현재 뉴스 데이터를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.</p>
+                  <Button 
+                    onClick={() => window.location.reload()} 
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    새로고침
+                  </Button>
+                </Card>
+              </div>
             )}
             </div>
             
             {/* 페이지네이션 */}
-            {console.log('🔍 페이지네이션 디버그:', { totalPages, totalElements, currentPage })}
             {totalPages > 1 && (
               <div className="flex flex-col items-center space-y-6 mt-16 mb-12">
                 {/* 페이지 정보 카드 */}
