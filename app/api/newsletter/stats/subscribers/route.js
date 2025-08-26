@@ -111,28 +111,8 @@ export async function GET(request) {
   }
 }
 
-// 더미 구독자 통계 생성 함수
+// 더미 구독자 통계 생성 함수 (임시 제거)
 function generateDummySubscriberStats(category) {
-  const categoryStats = {
-    '정치': { subscriberCount: 15420, activeSubscribers: 12850 },
-    '경제': { subscriberCount: 8920, activeSubscribers: 7450 },
-    '사회': { subscriberCount: 18760, activeSubscribers: 16230 },
-    '생활': { subscriberCount: 6540, activeSubscribers: 5230 },
-    '세계': { subscriberCount: 11230, activeSubscribers: 9870 },
-    'IT/과학': { subscriberCount: 12350, activeSubscribers: 10890 },
-    '자동차/교통': { subscriberCount: 8750, activeSubscribers: 7230 },
-    '여행/음식': { subscriberCount: 12340, activeSubscribers: 10980 },
-    '예술': { subscriberCount: 6540, activeSubscribers: 5230 }
-  };
-
-  if (category && categoryStats[category]) {
-    return categoryStats[category];
-  }
-
-  // 전체 통계
-  return {
-    totalSubscribers: 102450,
-    activeSubscribers: 89120,
-    categoryBreakdown: categoryStats
-  };
+  // 더미 데이터 제거 - 빈 객체 반환
+  return {};
 }

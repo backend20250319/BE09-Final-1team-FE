@@ -705,7 +705,25 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                   }
                   
                   // 백엔드에서 트렌드 키워드를 우선 사용, 없으면 기본값 사용
-                  const mainTopics = trendingKeywordsData?.map(item => item.keyword) || categoryData?.trendingKeywords || categoryData?.mainTopics || generateTopicsForCategory(newsletter.category);
+                  const mainTopics = (trendingKeywordsData && trendingKeywordsData.length > 0) 
+                    ? trendingKeywordsData.map(item => item.keyword) 
+                    : (categoryData?.trendingKeywords && categoryData.trendingKeywords.length > 0)
+                    ? categoryData.trendingKeywords
+                    : (categoryData?.mainTopics && categoryData.mainTopics.length > 0)
+                    ? categoryData.mainTopics
+                    : generateTopicsForCategory(newsletter.category);
+                  
+                  // 디버깅용 로그 (개발 환경에서만)
+                  if (process.env.NODE_ENV === 'development') {
+                    console.log(`🔍 주요 주제 데이터 (${newsletter.category}):`, {
+                      trendingKeywordsData: trendingKeywordsData?.length || 0,
+                      categoryDataTrendingKeywords: categoryData?.trendingKeywords?.length || 0,
+                      categoryDataMainTopics: categoryData?.mainTopics?.length || 0,
+                      finalMainTopics: mainTopics?.length || 0,
+                      mainTopics: mainTopics
+                    });
+                  }
+                  
                   const totalArticles = categoryData?.totalArticles || newsletter.stats?.totalArticles || 20;
                   
                   return (
@@ -809,29 +827,35 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                             주요 주제
                           </h4>
                           <div className="flex flex-wrap gap-1">
-                            {mainTopics?.slice(0, isTopicsExpanded ? mainTopics.length : 4).map((topic, idx) => (
-                              <Badge 
-                                key={idx} 
-                                className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs px-2 py-1 rounded-full shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                              >
-                                #{topic}
-                              </Badge>
-                            ))}
-                            {!isTopicsExpanded && mainTopics?.length > 4 && (
-                              <Badge 
-                                className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full hover:bg-gray-200 cursor-pointer transition-colors"
-                                onClick={() => toggleTopicsExpansion(newsletter.id)}
-                              >
-                                +{mainTopics.length - 4}개
-                              </Badge>
-                            )}
-                            {isTopicsExpanded && mainTopics?.length > 4 && (
-                              <Badge 
-                                className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full hover:bg-gray-200 cursor-pointer transition-colors"
-                                onClick={() => toggleTopicsExpansion(newsletter.id)}
-                              >
-                                접기
-                              </Badge>
+                            {mainTopics && mainTopics.length > 0 ? (
+                              <>
+                                {mainTopics.slice(0, isTopicsExpanded ? mainTopics.length : 4).map((topic, idx) => (
+                                  <Badge 
+                                    key={`${newsletter.id}-${idx}`} 
+                                    className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs px-2 py-1 rounded-full shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                                  >
+                                    #{topic}
+                                  </Badge>
+                                ))}
+                                {!isTopicsExpanded && mainTopics.length > 4 && (
+                                  <Badge 
+                                    className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full hover:bg-gray-200 cursor-pointer transition-colors"
+                                    onClick={() => toggleTopicsExpansion(newsletter.id)}
+                                  >
+                                    +{mainTopics.length - 4}개
+                                  </Badge>
+                                )}
+                                {isTopicsExpanded && mainTopics.length > 4 && (
+                                  <Badge 
+                                    className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full hover:bg-gray-200 cursor-pointer transition-colors"
+                                    onClick={() => toggleTopicsExpansion(newsletter.id)}
+                                  >
+                                    접기
+                                  </Badge>
+                                )}
+                              </>
+                            ) : (
+                              <div className="text-gray-400 text-xs">주제 정보를 불러오는 중...</div>
                             )}
                           </div>
                         </div>

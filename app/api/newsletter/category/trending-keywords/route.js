@@ -1,35 +1,9 @@
 // 카테고리별 트렌드 키워드 조회 API (쿼리 파라미터 방식)
 
-// 더미 트렌드 키워드 생성 함수
+// 더미 트렌드 키워드 생성 함수 (임시 제거)
 function generateDummyTrendingKeywords(category, limit = 8) {
-  // console.log('🔍 더미 키워드 생성 요청:', { category, limit });
-  
-  const categoryKeywords = {
-    '정치': ['총선', '국회', '정책', '여야', '민주당', '국민의힘', '정치개혁', '외교'],
-    '경제': ['주식', '부동산', '금리', '인플레이션', 'GDP', '투자', '경제정책', '환율'],
-    '사회': ['교육', '의료', '복지', '범죄', '사건사고', '사회문제', '인권', '환경'],
-    '생활': ['건강', '요리', '쇼핑', '여행', '취미', '가족', '육아', '반려동물'],
-    '세계': ['미국', '중국', '일본', 'EU', 'UN', '국제관계', '글로벌경제', '외교'],
-    'IT/과학': ['AI', '빅데이터', '클라우드', '블록체인', '5G', '반도체', '스타트업', '메타버스'],
-    '자동차/교통': ['전기차', '자율주행', '테슬라', '현대차', '교통정책', '대중교통', '친환경차', '모빌리티'],
-    '여행/음식': ['해외여행', '국내여행', '맛집', '카페', '호텔', '항공', '관광지', '음식문화'],
-    '예술': ['영화', '음악', '미술', '문학', '공연', '전시', '문화', '엔터테인먼트']
-  };
-
-  const keywords = categoryKeywords[category] || ['트렌드', '인기', '주목', '화제', '이슈', '뉴스', '정보', '소식'];
-  
-  // console.log('🔍 카테고리별 키워드 매칭:', { 
-  //   category, 
-  //   hasCategoryKeywords: !!categoryKeywords[category], 
-  //   selectedKeywords: keywords 
-  // });
-  
-  return keywords.slice(0, limit).map((keyword, index) => ({
-    keyword,
-    rank: index + 1,
-    diff: Math.floor(Math.random() * 5) - 2, // -2 ~ 2 사이의 랜덤 값
-    category: category
-  }));
+  // 더미 데이터 제거 - 빈 배열 반환
+  return [];
 }
 
 export async function GET(request) {
