@@ -1,10 +1,6 @@
 {
   "/api/subscriber-count/route": "app/api/subscriber-count/route.js",
-  "/api/news/trending-keywords/route": "app/api/news/trending-keywords/route.js",
-  "/_not-found/page": "app/_not-found/page.js",
+  "/api/newsletter/stats/subscribers/route": "app/api/newsletter/stats/subscribers/route.js",
   "/page": "app/page.js",
-  "/(newsletter)/newsletter/page": "app/(newsletter)/newsletter/page.js",
-  "/(auth)/auth/page": "app/(auth)/auth/page.js",
-  "/(news)/news/[id]/page": "app/(news)/news/[id]/page.js",
-  "/(newsletter)/newsletter/dashboard/page": "app/(newsletter)/newsletter/dashboard/page.js"
+  "/(newsletter)/newsletter/page": "app/(newsletter)/newsletter/page.js"
 }

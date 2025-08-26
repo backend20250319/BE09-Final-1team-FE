@@ -8,12 +8,15 @@ export function useNewsletters(options = {}) {
   return useQuery({
     queryKey: ['newsletters'],
     queryFn: newsletterService.getNewsletters,
-    staleTime: 5 * 60 * 1000, // 5분간 fresh 상태 유지
-    cacheTime: 15 * 60 * 1000, // 15분간 캐시 유지
-    refetchInterval: 10 * 60 * 1000, // 10분마다 자동 새로고침
+    staleTime: 10 * 60 * 1000, // 10분간 fresh 상태 유지
+    cacheTime: 30 * 60 * 1000, // 30분간 캐시 유지
+    refetchInterval: false, // 자동 새로고침 비활성화
     initialData: options.initialData || [], // 전달받은 초기 데이터 사용
     refetchOnMount: false, // 마운트 시 자동 refetch 비활성화
     refetchOnWindowFocus: false, // 윈도우 포커스 시 자동 refetch 비활성화
+    refetchOnReconnect: false, // 네트워크 재연결 시 자동 refetch 비활성화
+    retry: 1, // 재시도 횟수 제한
+    retryDelay: 2000, // 재시도 간격 증가
     ...options,
   })
 }
@@ -41,8 +44,7 @@ export function useSubscribeNewsletter() {
       newsletterService.subscribeNewsletter(category, email),
     
     onSuccess: (data, variables) => {
-      // 캐시 무효화하여 최신 데이터 가져오기
-      queryClient.invalidateQueries(['newsletters'])
+      // 구체적인 쿼리만 무효화하여 불필요한 리로딩 방지
       queryClient.invalidateQueries(['user-subscriptions'])
       
       toast({
@@ -73,8 +75,7 @@ export function useUnsubscribeNewsletter() {
       newsletterService.unsubscribeNewsletter(category),
     
     onSuccess: (data, variables) => {
-      // 캐시 무효화하여 최신 데이터 가져오기
-      queryClient.invalidateQueries(['newsletters'])
+      // 구체적인 쿼리만 무효화하여 불필요한 리로딩 방지
       queryClient.invalidateQueries(['user-subscriptions'])
       
       toast({
@@ -140,10 +141,8 @@ export function useUpdateSubscriptionStatus() {
       newsletterService.updateSubscriptionStatus(subscriptionId, status),
     
     onSuccess: (data, variables) => {
-      // 캐시 무효화하여 최신 데이터 가져오기
+      // 구체적인 쿼리만 무효화하여 불필요한 리로딩 방지
       queryClient.invalidateQueries(['subscription', variables.subscriptionId])
-      queryClient.invalidateQueries(['my-subscriptions'])
-      queryClient.invalidateQueries(['active-subscriptions'])
       queryClient.invalidateQueries(['user-subscriptions'])
       
       toast({
@@ -204,12 +203,13 @@ export function useCategoryHeadlines(category, limit = 5) {
     queryKey: ['category-headlines', category, limit],
     queryFn: () => newsletterService.getCategoryHeadlines(category, limit),
     enabled: !!category,
-    staleTime: 10 * 60 * 1000, // 10분간 fresh 상태 유지
-    cacheTime: 30 * 60 * 1000, // 30분간 캐시 유지
-    retry: 2, // 재시도 횟수
-    retryDelay: 2000, // 재시도 간격
+    staleTime: 30 * 60 * 1000, // 30분간 fresh 상태 유지 (15분에서 증가)
+    cacheTime: 60 * 60 * 1000, // 1시간간 캐시 유지 (45분에서 증가)
+    retry: 1, // 재시도 횟수 제한
+    retryDelay: 3000, // 재시도 간격
     refetchOnWindowFocus: false, // 윈도우 포커스 시 재요청 방지
     refetchOnMount: false, // 컴포넌트 마운트 시 재요청 방지
+    refetchOnReconnect: false, // 네트워크 재연결 시 재요청 방지
     onError: (error) => {
       console.warn(`카테고리 ${category} 헤드라인 조회 실패:`, error.message)
     }

@@ -121,7 +121,7 @@ export default function MainPage() {
         // 백엔드 API 호출
         // Next.js API 라우트를 통해 프록시 사용
         const categoryParam = selectedCategory === "전체" ? "" : `&category=${selectedCategory}`
-        const response = await fetch(`/api/news?page=${currentPage}&size=${itemsPerPage}${categoryParam}`)
+        const response = await fetch(`/api/news?page=${currentPage - 1}&size=${itemsPerPage}${categoryParam}`)
         const data = await response.json()
         
         console.log('📰 뉴스 데이터:', data.content)
@@ -337,51 +337,74 @@ export default function MainPage() {
 
             {/* Right: Sidebar */}
             <div className="w-full lg:w-1/3 space-y-4">
-              {/* Side News List */}
+              {/* Side News List - 트렌딩 뉴스와 겹치지 않도록 별도 데이터 사용 */}
               {filteredNewsItems.slice(0, 4).map((item, index) => (
-                <Card 
+                <Link 
                   key={`sidebar-news-${item.id || index}-${index}`} 
-                  className="flex items-center gap-4 p-4 glass hover-lift rounded-xl h-[130px] transition animate-slide-in"
-                  style={{ animationDelay: `${0.3 + index * 0.1}s` }}
+                  href={`/news/${item.id}`}
+                  className="block"
                 >
-                  <img
-                    src={item.image || "/placeholder.jpg"}
-                    alt={item.title}
-                    className="w-24 h-24 object-cover rounded-lg flex-shrink-0"
-                    onError={(e) => {
-                      e.target.src = "/placeholder.jpg"
-                    }}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-base font-semibold line-clamp-2 text-gray-800 mb-2">
-                      {item.title}
-                    </p>
-                    <p className="text-sm text-gray-500 mb-2">
-                      {new Date(item.publishedAt).toLocaleDateString("ko-KR", {
-                        month: "short",
-                        day: "numeric"
-                      })}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <Badge variant="outline" className="text-xs">
-                        {item.category}
-                      </Badge>
-                      <span className="text-xs text-gray-500 flex items-center">
-                        <Eye className="h-3 w-3 mr-1" />
-                        {item.views?.toLocaleString() || "0"}
-                      </span>
+                  <Card 
+                    className="flex items-center gap-4 p-4 glass hover-lift rounded-xl h-[130px] transition animate-slide-in cursor-pointer"
+                    style={{ animationDelay: `${0.3 + index * 0.1}s` }}
+                  >
+                    <img
+                      src={item.image || "/placeholder.jpg"}
+                      alt={item.title}
+                      className="w-24 h-24 object-cover rounded-lg flex-shrink-0"
+                      onError={(e) => {
+                        e.target.src = "/placeholder.jpg"
+                      }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-base font-semibold line-clamp-2 text-gray-800 mb-2 hover:text-blue-600 transition-colors">
+                        {item.title}
+                      </p>
+                      <p className="text-sm text-gray-500 mb-2">
+                        {new Date(item.publishedAt).toLocaleDateString("ko-KR", {
+                          month: "short",
+                          day: "numeric"
+                        })}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <Badge variant="outline" className="text-xs">
+                          {categoryDisplayNames[item.category] || item.category}
+                        </Badge>
+                        <span className="text-xs text-gray-500 flex items-center">
+                          <Eye className="h-3 w-3 mr-1" />
+                          {item.views?.toLocaleString() || "0"}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </Card>
+                  </Card>
+                </Link>
               ))}
             </div>
           </div>
 
 
           {/* News List */}
-           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
-            
-              {filteredNewsItems.map((news, index) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
+            {loading ? (
+              // 로딩 상태 표시
+              Array.from({ length: 6 }, (_, index) => (
+                <Card key={`loading-${index}`} className="min-h-[500px] max-h-[500px] flex flex-col justify-between glass animate-pulse">
+                  <div className="h-72 w-full bg-gray-200 rounded-lg"></div>
+                  <div className="flex flex-col justify-between flex-1 px-4 py-3">
+                    <div className="space-y-3">
+                      <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                      <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                    </div>
+                    <div className="flex items-center justify-between pt-2">
+                      <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                      <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                    </div>
+                  </div>
+                </Card>
+              ))
+            ) : (
+              filteredNewsItems.map((news, index) => (
                 <Link 
                   key={`main-news-${news.id || index}-${index}`} 
                   href={`/news/${news.id}`} 
@@ -460,7 +483,8 @@ export default function MainPage() {
                   </div>
               </Card>
                 </Link>
-              ))}
+              ))
+            )}
             </div>
             
             {/* 페이지네이션 */}

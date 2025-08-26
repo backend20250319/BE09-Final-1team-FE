@@ -25,13 +25,23 @@ import { useNewsletters, useUserSubscriptions, useSubscribeNewsletter, useUnsubs
 const useCategorySubscriberCounts = (categories) => {
   const [counts, setCounts] = useState({});
   const [loading, setLoading] = useState(true);
+  const [lastFetchTime, setLastFetchTime] = useState(0);
 
   useEffect(() => {
     const fetchAllCategoryCounts = async () => {
+      // 5분 이내에 이미 조회했다면 다시 조회하지 않음
+      const now = Date.now();
+      if (now - lastFetchTime < 5 * 60 * 1000 && Object.keys(counts).length > 0) {
+        console.log('⏰ 5분 이내 조회로 인해 API 호출 건너뜀');
+        setLoading(false);
+        return;
+      }
+
+      console.log('🔄 카테고리별 구독자 수 로딩 시작');
+      setLoading(true);
+      
       try {
-        setLoading(true);
-        
-        // 카테고리별 기본값 설정
+        // 기본값을 즉시 설정하여 UI 반응성 향상
         const categoryDefaults = {
           "정치": 15420,
           "경제": 8920,
@@ -44,61 +54,52 @@ const useCategorySubscriberCounts = (categories) => {
           "예술": 8760
         };
         
-        // 전체 통계 API 호출 (백엔드에서 개별 카테고리 데이터를 제공하지 않으므로 기본값 사용)
-        try {
-          const res = await fetch('/api/newsletter/category/stats/subscribers', {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          });
-
-          if (res.ok) {
-            const data = await res.json();
-            console.log('전체 통계 API 응답:', data);
-            
-            // 백엔드에서 전체 통계만 제공하므로 기본값 사용
-            const newCounts = {};
-            categories.forEach(category => {
-              newCounts[category] = categoryDefaults[category] || 10000;
-              console.log(`${category} 카테고리 구독자 수:`, newCounts[category]);
+        const initialCounts = {};
+        categories.forEach(category => {
+          initialCounts[category] = categoryDefaults[category] || 10000;
+        });
+        setCounts(initialCounts);
+        
+        // API 호출 (백그라운드에서 실행)
+        const response = await fetch('/api/newsletter/stats/subscribers');
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.data) {
+            const newCounts = { ...initialCounts };
+            // API 응답으로 기본값 업데이트
+            Object.keys(data.data).forEach(category => {
+              if (newCounts[category] !== undefined) {
+                newCounts[category] = data.data[category];
+              }
             });
-            
             setCounts(newCounts);
+            setLastFetchTime(now);
+            console.log('✅ 카테고리별 구독자 수 설정 완료:', newCounts);
           } else {
-            console.warn("전체 통계 API 응답 오류:", res.status);
-            // 기본값으로 설정
-            setCounts(categoryDefaults);
+            console.warn("전체 통계 API 응답 오류:", response.status);
+            console.log('⚠️ API 응답 오류로 기본값 유지');
           }
-        } catch (error) {
-          console.error("전체 통계 API 호출 실패:", error);
-          // 기본값으로 설정
-          setCounts(categoryDefaults);
+        } else {
+          console.warn("전체 통계 API 호출 실패:", response.status);
+          console.log('⚠️ API 호출 실패로 기본값 유지');
         }
       } catch (error) {
         console.error("카테고리별 구독자 수 로딩 실패:", error);
-        // 기본값으로 설정
-        const categoryDefaults = {
-          "정치": 15420,
-          "경제": 8920,
-          "사회": 18760,
-          "생활": 12340,
-          "세계": 11230,
-          "IT/과학": 12350,
-          "자동차/교통": 9870,
-          "여행/음식": 12340,
-          "예술": 8760
-        };
-        setCounts(categoryDefaults);
+        console.log('⚠️ 전체 에러로 기본값 유지');
       } finally {
+        console.log('🏁 카테고리별 구독자 수 로딩 완료, loading 상태를 false로 설정');
         setLoading(false);
       }
     };
 
-    if (categories.length > 0) {
+    if (categories && categories.length > 0) {
       fetchAllCategoryCounts();
+    } else {
+      console.log('⚠️ categories가 비어있어서 로딩을 건너뜀');
+      setLoading(false);
     }
-  }, [categories]);
+  }, [categories?.join(',')]); // lastFetchTime 의존성 제거
 
   return { counts, loading };
 };
@@ -173,7 +174,10 @@ export default function NewsletterPageClient({ initialNewsletters }) {
     refetch: refetchNewsletters 
   } = useNewsletters({
     initialData: initialNewsletters || [],
-    staleTime: 0,
+    staleTime: 10 * 60 * 1000, // 10분간 fresh 상태 유지 (5분에서 증가)
+    refetchOnMount: false, // 마운트 시 자동 refetch 비활성화
+    refetchOnWindowFocus: false, // 윈도우 포커스 시 자동 refetch 비활성화
+    refetchInterval: false, // 자동 새로고침 비활성화
   })
 
   const { 
@@ -185,20 +189,26 @@ export default function NewsletterPageClient({ initialNewsletters }) {
     enabled: !!userRole,
     retry: 1,
     retryDelay: 1000,
+    staleTime: 5 * 60 * 1000, // 5분간 fresh 상태 유지
+    refetchOnWindowFocus: false, // 윈도우 포커스 시 자동 refetch 비활성화
   })
 
   // 카테고리별 기사 데이터 조회 - 실제로 필요한 카테고리만 조회 (백엔드 서버가 없을 때를 대비)
   const allCategories = ["정치", "경제", "사회", "생활", "세계", "IT/과학", "자동차/교통", "여행/음식", "예술"]
   const categories = ["전체", ...allCategories]
   
-  // 백엔드 서버가 실행 중일 때만 카테고리별 기사 조회
-  const categoryArticlesQueries = allCategories.map(category => useCategoryArticles(category, 5))
+  // 선택된 카테고리가 "전체"가 아닐 때만 해당 카테고리 데이터 조회
+  const shouldFetchCategoryData = selectedCategory !== "전체"
+  const targetCategory = shouldFetchCategoryData ? selectedCategory : null
   
-  // 카테고리별 트렌드 키워드 조회
-  const trendingKeywordsQueries = allCategories.map(category => useTrendingKeywords(category, 8))
+  // 백엔드 서버가 실행 중일 때만 카테고리별 기사 조회 (선택된 카테고리만)
+  const categoryArticlesQuery = useCategoryArticles(targetCategory, 5)
   
-  // 카테고리별 헤드라인 조회
-  const headlinesQueries = allCategories.map(category => useCategoryHeadlines(category, 5))
+  // 카테고리별 트렌드 키워드 조회 (선택된 카테고리만)
+  const trendingKeywordsQuery = useTrendingKeywords(targetCategory, 8)
+  
+  // 카테고리별 헤드라인 조회 (선택된 카테고리만)
+  const headlinesQuery = useCategoryHeadlines(targetCategory, 5)
 
   // 카테고리별 구독자 수 조회
   const { counts: categorySubscriberCounts, loading: categoryCountsLoading } = useCategorySubscriberCounts(allCategories)
@@ -500,7 +510,10 @@ export default function NewsletterPageClient({ initialNewsletters }) {
     }));
   }, [filteredNewsletters]);
 
-  const isLoading = newslettersLoading || (userRole && subscriptionsLoading)
+  // 로딩 상태 메모이제이션
+  const isLoading = useMemo(() => {
+    return newslettersLoading || (userRole && subscriptionsLoading);
+  }, [newslettersLoading, userRole, subscriptionsLoading]);
 
   if (!isClient) {
     return (
@@ -539,8 +552,11 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                   variant="outline"
                   size="sm"
                   onClick={() => {
+                    // 선택적으로 필요한 데이터만 새로고침
                     refetchNewsletters()
-                    if (userRole) refetchSubscriptions()
+                    if (userRole) {
+                      refetchSubscriptions()
+                    }
                   }}
                   disabled={isLoading}
                   className="hover-lift"
@@ -618,34 +634,29 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                   // 카테고리별 구독자 수 조회
                   const categorySubscriberCount = categorySubscriberCounts[newsletter.category] || 0;
                   
-                  // 미리 조회한 카테고리별 기사 데이터 사용 (백엔드 서버가 없을 때는 기본값 사용)
-                  const categoryIndex = allCategories.indexOf(newsletter.category);
-                  const categoryData = categoryIndex >= 0 && categoryArticlesQueries[categoryIndex] 
-                    ? categoryArticlesQueries[categoryIndex].data 
-                    : null;
+                  // 선택된 카테고리와 현재 뉴스레터 카테고리가 일치할 때만 데이터 사용
+                  const isCurrentCategorySelected = selectedCategory === newsletter.category || selectedCategory === "전체";
+                  const categoryData = isCurrentCategorySelected && categoryArticlesQuery?.data ? categoryArticlesQuery.data : null;
                   
                   // 실제 기사 데이터가 있으면 사용, 없으면 기본값 사용
                   const articles = categoryData?.articles || [];
                   
                   // 트렌드 키워드 데이터 조회
-                  const trendingKeywordsData = categoryIndex >= 0 && trendingKeywordsQueries[categoryIndex] 
-                    ? trendingKeywordsQueries[categoryIndex].data 
-                    : null;
+                  const trendingKeywordsData = isCurrentCategorySelected && trendingKeywordsQuery?.data ? trendingKeywordsQuery.data : null;
                   
                   // 헤드라인 데이터 조회
-                  const headlinesQuery = categoryIndex >= 0 ? headlinesQueries[categoryIndex] : null;
-                  const headlinesData = headlinesQuery?.data || null;
-                  const isHeadlinesLoading = headlinesQuery?.isLoading || false;
+                  const headlinesData = isCurrentCategorySelected && headlinesQuery?.data ? headlinesQuery.data : null;
+                  const isHeadlinesLoading = isCurrentCategorySelected && headlinesQuery?.isLoading || false;
                   
-                  // 헤드라인 데이터 디버깅 (필요시에만)
-                  if (process.env.NODE_ENV === 'development') {
-                    console.log(`헤드라인 데이터 (${newsletter.category}):`, {
-                      data: headlinesData?.length || 0,
-                      isLoading: isHeadlinesLoading,
-                      isSuccess: headlinesQuery?.isSuccess,
-                      isError: headlinesQuery?.isError
-                    });
-                  }
+                  // 헤드라인 데이터 디버깅 (개발 환경에서만)
+                  // if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_DEBUG_LOGS === 'true') {
+                  //   console.log(`헤드라인 데이터 (${newsletter.category}):`, {
+                  //     data: headlinesData?.length || 0,
+                  //     isLoading: isHeadlinesLoading,
+                  //     isSuccess: headlinesQuery?.isSuccess,
+                  //     isError: headlinesQuery?.isError
+                  //   });
+                  // }
                   
                   // 백엔드에서 트렌드 키워드를 우선 사용, 없으면 기본값 사용
                   const mainTopics = trendingKeywordsData?.map(item => item.keyword) || categoryData?.trendingKeywords || categoryData?.mainTopics || generateTopicsForCategory(newsletter.category);
