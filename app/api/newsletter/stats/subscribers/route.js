@@ -1,9 +1,9 @@
 // 구독자 통계 조회 API
 export async function GET(request) {
+  const { searchParams } = new URL(request.url);
+  const category = searchParams.get('category');
+  
   try {
-    const { searchParams } = new URL(request.url);
-    const category = searchParams.get('category');
-    
     console.log('🔍 구독자 통계 조회 요청:', { category });
     
     // 클라이언트에서 전달받은 인증 헤더 가져오기
@@ -97,7 +97,12 @@ export async function GET(request) {
     return Response.json(data)
   } catch (error) {
     console.error('🚨 구독자 통계 조회 실패:', error)
-    // 에러 발생 시에도 더미 데이터 반환
+    
+    // 백엔드 연결 실패 시 더미 데이터 반환
+    if (error.code === 'ECONNREFUSED' || error.message.includes('fetch failed')) {
+      console.log('🔄 백엔드 서버 연결 실패로 더미 데이터 반환');
+    }
+    
     const dummyData = generateDummySubscriberStats(category);
     return Response.json({
       success: true,

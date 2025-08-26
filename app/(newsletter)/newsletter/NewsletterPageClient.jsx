@@ -197,18 +197,62 @@ export default function NewsletterPageClient({ initialNewsletters }) {
   const allCategories = ["정치", "경제", "사회", "생활", "세계", "IT/과학", "자동차/교통", "여행/음식", "예술"]
   const categories = ["전체", ...allCategories]
   
-  // 선택된 카테고리가 "전체"가 아닐 때만 해당 카테고리 데이터 조회
-  const shouldFetchCategoryData = selectedCategory !== "전체"
-  const targetCategory = shouldFetchCategoryData ? selectedCategory : null
+  // 각 카테고리별 백엔드 데이터 조회 (개별 훅으로 분리)
+  const politicsData = useCategoryArticles("정치", 5);
+  const economyData = useCategoryArticles("경제", 5);
+  const societyData = useCategoryArticles("사회", 5);
+  const lifeData = useCategoryArticles("생활", 5);
+  const worldData = useCategoryArticles("세계", 5);
+  const itScienceData = useCategoryArticles("IT/과학", 5);
+  const vehicleData = useCategoryArticles("자동차/교통", 5);
+  const travelFoodData = useCategoryArticles("여행/음식", 5);
+  const artData = useCategoryArticles("예술", 5);
   
-  // 백엔드 서버가 실행 중일 때만 카테고리별 기사 조회 (선택된 카테고리만)
-  const categoryArticlesQuery = useCategoryArticles(targetCategory, 5)
+  // 카테고리별 데이터 맵 생성
+  const categoryDataMap = {
+    "정치": politicsData.data,
+    "경제": economyData.data,
+    "사회": societyData.data,
+    "생활": lifeData.data,
+    "세계": worldData.data,
+    "IT/과학": itScienceData.data,
+    "자동차/교통": vehicleData.data,
+    "여행/음식": travelFoodData.data,
+    "예술": artData.data
+  };
   
-  // 카테고리별 트렌드 키워드 조회 (선택된 카테고리만)
-  const trendingKeywordsQuery = useTrendingKeywords(targetCategory, 8)
+  // 각 카테고리별 트렌딩 키워드 조회 (개별 훅으로 분리)
+  const politicsKeywords = useTrendingKeywords("정치", 8);
+  const economyKeywords = useTrendingKeywords("경제", 8);
+  const societyKeywords = useTrendingKeywords("사회", 8);
+  const lifeKeywords = useTrendingKeywords("생활", 8);
+  const worldKeywords = useTrendingKeywords("세계", 8);
+  const itScienceKeywords = useTrendingKeywords("IT/과학", 8);
+  const vehicleKeywords = useTrendingKeywords("자동차/교통", 8);
+  const travelFoodKeywords = useTrendingKeywords("여행/음식", 8);
+  const artKeywords = useTrendingKeywords("예술", 8);
+  
+  // 카테고리별 트렌딩 키워드 맵 생성
+  const categoryKeywordsMap = {
+    "정치": politicsKeywords.data,
+    "경제": economyKeywords.data,
+    "사회": societyKeywords.data,
+    "생활": lifeKeywords.data,
+    "세계": worldKeywords.data,
+    "IT/과학": itScienceKeywords.data,
+    "자동차/교통": vehicleKeywords.data,
+    "여행/음식": travelFoodKeywords.data,
+    "예술": artKeywords.data
+  };
+  
+  // 선택된 카테고리의 데이터 (현재 선택된 카테고리용)
+  const selectedCategoryData = selectedCategory === "전체" ? null : categoryDataMap[selectedCategory];
+  
+  // 선택된 카테고리의 트렌딩 키워드 (현재 선택된 카테고리용)
+  const selectedCategoryKeywords = selectedCategory === "전체" ? null : categoryKeywordsMap[selectedCategory];
   
   // 카테고리별 헤드라인 조회 (선택된 카테고리만)
-  const headlinesQuery = useCategoryHeadlines(targetCategory, 5)
+  const headlinesQuery = useCategoryHeadlines(selectedCategory === "전체" ? null : selectedCategory, 5)
 
   // 카테고리별 구독자 수 조회
   const { counts: categorySubscriberCounts, loading: categoryCountsLoading } = useCategorySubscriberCounts(allCategories)
@@ -501,9 +545,9 @@ export default function NewsletterPageClient({ initialNewsletters }) {
       topics: generateTopicsForCategory(newsletter.category),
       // 최근 뉴스 헤드라인 시뮬레이션
       recentHeadlines: generateRecentHeadlines(newsletter.category),
-      // 통계 정보
+      // 통계 정보 (백엔드 데이터가 없을 때만 기본값 사용)
       stats: {
-        totalArticles: Math.floor(Math.random() * 50) + 20,
+        totalArticles: 0, // 백엔드 데이터로 덮어쓸 예정
         weeklyGrowth: Math.floor(Math.random() * 15) + 1,
         averageReadTime: Math.floor(Math.random() * 5) + 3
       }
@@ -634,29 +678,31 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                   // 카테고리별 구독자 수 조회
                   const categorySubscriberCount = categorySubscriberCounts[newsletter.category] || 0;
                   
-                  // 선택된 카테고리와 현재 뉴스레터 카테고리가 일치할 때만 데이터 사용
-                  const isCurrentCategorySelected = selectedCategory === newsletter.category || selectedCategory === "전체";
-                  const categoryData = isCurrentCategorySelected && categoryArticlesQuery?.data ? categoryArticlesQuery.data : null;
+                  // 현재 뉴스레터 카테고리의 백엔드 데이터 조회
+                  const categoryData = categoryDataMap[newsletter.category];
                   
                   // 실제 기사 데이터가 있으면 사용, 없으면 기본값 사용
                   const articles = categoryData?.articles || [];
                   
-                  // 트렌드 키워드 데이터 조회
-                  const trendingKeywordsData = isCurrentCategorySelected && trendingKeywordsQuery?.data ? trendingKeywordsQuery.data : null;
+                  // 현재 뉴스레터 카테고리의 트렌딩 키워드 조회
+                  const trendingKeywordsData = categoryKeywordsMap[newsletter.category];
                   
-                  // 헤드라인 데이터 조회
+                  // 헤드라인 데이터 조회 (선택된 카테고리와 일치할 때만)
+                  const isCurrentCategorySelected = selectedCategory === newsletter.category || selectedCategory === "전체";
                   const headlinesData = isCurrentCategorySelected && headlinesQuery?.data ? headlinesQuery.data : null;
                   const isHeadlinesLoading = isCurrentCategorySelected && headlinesQuery?.isLoading || false;
                   
                   // 헤드라인 데이터 디버깅 (개발 환경에서만)
-                  // if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_DEBUG_LOGS === 'true') {
-                  //   console.log(`헤드라인 데이터 (${newsletter.category}):`, {
-                  //     data: headlinesData?.length || 0,
-                  //     isLoading: isHeadlinesLoading,
-                  //     isSuccess: headlinesQuery?.isSuccess,
-                  //     isError: headlinesQuery?.isError
-                  //   });
-                  // }
+                  if (process.env.NODE_ENV === 'development') {
+                    console.log(`🔍 헤드라인 데이터 (${newsletter.category}):`, {
+                      data: headlinesData?.length || 0,
+                      isLoading: isHeadlinesLoading,
+                      isSuccess: headlinesQuery?.isSuccess,
+                      isError: headlinesQuery?.isError,
+                      selectedCategory,
+                      isCurrentCategorySelected
+                    });
+                  }
                   
                   // 백엔드에서 트렌드 키워드를 우선 사용, 없으면 기본값 사용
                   const mainTopics = trendingKeywordsData?.map(item => item.keyword) || categoryData?.trendingKeywords || categoryData?.mainTopics || generateTopicsForCategory(newsletter.category);
