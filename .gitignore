@@ -31,7 +31,7 @@ next-env.d.ts
 *.iws
 *.iml
 *.ipr
-out/
+.out/
 !**/src/main/**/out/
 !**/src/test/**/out/
 
