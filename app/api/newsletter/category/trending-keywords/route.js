@@ -1,10 +1,6 @@
 // 카테고리별 트렌드 키워드 조회 API (쿼리 파라미터 방식)
 
-// 더미 트렌드 키워드 생성 함수 (임시 제거)
-function generateDummyTrendingKeywords(category, limit = 8) {
-  // 더미 데이터 제거 - 빈 배열 반환
-  return [];
-}
+
 
 export async function GET(request) {
   try {
@@ -35,7 +31,7 @@ export async function GET(request) {
     };
 
     const backendCategory = categoryMapping[category] || category;
-    // console.log('🔄 카테고리 매핑:', { frontend: category, backend: backendCategory });
+    console.log('🔄 카테고리 매핑:', { frontend: category, backend: backendCategory });
 
     // 클라이언트에서 전달받은 인증 헤더 가져오기
     const authHeader = request.headers.get('authorization')
@@ -54,69 +50,67 @@ export async function GET(request) {
 
     // Authorization 헤더나 쿠키에서 토큰을 찾지 못한 경우
     if (!authHeader && !cookieToken) {
-      // console.log('❌ 인증 토큰이 없음 (헤더와 쿠키 모두)');
-      // 인증이 없어도 카테고리별 더미 데이터 반환 (401 대신 200)
-      const dummyData = generateDummyTrendingKeywords(category, limit);
-      // console.log('🔄 인증 없이 더미 데이터 반환:', dummyData);
-      return Response.json({
-        success: true,
-        data: dummyData
-      })
+      console.log('❌ 인증 토큰이 없음 (헤더와 쿠키 모두)');
+      // 인증이 없어도 실제 데이터 반환 시도
+      console.log('🔄 인증 없이 실제 데이터 반환 시도');
     }
 
     // 사용할 토큰 결정 (헤더 우선, 없으면 쿠키)
     const token = authHeader ? authHeader.replace('Bearer ', '') : cookieToken
     const authHeaderValue = `Bearer ${token}`
 
-    const backendUrl = `http://localhost:8085/api/newsletter/category/${backendCategory}/trending-keywords?limit=${limit}`;
-    // console.log('🌐 백엔드 API 호출:', backendUrl);
+    const backendUrl = `http://localhost:8082/api/trending/trending-keywords/category/${backendCategory}?limit=${limit}&hours=24`;
+    console.log('🌐 백엔드 API 호출:', backendUrl);
 
-    // 백엔드 API 호출
-    const response = await fetch(backendUrl, {
-      method: 'GET',
-      headers: {
-        'Authorization': authHeaderValue,
-        'Content-Type': 'application/json',
+    // 백엔드 API 호출 (URL 인코딩 문제로 인해 폴백 데이터 사용)
+    console.log('🌐 백엔드 API 호출 시작:', backendUrl);
+    console.log('🔍 백엔드 카테고리 확인:', backendCategory);
+    
+    // 백엔드 API 호출 시도
+    try {
+      const response = await fetch(backendUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': authHeaderValue,
+          'Content-Type': 'application/json',
+        }
+      });
+
+      console.log('📡 백엔드 응답 상태:', response.status, response.statusText);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ 백엔드 응답 성공:', data);
+        
+        if (data.success && data.data && Array.isArray(data.data)) {
+          return Response.json(data);
+        } else {
+          console.log('🔄 백엔드 응답이 유효하지 않아 빈 배열 반환');
+          return Response.json({
+            success: true,
+            data: []
+          });
+        }
+      } else {
+        console.log('🔄 백엔드 오류로 인해 빈 배열 반환');
+        return Response.json({
+          success: true,
+          data: []
+        });
       }
-    })
-
-    // console.log('📡 백엔드 응답 상태:', response.status, response.statusText);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      // console.error('❌ 백엔드 에러 응답:', errorText);
-      
-      // 백엔드에서 401이나 다른 오류가 발생해도 더미 데이터 반환
-      // console.log('🔄 백엔드 오류로 인해 더미 데이터 반환');
-      const dummyData = generateDummyTrendingKeywords(category, limit);
+    } catch (error) {
+      console.error('🚨 백엔드 API 호출 실패:', error);
       return Response.json({
         success: true,
-        data: dummyData
-      })
+        data: []
+      });
     }
-
-    const data = await response.json()
-    // console.log('✅ 백엔드 응답 성공:', data);
-    
-    // 백엔드 응답이 비어있거나 유효하지 않은 경우 더미 데이터 반환
-    if (!data || !data.data || data.data.length === 0) {
-      // console.log('🔄 백엔드 응답이 비어있어 카테고리별 더미 데이터 반환');
-      const dummyData = generateDummyTrendingKeywords(category, limit);
-      // console.log('🔄 백엔드 빈 응답으로 더미 데이터 반환:', dummyData);
-      return Response.json({
-        success: true,
-        data: dummyData
-      })
-    }
-    
-    return Response.json(data)
   } catch (error) {
-    // console.error('🚨 트렌드 키워드 조회 실패:', error)
-    // 에러 발생 시에도 더미 데이터 반환
-    const dummyData = generateDummyTrendingKeywords(category, limit);
+    console.error('🚨 트렌드 키워드 조회 실패:', error)
+    // 에러 발생 시에도 빈 배열 반환
     return Response.json({
       success: true,
-      data: dummyData
+      data: []
     })
   }
 }

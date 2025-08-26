@@ -16,11 +16,6 @@
       "static/chunks/main-app.js",
       "static/chunks/app/api/news/trending-keywords/route.js"
     ],
-    "/api/subscriber-count/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/subscriber-count/route.js"
-    ],
     "/api/news/trending/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
@@ -31,15 +26,10 @@
       "static/chunks/main-app.js",
       "static/chunks/app/api/news/route.js"
     ],
-    "/(news)/loading": [
+    "/api/subscriber-count/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(news)/loading.js"
-    ],
-    "/(news)/news/[id]/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(news)/news/[id]/page.js"
+      "static/chunks/app/api/subscriber-count/route.js"
     ],
     "/(newsletter)/newsletter/page": [
       "static/chunks/webpack.js",
@@ -56,40 +46,10 @@
       "static/chunks/main-app.js",
       "static/chunks/app/api/newsletter/category/trending-keywords/route.js"
     ],
-    "/api/newsletter/category/headlines/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/newsletter/category/headlines/route.js"
-    ],
-    "/api/newsletter/category/stats/subscribers/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/newsletter/category/stats/subscribers/route.js"
-    ],
-    "/(api)/api/newsletters/user-subscriptions/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(api)/api/newsletters/user-subscriptions/route.js"
-    ],
-    "/(api)/api/newsletters/subscribe/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(api)/api/newsletters/subscribe/route.js"
-    ],
-    "/(api)/api/newsletters/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(api)/api/newsletters/route.js"
-    ],
     "/api/newsletter/stats/subscribers/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/api/newsletter/stats/subscribers/route.js"
-    ],
-    "/_not-found/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/_not-found/page.js"
     ]
   }
 }

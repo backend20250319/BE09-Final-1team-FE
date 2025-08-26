@@ -48,11 +48,10 @@ export async function GET(request) {
     // Authorization 헤더나 쿠키에서 토큰을 찾지 못한 경우
     if (!authHeader && !cookieToken) {
       console.log('❌ 인증 토큰이 없음 (헤더와 쿠키 모두)');
-      // 인증이 없어도 더미 데이터 반환 (401 대신 200)
-      const dummyData = generateDummyHeadlines(category, limit);
+      // 인증이 없으면 빈 배열 반환
       return Response.json({
         success: true,
-        data: dummyData
+        data: []
       })
     }
 
@@ -78,25 +77,23 @@ export async function GET(request) {
       const errorText = await response.text();
       console.error('❌ 백엔드 에러 응답:', errorText);
       
-      // 백엔드에서 401이나 다른 오류가 발생해도 더미 데이터 반환
-      console.log('🔄 백엔드 오류로 인해 더미 데이터 반환');
-      const dummyData = generateDummyHeadlines(category, limit);
+      // 백엔드에서 401이나 다른 오류가 발생하면 빈 배열 반환
+      console.log('🔄 백엔드 오류로 인해 빈 배열 반환');
       return Response.json({
         success: true,
-        data: dummyData
+        data: []
       })
     }
 
     const data = await response.json()
     console.log('✅ 백엔드 응답 성공:', data);
     
-    // 백엔드 응답이 비어있거나 유효하지 않은 경우 더미 데이터 반환
+    // 백엔드 응답이 비어있거나 유효하지 않은 경우 빈 배열 반환
     if (!data || !data.data || data.data.length === 0) {
-      console.log('🔄 백엔드 응답이 비어있어 더미 데이터 반환');
-      const dummyData = generateDummyHeadlines(category, limit);
+      console.log('🔄 백엔드 응답이 비어있어 빈 배열 반환');
       return Response.json({
         success: true,
-        data: dummyData
+        data: []
       })
     }
     
@@ -141,20 +138,15 @@ export async function GET(request) {
     })
   } catch (error) {
     console.error('🚨 헤드라인 조회 실패:', error)
-    // 에러 발생 시에도 더미 데이터 반환
-    const dummyData = generateDummyHeadlines(category, limit);
+    // 에러 발생 시에도 빈 배열 반환
     return Response.json({
       success: true,
-      data: dummyData
+      data: []
     })
   }
 }
 
-// 더미 헤드라인 생성 함수 (임시 제거)
-function generateDummyHeadlines(category, limit = 5) {
-  // 더미 데이터 제거 - 빈 배열 반환
-  return [];
-}
+
 
 // 구독자 수 포맷팅 함수
 function formatSubscriberCount(count) {
@@ -167,8 +159,4 @@ function formatSubscriberCount(count) {
   }
 }
 
-// 더미 구독자 통계 생성 함수 (임시 제거)
-function generateDummySubscriberStats(category) {
-  // 더미 데이터 제거 - 빈 객체 반환
-  return {};
-}
+

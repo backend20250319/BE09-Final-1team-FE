@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -25,18 +25,14 @@ import { useNewsletters, useUserSubscriptions, useSubscribeNewsletter, useUnsubs
 const useCategorySubscriberCounts = (categories) => {
   const [counts, setCounts] = useState({});
   const [loading, setLoading] = useState(true);
-  const [lastFetchTime, setLastFetchTime] = useState(0);
+  const hasInitializedRef = useRef(false);
 
   useEffect(() => {
-    const fetchAllCategoryCounts = async () => {
-      // 5분 이내에 이미 조회했다면 다시 조회하지 않음
-      const now = Date.now();
-      if (now - lastFetchTime < 5 * 60 * 1000 && Object.keys(counts).length > 0) {
-        console.log('⏰ 5분 이내 조회로 인해 API 호출 건너뜀');
-        setLoading(false);
-        return;
-      }
+    if (hasInitializedRef.current) {
+      return;
+    }
 
+    const fetchAllCategoryCounts = async () => {
       console.log('🔄 카테고리별 구독자 수 로딩 시작');
       setLoading(true);
       
@@ -74,32 +70,29 @@ const useCategorySubscriberCounts = (categories) => {
               }
             });
             setCounts(newCounts);
-            setLastFetchTime(now);
             console.log('✅ 카테고리별 구독자 수 설정 완료:', newCounts);
           } else {
             console.warn("전체 통계 API 응답 오류:", response.status);
-            console.log('⚠️ API 응답 오류로 기본값 유지');
           }
         } else {
           console.warn("전체 통계 API 호출 실패:", response.status);
-          console.log('⚠️ API 호출 실패로 기본값 유지');
         }
       } catch (error) {
         console.error("카테고리별 구독자 수 로딩 실패:", error);
-        console.log('⚠️ 전체 에러로 기본값 유지');
       } finally {
-        console.log('🏁 카테고리별 구독자 수 로딩 완료, loading 상태를 false로 설정');
+        console.log('🏁 카테고리별 구독자 수 로딩 완료');
         setLoading(false);
+        hasInitializedRef.current = true;
       }
     };
 
     if (categories && categories.length > 0) {
       fetchAllCategoryCounts();
     } else {
-      console.log('⚠️ categories가 비어있어서 로딩을 건너뜀');
       setLoading(false);
+      hasInitializedRef.current = true;
     }
-  }, [categories?.join(',')]); // lastFetchTime 의존성 제거
+  }, []); // 빈 의존성 배열로 한 번만 실행
 
   return { counts, loading };
 };
