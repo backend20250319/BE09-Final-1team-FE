@@ -56,7 +56,7 @@ export async function GET(request) {
     const token = authHeader ? authHeader.replace('Bearer ', '') : cookieToken
     const authHeaderValue = token ? `Bearer ${token}` : null
 
-    const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/news/category/${backendCategory}/headlines?limit=${limit}`;
+    const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/news/category/${backendCategory}/articles?limit=${limit}`;
     console.log('🌐 백엔드 API 호출:', backendUrl);
 
     // 백엔드 API 호출 (토큰이 있으면 헤더에 포함, 없으면 제외)
@@ -89,9 +89,15 @@ export async function GET(request) {
 
     const data = await response.json()
     console.log('✅ 백엔드 응답 성공:', data);
+    console.log('📊 백엔드 응답 구조:', {
+      hasData: !!data,
+      hasContent: !!data?.content,
+      contentLength: data?.content?.length || 0,
+      contentType: typeof data?.content
+    });
     
     // 백엔드 응답이 비어있거나 유효하지 않은 경우 빈 배열 반환
-    if (!data || !data.data || data.data.length === 0) {
+    if (!data || !data.content || data.content.length === 0) {
       console.log('🔄 백엔드 응답이 비어있어 빈 배열 반환');
       return Response.json({
         success: true,
@@ -100,7 +106,7 @@ export async function GET(request) {
     }
     
     // 백엔드 데이터를 프론트엔드 형식으로 변환
-    let headlinesData = data.data.map(headline => ({
+    let headlinesData = data.content.map(headline => ({
       ...headline,
       // publishedAt을 time으로 변환
       time: formatTimeAgo(headline.publishedAt),

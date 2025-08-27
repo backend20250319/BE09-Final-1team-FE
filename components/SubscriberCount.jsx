@@ -36,7 +36,8 @@ export default function SubscriberCount({
           
           if (category) {
             // 특정 카테고리 데이터
-            setCount(data.data?.subscriberCount || data.data?.activeSubscribers || 0);
+            const categoryData = data.data?.[category];
+            setCount(categoryData || data.data?.subscriberCount || data.data?.activeSubscribers || 0);
           } else if (showCategoryStats) {
             // 전체 카테고리 통계 데이터
             setCategoryStats(data.data);
@@ -47,11 +48,11 @@ export default function SubscriberCount({
           }
         } else {
           console.warn("구독자 수 API 응답 오류:", res.status);
-          setCount(category ? 15420 : 15420); // 기본값 설정
+          setCount(0); // 기본값을 0으로 설정
         }
       } catch (error) {
         console.error("구독자 수 로딩 실패:", error);
-        setCount(category ? 15420 : 15420); // 기본값 설정
+        setCount(0); // 기본값을 0으로 설정
       } finally {
         setLoading(false);
       }

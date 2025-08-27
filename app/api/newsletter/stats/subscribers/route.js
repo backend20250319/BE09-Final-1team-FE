@@ -24,17 +24,13 @@ export async function GET(request) {
     // Authorization 헤더나 쿠키에서 토큰을 찾지 못한 경우
     if (!authHeader && !cookieToken) {
       console.log('❌ 인증 토큰이 없음 (헤더와 쿠키 모두)');
-      // 인증이 없어도 더미 데이터 반환 (401 대신 200)
-      const dummyData = generateDummySubscriberStats(category);
-      return Response.json({
-        success: true,
-        data: dummyData
-      })
+      // 인증이 없어도 백엔드에서 데이터 가져오기 시도
+      console.log('🔄 인증 없이 백엔드 데이터 조회 시도');
     }
 
     // 사용할 토큰 결정 (헤더 우선, 없으면 쿠키)
     const token = authHeader ? authHeader.replace('Bearer ', '') : cookieToken
-    const authHeaderValue = `Bearer ${token}`
+    const authHeaderValue = token ? `Bearer ${token}` : null
 
     // 프론트엔드 카테고리명을 백엔드 카테고리명으로 매핑
     const categoryMapping = {
@@ -51,19 +47,24 @@ export async function GET(request) {
 
     const backendCategory = categoryMapping[category] || category;
 
-    const backendUrl = category 
-                  ? `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/newsletter/stats/subscribers/category/${backendCategory}`
-        : `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/newsletter/stats/subscribers`;
+    // 특정 카테고리 요청이어도 전체 데이터를 가져와서 필터링
+    const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/newsletter/stats/subscribers`;
     
     console.log('🌐 백엔드 API 호출:', backendUrl);
+
+    // 백엔드 API 호출 헤더 설정
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (authHeaderValue) {
+      headers['Authorization'] = authHeaderValue;
+    }
 
     // 백엔드 API 호출
     const response = await fetch(backendUrl, {
       method: 'GET',
-      headers: {
-        'Authorization': authHeaderValue,
-        'Content-Type': 'application/json',
-      }
+      headers: headers
     })
 
     console.log('📡 백엔드 응답 상태:', response.status, response.statusText);
@@ -72,30 +73,36 @@ export async function GET(request) {
       const errorText = await response.text();
       console.error('❌ 백엔드 에러 응답:', errorText);
       
-      // 백엔드에서 401이나 다른 오류가 발생해도 더미 데이터 반환
-      console.log('🔄 백엔드 오류로 인해 더미 데이터 반환');
-      const dummyData = generateDummySubscriberStats(category);
+      // 백엔드에서 401이나 다른 오류가 발생해도 빈 데이터 반환
+      console.log('🔄 백엔드 오류로 인해 빈 데이터 반환');
+      const emptyData = category ? { [category]: 0 } : {};
       return Response.json({
         success: true,
-        data: dummyData
+        data: emptyData
       })
     }
 
     const data = await response.json()
     console.log('✅ 백엔드 응답 성공:', data);
+    console.log('🔍 백엔드 데이터 구조:', {
+      hasData: !!data,
+      hasDataData: !!data.data,
+      hasSubscriberCounts: !!(data.data && data.data.subscriberCounts),
+      subscriberCounts: data.data?.subscriberCounts
+    });
     
-    // 백엔드 응답이 비어있거나 유효하지 않은 경우 더미 데이터 반환
+    // 백엔드 응답이 비어있거나 유효하지 않은 경우 빈 데이터 반환
     if (!data || !data.data) {
-      console.log('🔄 백엔드 응답이 비어있어 더미 데이터 반환');
-      const dummyData = generateDummySubscriberStats(category);
+      console.log('🔄 백엔드 응답이 비어있어 빈 데이터 반환');
+      const emptyData = category ? { [category]: 0 } : {};
       return Response.json({
         success: true,
-        data: dummyData
+        data: emptyData
       })
     }
     
     // 백엔드 데이터를 프론트엔드 형식으로 매핑
-    let mappedData = data.data;
+    let mappedData = {};
     
     // 특정 카테고리 요청인 경우
     if (category) {
@@ -121,36 +128,18 @@ export async function GET(request) {
   } catch (error) {
     console.error('🚨 구독자 통계 조회 실패:', error)
     
-    // 백엔드 연결 실패 시 더미 데이터 반환
+    // 백엔드 연결 실패 시 빈 데이터 반환
     if (error.code === 'ECONNREFUSED' || error.message.includes('fetch failed')) {
-      console.log('🔄 백엔드 서버 연결 실패로 더미 데이터 반환');
+      console.log('🔄 백엔드 서버 연결 실패로 빈 데이터 반환');
     }
     
-    const dummyData = generateDummySubscriberStats(category);
+    // 에러 발생 시 빈 데이터 반환
+    const emptyData = category ? { [category]: 0 } : {};
     return Response.json({
       success: true,
-      data: dummyData
+      data: emptyData
     })
   }
 }
 
-// 더미 구독자 통계 생성 함수
-function generateDummySubscriberStats(category) {
-  const defaultCounts = {
-    "정치": 15420,
-    "경제": 8920,
-    "사회": 18760,
-    "생활": 12340,
-    "세계": 9870,
-    "IT/과학": 12350,
-    "자동차/교통": 11230,
-    "여행/음식": 14560,
-    "예술": 8760
-  };
 
-  if (category) {
-    return { [category]: defaultCounts[category] || 10000 };
-  }
-
-  return defaultCounts;
-}

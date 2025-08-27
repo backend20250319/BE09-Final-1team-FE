@@ -37,22 +37,10 @@ const useCategorySubscriberCounts = (categories) => {
       setLoading(true);
       
       try {
-        // 기본값을 즉시 설정하여 UI 반응성 향상
-        const categoryDefaults = {
-          "정치": 15420,
-          "경제": 8920,
-          "사회": 18760,
-          "생활": 12340,
-          "세계": 11230,
-          "IT/과학": 12350,
-          "자동차/교통": 9870,
-          "여행/음식": 12340,
-          "예술": 8760
-        };
-        
+        // 기본값을 0으로 설정
         const initialCounts = {};
         categories.forEach(category => {
-          initialCounts[category] = categoryDefaults[category] || 10000;
+          initialCounts[category] = 0;
         });
         setCounts(initialCounts);
         
@@ -66,7 +54,7 @@ const useCategorySubscriberCounts = (categories) => {
           if (data.success && data.data) {
             const newCounts = { ...initialCounts };
             
-            // API 응답으로 기본값 업데이트
+            // API 응답으로 실제 데이터 업데이트
             if (typeof data.data === 'object' && data.data !== null) {
               Object.keys(data.data).forEach(category => {
                 if (newCounts[category] !== undefined && typeof data.data[category] === 'number') {
@@ -122,6 +110,27 @@ const generateTopicsForCategory = (category) => {
 // 최근 헤드라인 생성 함수
 const generateRecentHeadlines = (category) => {
   const headlinesMap = {
+    "정치": [
+      { title: "국회 예산안 심의 시작, 주요 정책 쟁점 논의", time: "1시간 전", views: "3.2K" },
+      { title: "외교부, 주요국과 정상회담 준비 착수", time: "3시간 전", views: "2.8K" },
+      { title: "정치개혁법안 발의, 여야 간 견해차 좁혀지지 않아", time: "5시간 전", views: "2.1K" },
+      { title: "지방선거 준비 본격화, 주요 정당 공약 발표", time: "1일 전", views: "4.5K" },
+      { title: "정부 정책 평가 보고서 발표, 경제 정책 효과 분석", time: "2일 전", views: "3.1K" }
+    ],
+    "경제": [
+      { title: "한국은행 기준금리 동결 결정, 인플레이션 우려 지속", time: "2시간 전", views: "4.1K" },
+      { title: "주요 기업 실적 발표, 반도체 업계 회복세 뚜렷", time: "4시간 전", views: "3.8K" },
+      { title: "부동산 시장 안정화 정책 발표, 시장 반응 주목", time: "6시간 전", views: "3.2K" },
+      { title: "글로벌 경제 불확실성 증가, 한국 경제 영향 분석", time: "1일 전", views: "2.9K" },
+      { title: "신성장 산업 투자 확대, 정부 지원책 발표", time: "2일 전", views: "2.4K" }
+    ],
+    "사회": [
+      { title: "사회적 거리두기 완화, 일상 회복 조짐 뚜렷", time: "1시간 전", views: "5.2K" },
+      { title: "교육 정책 개편안 발표, 학생 부담 경감 방안", time: "3시간 전", views: "4.1K" },
+      { title: "의료진 부족 현상 심화, 정부 대책 마련", time: "5시간 전", views: "3.8K" },
+      { title: "환경 보호 정책 강화, 탄소중립 목표 달성 노력", time: "1일 전", views: "3.5K" },
+      { title: "사회 안전망 확충, 취약계층 지원 강화", time: "2일 전", views: "2.9K" }
+    ],
     "자동차/교통": [
       { title: "전기차 시장 급성장, 올해 판매량 전년 대비 150% 증가", time: "2시간 전", views: "2.1K" },
       { title: "자율주행 기술 발전, 도로교통법 개정안 발표", time: "4시간 전", views: "1.8K" },
