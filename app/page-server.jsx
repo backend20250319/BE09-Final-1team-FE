@@ -1,4 +1,5 @@
 import MainPage from "./page"
+import { siteUrl } from "../lib/api-url"
 
 async function fetchJSON(url, init) {
   const res = await fetch(url, { ...init, next: { revalidate: 30 } })
@@ -10,8 +11,8 @@ export default async function Page() {
   try {
     // 내부 프록시를 그대로 써도 되고, 백엔드 직접 호출도 가능
     const [trending, list] = await Promise.all([
-      fetchJSON(`${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/api/news/trending?hours=24&limit=1`),
-      fetchJSON(`${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/api/news?page=0&size=21`)
+      fetchJSON(siteUrl(`/api/news/trending?hours=24&limit=1`)),
+      fetchJSON(siteUrl(`/api/news?page=0&size=21`))
     ])
 
     // 백엔드 응답에 맞춰 매핑(당신의 MainPage에서 하던 그대로)

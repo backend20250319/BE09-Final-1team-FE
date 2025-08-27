@@ -26,7 +26,7 @@ export default function MainPage({
   initialTotalElements
 }) {
   const [selectedCategory, setSelectedCategory] = useState("전체")
-  const [isLoaded, setIsLoaded] = useState(true) // 초기 데이터가 있으므로 true로 시작
+  const [isLoaded, setIsLoaded] = useState(true)
   const [userRole, setUserRole] = useState(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(initialTotalPages || 1)
@@ -77,13 +77,13 @@ export default function MainPage({
   useEffect(() => {
     if (!listData) return
     const mapped = (listData.content ?? []).map((news) => ({
-            id: news.newsId,
-            title: news.title,
-            content: news.content,
-            source: news.press,
-            publishedAt: news.publishedAt,
-            category: news.categoryName,
-            image: news.imageUrl,
+      id: news.newsId,
+      title: news.title,
+      content: news.content,
+      source: news.press,
+      publishedAt: news.publishedAt,
+      category: news.categoryName,
+      image: news.imageUrl,
       views: news.viewCount ?? 0
     }))
     setNewsItems(mapped)

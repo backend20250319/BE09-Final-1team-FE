@@ -97,6 +97,20 @@ const generateRecentHeadlines = (category) => {
       { title: "환경 보호 정책 강화, 탄소중립 목표 달성 노력", time: "1일 전", views: "3.5K" },
       { title: "사회 안전망 확충, 취약계층 지원 강화", time: "2일 전", views: "2.9K" }
     ],
+    "생활": [
+      { title: "일상생활 편의성 증대, 스마트홈 기술 보급 확산", time: "2시간 전", views: "3.1K" },
+      { title: "건강관리 트렌드, 웨어러블 디바이스 활용 증가", time: "4시간 전", views: "2.7K" },
+      { title: "취미생활 변화, 온라인 클래스 수요 급증", time: "6시간 전", views: "2.3K" },
+      { title: "가족 여가 문화, 홈 엔터테인먼트 시장 성장", time: "1일 전", views: "1.9K" },
+      { title: "일상 스트레스 해소법, 마음건강 관리 중요성", time: "2일 전", views: "2.5K" }
+    ],
+    "세계": [
+      { title: "글로벌 경제 불확실성, 주요국 정책 대응 분석", time: "1시간 전", views: "4.8K" },
+      { title: "국제 관계 변화, 새로운 세계 질서 형성", time: "3시간 전", views: "4.2K" },
+      { title: "기후변화 대응, 글로벌 협력 강화", time: "5시간 전", views: "3.5K" },
+      { title: "국제 분쟁 해결, 평화 협상 진행 상황", time: "1일 전", views: "3.1K" },
+      { title: "세계 문화 교류, 글로벌 문화 축제 개최", time: "2일 전", views: "2.8K" }
+    ],
     "자동차/교통": [
       { title: "전기차 시장 급성장, 올해 판매량 전년 대비 150% 증가", time: "2시간 전", views: "2.1K" },
       { title: "자율주행 기술 발전, 도로교통법 개정안 발표", time: "4시간 전", views: "1.8K" },
@@ -117,6 +131,13 @@ const generateRecentHeadlines = (category) => {
       { title: "클래식 음악 페스티벌, 세계적 연주자들의 축제", time: "6시간 전", views: "1.6K" },
       { title: "영화계 신기술 도입, VR/AR 기반 새로운 경험", time: "1일 전", views: "2.8K" },
       { title: "공공미술 프로젝트, 도시를 예술로 물들이다", time: "2일 전", views: "1.4K" }
+    ],
+    "IT/과학": [
+      { title: "AI 기술 혁신, 챗GPT-5 출시 임박", time: "1시간 전", views: "4.2K" },
+      { title: "반도체 업계 회복세, 삼성전자 실적 전망 긍정적", time: "3시간 전", views: "3.8K" },
+      { title: "메타버스 기술 발전, 가상현실 생태계 확장", time: "5시간 전", views: "2.9K" },
+      { title: "양자컴퓨팅 연구 성과, 암호화 기술 혁신 가져올까", time: "1일 전", views: "2.1K" },
+      { title: "바이오테크 스타트업 투자 열풍, 신약 개발 가속화", time: "2일 전", views: "1.8K" }
     ]
   };
   
@@ -139,6 +160,9 @@ export default function NewsletterPageClient({ initialNewsletters }) {
   const [userRole, setUserRole] = useState(null)
   const [isClient, setIsClient] = useState(false)
   const { toast } = useToast()
+  
+  // 이전 userSubscriptions를 추적하기 위한 ref
+  const prevUserSubscriptionsRef = useRef(null)
 
   // React Query 훅들
   const { 
@@ -154,18 +178,39 @@ export default function NewsletterPageClient({ initialNewsletters }) {
     refetchInterval: false, // 자동 새로고침 비활성화
   })
 
+  // 디버깅: 뉴스레터 목록 로깅
+  console.log('📰 뉴스레터 목록:', {
+    newsletters: newsletters,
+    length: newsletters.length,
+    ids: newsletters.map(n => n.id),
+    uniqueIds: [...new Set(newsletters.map(n => n.id))],
+    hasDuplicates: newsletters.length !== [...new Set(newsletters.map(n => n.id))].length
+  });
+
   const { 
     data: userSubscriptions = [], 
     isLoading: subscriptionsLoading,
     error: subscriptionsError,
     refetch: refetchSubscriptions 
   } = useUserSubscriptions({
-    enabled: !!userRole,
+    enabled: !!userRole, // 사용자 역할이 있을 때만 활성화
     retry: 1,
     retryDelay: 1000,
     staleTime: 5 * 60 * 1000, // 5분간 fresh 상태 유지
     refetchOnWindowFocus: false, // 윈도우 포커스 시 자동 refetch 비활성화
   })
+
+  // 디버깅: userSubscriptions 상태 로깅
+  console.log('🔍 userSubscriptions 상태:', {
+    data: userSubscriptions,
+    isLoading: subscriptionsLoading,
+    error: subscriptionsError,
+    userRole: userRole,
+    enabled: !!userRole || typeof window !== 'undefined',
+    isArray: Array.isArray(userSubscriptions),
+    length: Array.isArray(userSubscriptions) ? userSubscriptions.length : 'N/A',
+    enabledCondition: !!userRole || typeof window !== 'undefined'
+  });
 
   // 카테고리별 기사 데이터 조회 - 실제로 필요한 카테고리만 조회 (백엔드 서버가 없을 때를 대비)
   const allCategories = ["정치", "경제", "사회", "생활", "세계", "IT/과학", "자동차/교통", "여행/음식", "예술"]
@@ -247,7 +292,15 @@ export default function NewsletterPageClient({ initialNewsletters }) {
       setIsLoaded(true)
     }, 100)
     
-    const role = getUserRole()
+    let role = getUserRole()
+    console.log('🔍 getUserRole() 결과:', role)
+    
+    // 개발 환경에서 역할이 없으면 기본값 설정
+    if (!role && typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+      role = 'USER'
+      console.log('🔧 개발 환경에서 기본 역할 설정:', role)
+    }
+    
     setUserRole(role)
     setIsClient(true)
     
@@ -257,12 +310,30 @@ export default function NewsletterPageClient({ initialNewsletters }) {
   // 서버 구독 목록이 업데이트되면 로컬 상태 동기화
   useEffect(() => {
     if (Array.isArray(userSubscriptions)) {
+      // 이전 데이터와 비교하여 실제 변경사항이 있는지 확인
+      const prevData = prevUserSubscriptionsRef.current;
+      const currentData = JSON.stringify(userSubscriptions);
+      
+      if (prevData === currentData) {
+        console.log('🔄 서버 구독 목록 동기화: 데이터 변경 없음 (스킵)');
+        return;
+      }
+      
+      // 현재 데이터를 ref에 저장
+      prevUserSubscriptionsRef.current = currentData;
+      
       const serverCategories = new Set();
       
       userSubscriptions.forEach(sub => {
+        console.log('📋 구독 정보 처리:', sub);
+        
         // preferredCategories 배열 처리 (백엔드에서 이 필드로 카테고리 정보를 제공)
         if (sub.preferredCategories && Array.isArray(sub.preferredCategories)) {
+          console.log('📋 preferredCategories:', sub.preferredCategories);
+          
           sub.preferredCategories.forEach(prefCat => {
+            console.log('🔍 카테고리 매핑 중:', prefCat);
+            
             // 백엔드 카테고리명을 프론트엔드 카테고리명으로 변환
             const categoryMapping = {
               'POLITICS': '정치',
@@ -277,19 +348,46 @@ export default function NewsletterPageClient({ initialNewsletters }) {
             };
             
             const frontendCategory = categoryMapping[prefCat];
+            console.log(`🔍 매핑 결과: ${prefCat} -> ${frontendCategory}`);
+            
             if (frontendCategory) {
               serverCategories.add(frontendCategory);
+              console.log(`✅ ${frontendCategory} 추가됨`);
+            } else {
+              console.log(`❌ 매핑 실패: ${prefCat}`);
             }
           });
+        } else {
+          console.log('❌ preferredCategories가 없거나 배열이 아님:', sub.preferredCategories);
         }
       });
       
-      console.log('🔄 서버 구독 목록 동기화:', {
-        userSubscriptions: userSubscriptions,
-        serverCategories: Array.from(serverCategories),
-        currentLocalSubscriptions: Array.from(localSubscriptions)
-      });
-      setLocalSubscriptions(serverCategories);
+      // 현재 로컬 상태와 서버 상태를 비교하여 변경사항이 있을 때만 업데이트
+      const currentCategories = Array.from(localSubscriptions).sort();
+      const newCategories = Array.from(serverCategories).sort();
+      
+      const hasChanged = currentCategories.length !== newCategories.length || 
+                        currentCategories.some((cat, index) => cat !== newCategories[index]);
+      
+      if (hasChanged) {
+        console.log('🔄 서버 구독 목록 동기화:', {
+          userSubscriptions: userSubscriptions,
+          serverCategories: Array.from(serverCategories),
+          currentLocalSubscriptions: Array.from(localSubscriptions),
+          serverCategoriesSize: serverCategories.size,
+          hasChanged: hasChanged
+        });
+        
+        // 로컬 상태 업데이트
+        setLocalSubscriptions(serverCategories);
+        
+        // 업데이트 후 상태 확인
+        setTimeout(() => {
+          console.log('✅ 로컬 상태 업데이트 완료:', Array.from(serverCategories));
+        }, 100);
+      } else {
+        console.log('🔄 서버 구독 목록 동기화: 변경사항 없음');
+      }
     }
   }, [userSubscriptions]);
 
@@ -1094,6 +1192,11 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                     </CardTitle>
                     <CardDescription>
                       현재 구독 중인 뉴스레터 ({Array.from(localSubscriptions).length}/3개)
+                      {Array.from(localSubscriptions).length > 0 && (
+                        <span className="text-xs text-gray-500 ml-2">
+                          ({Array.from(localSubscriptions).join(', ')})
+                        </span>
+                      )}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
