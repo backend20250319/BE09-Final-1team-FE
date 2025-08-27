@@ -41,3 +41,6 @@ out/
 ### history directory ###
 .history/
 news2/.history/
+
+.DS_Store
+.DS_Store/
