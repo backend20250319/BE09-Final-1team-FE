@@ -10,9 +10,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Bookmark, Share2, Calendar, Loader2 } from "lucide-react";
+import { Bookmark, Share2, Calendar, FolderPlus } from "lucide-react"; // FolderPlus 아이콘 추가
 import { useScrap } from "@/contexts/ScrapContext";
 import Link from "next/link";
+import AddToCollectionModal from "./AddToCollectionModal"; // 모달 컴포넌트 import
 
 const ScrapSkeleton = () => (
     <div className="space-y-4">
@@ -45,6 +46,22 @@ export default function ScrapsTab() {
     totalPages,
     setCurrentPage
   } = useScrap();
+
+  // 모달 상태 관리를 위한 state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedNews, setSelectedNews] = useState(null);
+
+  // 모달을 여는 함수
+  const handleOpenModal = (news) => {
+    setSelectedNews(news);
+    setIsModalOpen(true);
+  };
+
+  // 모달을 닫는 함수
+  const handleCloseModal = () => {
+    setSelectedNews(null);
+    setIsModalOpen(false);
+  };
 
   const renderContent = () => {
     if (isLoading) {
@@ -106,6 +123,14 @@ export default function ScrapsTab() {
                 </div>
 
                 <div className="flex items-center justify-end space-x-2">
+                   <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleOpenModal(news)}
+                    >
+                      <FolderPlus className="h-4 w-4 mr-2" />
+                      컬렉션에 추가
+                    </Button>
                   <Link href={`/news/${news.newsId}`} passHref legacyBehavior>
                     <Button variant="outline" size="sm" as="a">
                       기사 읽기
@@ -143,6 +168,7 @@ export default function ScrapsTab() {
   };
 
   return (
+    <>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
@@ -154,7 +180,7 @@ export default function ScrapsTab() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="lg:w-full overflow-x-auto flex space-x-1 pb-4">
+          <div className="lg:w-full overflow-x-auto flex-wrap flex items-center justify-between space-x-1 pb-4">
             {categories.map((category) => (
                 <Button
                     key={category}
@@ -170,5 +196,16 @@ export default function ScrapsTab() {
           {renderContent()}
         </CardContent>
       </Card>
+
+      {/* 모달 렌더링 */}
+      {selectedNews && (
+        <AddToCollectionModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          newsId={selectedNews.newsId}
+          newsTitle={selectedNews.title}
+        />
+      )}
+    </>
   );
 }
