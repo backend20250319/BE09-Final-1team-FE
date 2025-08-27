@@ -1,12 +1,12 @@
 /**
- * API 연결 및 디버깅 유틸리티
+ * API 연결 및 디버깅 유틸리티 (최종 통합 버전)
  */
-import { apiUrl } from "./api-url";
+import { getApiUrl } from "./config";
 import { z } from "zod";
 
 // 캐시 저장소
 const cache = new Map();
-const CACHE_DURATION = 5 * 60 * 1000; // 5분
+const CACHE_DURATION = 5 * 60 * 1000; // 5분 (캐시 유효 시간)
 
 /**
  * 캐시 유틸리티
@@ -15,33 +15,203 @@ const cacheUtils = {
   get: (key) => {
     const item = cache.get(key);
     if (!item) return null;
-    
+
+    // 캐시 유효기간 확인
     if (Date.now() - item.timestamp > CACHE_DURATION) {
       cache.delete(key);
       return null;
     }
-    
+
     return item.data;
   },
-  
+
   set: (key, data) => {
     cache.set(key, {
       data,
       timestamp: Date.now()
     });
   },
-  
+
   clear: () => cache.clear(),
-  
-  delete: (key) => cache.delete(key)
+
+  delete: (key) => cache.delete(key),
+
+  // 특정 패턴을 포함하는 캐시 항목 무효화
+  invalidateByPattern: (pattern) => {
+    for (const key of cache.keys()) {
+      if (key.includes(pattern)) {
+        cache.delete(key);
+      }
+    }
+  }
 };
 
 /**
- * 백엔드 서버 연결 상태를 확인합니다
+ * Zod 스키마로 응답 데이터 검증
+ * @param {*} data - 검증할 데이터
+ * @param {z.ZodSchema} schema - Zod 스키마
+ * @returns {{success: boolean, data?: *, error?: string}} - 검증 결과
  */
-export async function checkBackendHealth() {
+function validateResponse(data, schema) {
   try {
-    const response = await fetch(apiUrl("/api/news/health"), {
+    if (!schema) return { success: true, data };
+
+    const validatedData = schema.parse(data);
+    return { success: true, data: validatedData };
+  } catch (error) {
+    console.error("❌ 응답 데이터 검증 실패:", error);
+    return {
+      success: false,
+      error: error.errors?.[0]?.message || "데이터 형식이 올바르지 않습니다"
+    };
+  }
+}
+
+/**
+ * API 호출을 위한 공통 설정
+ */
+const apiConfig = {
+  headers: {
+    "Content-Type": "application/json",
+  },
+  mode: "cors",
+  credentials: "omit",
+};
+
+/**
+ * 안전한 API 호출 함수 (통합 버전)
+ * @param {string} endpoint - API 엔드포인트 URL
+ * @param {object} options - 추가 옵션
+ * @param {z.ZodSchema} [options.schema] - 응답 데이터 검증을 위한 Zod 스키마
+ * @param {string} [options.cacheKey] - 캐시를 사용할 경우 캐시 키
+ * @param {boolean} [options.useCache=false] - 캐시 사용 여부
+ * @param {string} [options.method="GET"] - HTTP 메서드
+ * @param {*} [options.body] - 요청 본문 (POST, PUT, PATCH용)
+ * @param {object} [restOptions] - fetch API에 전달할 나머지 옵션
+ * @returns {Promise<*>} - API 응답 데이터
+ */
+async function safeApiCall(endpoint, options = {}) {
+  const {
+    schema,
+    cacheKey,
+    useCache = false,
+    method = "GET",
+    body,
+    ...restOptions
+  } = options;
+
+  // 캐시 확인 (GET 요청에만 적용)
+  if (useCache && method === "GET" && cacheKey) {
+    const cachedData = cacheUtils.get(cacheKey);
+    if (cachedData) {
+      console.log("📦 캐시된 데이터 사용:", cacheKey);
+      return cachedData;
+    }
+  }
+
+  // URL 처리 로직 (Next.js rewrites와 일반 URL 구성 통합)
+  let url = endpoint;
+  if (endpoint.startsWith("/api/")) {
+    // /api/ 경로는 그대로 두어 Next.js 프록시가 처리하도록 함 (CORS 방지)
+    url = endpoint;
+  }
+  else if (!endpoint.startsWith("http")) {
+    // 그 외 경로는 전체 URL로 변환
+    url = getApiUrl(endpoint);
+  }
+
+  try {
+    console.log("🔄 API 호출:", url, { method });
+
+    const requestOptions = {
+      ...apiConfig,
+      method,
+      cache: 'no-store',
+      next: { revalidate: 0 },
+      ...restOptions,
+      // 헤더는 아래에서 동적으로 설정하므로 원본을 유지하기 위해 복사해서 사용
+      headers: { ...apiConfig.headers },
+    };
+
+    // 브라우저 환경에서만 localStorage의 인증 토큰을 헤더에 자동으로 추가
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("accessToken");
+      if (token) {
+        requestOptions.headers["Authorization"] = `Bearer ${token}`;
+        console.log("🔑 인증 토큰을 헤더에 추가했습니다.");
+      } else {
+        console.warn("🤔 인증 토큰이 없습니다. 스크랩 등 인증이 필요한 기능은 실패할 수 있습니다.");
+      }
+    }
+
+    if (body && ["POST", "PUT", "PATCH"].includes(method)) {
+      requestOptions.body = typeof body === "string" ? body : JSON.stringify(body);
+    }
+
+    const response = await fetch(url, requestOptions);
+
+    console.log("📡 응답 상태:", response.status, response.statusText);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        errorData = { message: errorText };
+      }
+
+      // 오류 객체에 HTTP 상태 코드를 포함시켜 더 나은 오류 처리 지원
+      const error = new Error(
+          errorData.message || `HTTP ${response.status}: ${response.statusText}`
+      );
+      error.status = response.status;
+      throw error;
+    }
+
+    const text = await response.text();
+    if (!text || text.trim() === '') {
+      console.log("✅ API 호출 성공 (빈 응답):", endpoint);
+      return null;
+    }
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (parseError) {
+      console.error("❌ JSON 파싱 실패:", endpoint, parseError);
+      console.error("📄 응답 텍스트:", text);
+      throw new Error(`Invalid JSON response: ${parseError.message}`);
+    }
+
+    const validation = validateResponse(data, schema);
+    if (!validation.success) {
+      throw new Error(validation.error);
+    }
+    data = validation.data;
+
+    if (useCache && method === "GET" && cacheKey && data) {
+      cacheUtils.set(cacheKey, data);
+    }
+
+    console.log("✅ API 호출 성공:", endpoint);
+    return data;
+  } catch (error) {
+    console.error("❌ API 호출 실패:", endpoint, error);
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      console.error("🌐 네트워크 연결 문제 가능성");
+    }
+    throw error;
+  }
+}
+
+/**
+ * 백엔드 서버 연결 상태를 확인합니다
+ * @returns {Promise<{isConnected: boolean, status?: number, statusText?: string, data?: string, error?: string, type?: string}>}
+ */
+async function checkBackendHealth() {
+  try {
+    const response = await fetch(getApiUrl("/api/news/health"), {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -67,13 +237,15 @@ export async function checkBackendHealth() {
 
 /**
  * API URL을 테스트합니다
+ * @param {string} endpoint - 테스트할 엔드포인트
+ * @returns {string} - 구성된 전체 URL
  */
-export function testApiUrl(endpoint = "") {
-  const url = apiUrl(endpoint);
+function testApiUrl(endpoint = "") {
+  const url = getApiUrl(endpoint);
   console.log("🔗 API URL 테스트:", {
     endpoint,
     fullUrl: url,
-    baseUrl: process.env.API_BASE_URL || "설정되지 않음",
+    baseUrl: process.env.NEXT_PUBLIC_API_URL || "설정되지 않음",
     env: process.env.NODE_ENV,
   });
   return url;
@@ -81,10 +253,10 @@ export function testApiUrl(endpoint = "") {
 
 /**
  * 네트워크 연결 상태를 확인합니다
+ * @returns {Promise<{isOnline: boolean, status?: number, error?: string}>}
  */
-export async function checkNetworkConnectivity() {
+async function checkNetworkConnectivity() {
   try {
-    // 간단한 네트워크 테스트
     const response = await fetch("https://httpbin.org/get", {
       method: "GET",
       mode: "cors",
@@ -103,15 +275,15 @@ export async function checkNetworkConnectivity() {
 
 /**
  * CORS 문제를 진단합니다
+ * @returns {Promise<{networkConnectivity: object, backendHealth: object, apiUrl: string, environment: object}>}
  */
-export async function diagnoseCorsIssue() {
+async function diagnoseCorsIssue() {
   const results = {
     networkConnectivity: await checkNetworkConnectivity(),
     backendHealth: await checkBackendHealth(),
     apiUrl: testApiUrl("/api/news/health"),
     environment: {
       NODE_ENV: process.env.NODE_ENV,
-      API_BASE_URL: process.env.API_BASE_URL,
       NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
       isBrowser: typeof window !== "undefined",
     },
@@ -122,184 +294,69 @@ export async function diagnoseCorsIssue() {
 }
 
 /**
- * API 호출을 위한 공통 설정
- */
-export const apiConfig = {
-  headers: {
-    "Content-Type": "application/json",
-  },
-  mode: "cors",
-  credentials: "omit",
-};
-
-/**
- * Zod 스키마로 응답 데이터 검증
- */
-export function validateResponse(data, schema) {
-  try {
-    if (!schema) return { success: true, data };
-    
-    const validatedData = schema.parse(data);
-    return { success: true, data: validatedData };
-  } catch (error) {
-    console.error("❌ 응답 데이터 검증 실패:", error);
-    return { 
-      success: false, 
-      error: error.errors?.[0]?.message || "데이터 형식이 올바르지 않습니다" 
-    };
-  }
-}
-
-/**
- * 안전한 API 호출 함수 (개선된 버전)
- */
-export async function safeApiCall(endpoint, options = {}) {
-  const { 
-    schema, 
-    cacheKey, 
-    useCache = false, 
-    method = "GET",
-    body,
-    ...restOptions 
-  } = options;
-
-  // 캐시 확인 (GET 요청만)
-  if (useCache && method === "GET" && cacheKey) {
-    const cachedData = cacheUtils.get(cacheKey);
-    if (cachedData) {
-      console.log("📦 캐시된 데이터 사용:", cacheKey);
-      return cachedData;
-    }
-  }
-
-  // 게이트웨이 절대 URL로 강제 변환 (SSR에서 안전)
-  let url = endpoint;
-  if (endpoint.startsWith("/api/")) {
-    url = apiUrl(endpoint); // 게이트웨이로 강제
-  } else if (!endpoint.startsWith("http")) {
-    url = apiUrl(endpoint);
-  }
-
-  try {
-    console.log("🔄 API 호출:", url, { method });
-
-    const requestOptions = {
-      ...apiConfig,
-      method,
-      // SSR에서 캐시 끄기 (필요 시 조정)
-      cache: 'no-store',
-      // Next.js 15 App Router에서 재검증 off
-      next: { revalidate: 0 },
-      ...restOptions,
-    };
-
-    // POST/PUT/PATCH 요청에 body 추가
-    if (body && ["POST", "PUT", "PATCH"].includes(method)) {
-      requestOptions.body = typeof body === "string" ? body : JSON.stringify(body);
-    }
-
-    const response = await fetch(url, requestOptions);
-
-    console.log("📡 응답 상태:", response.status, response.statusText);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      let errorData;
-      try {
-        errorData = JSON.parse(errorText);
-      } catch {
-        errorData = { message: errorText };
-      }
-      
-      throw new Error(
-        errorData.message || `HTTP ${response.status}: ${response.statusText}`
-      );
-    }
-
-    // 응답 본문이 비어있는지 확인
-    const text = await response.text();
-    if (!text || text.trim() === '') {
-      console.log("✅ API 호출 성공 (빈 응답):", endpoint);
-      return null;
-    }
-
-    // JSON 파싱 시도
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch (parseError) {
-      console.error("❌ JSON 파싱 실패:", endpoint, parseError);
-      console.error("📄 응답 텍스트:", text);
-      throw new Error(`Invalid JSON response: ${parseError.message}`);
-    }
-
-    // 스키마 검증
-    const validation = validateResponse(data, schema);
-    if (!validation.success) {
-      throw new Error(validation.error);
-    }
-
-    // 캐시 저장 (GET 요청만)
-    if (useCache && method === "GET" && cacheKey && validation.data) {
-      cacheUtils.set(cacheKey, validation.data);
-    }
-
-    console.log("✅ API 호출 성공:", endpoint);
-    return validation.data;
-  } catch (error) {
-    console.error("❌ API 호출 실패:", endpoint, error);
-    // 네트워크 오류나 기타 예외 상황에 대한 추가 정보 제공
-    if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      console.error("🌐 네트워크 연결 문제 가능성");
-    }
-    throw error;
-  }
-}
-
-/**
  * GET 요청 전용 함수
+ * @param {string} endpoint - API 엔드포인트
+ * @param {object} options - safeApiCall에 전달할 옵션
+ * @returns {Promise<*>}
  */
-export async function apiGet(endpoint, options = {}) {
+async function apiGet(endpoint, options = {}) {
   return safeApiCall(endpoint, { method: "GET", ...options });
 }
 
 /**
  * POST 요청 전용 함수
+ * @param {string} endpoint - API 엔드포인트
+ * @param {*} body - 요청 본문
+ * @param {object} options - safeApiCall에 전달할 옵션
+ * @returns {Promise<*>}
  */
-export async function apiPost(endpoint, body, options = {}) {
+async function apiPost(endpoint, body, options = {}) {
   return safeApiCall(endpoint, { method: "POST", body, ...options });
 }
 
 /**
  * PUT 요청 전용 함수
+ * @param {string} endpoint - API 엔드포인트
+ * @param {*} body - 요청 본문
+ * @param {object} options - safeApiCall에 전달할 옵션
+ * @returns {Promise<*>}
  */
-export async function apiPut(endpoint, body, options = {}) {
+async function apiPut(endpoint, body, options = {}) {
   return safeApiCall(endpoint, { method: "PUT", body, ...options });
 }
 
 /**
  * DELETE 요청 전용 함수
+ * @param {string} endpoint - API 엔드포인트
+ * @param {object} options - safeApiCall에 전달할 옵션
+ * @returns {Promise<*>}
  */
-export async function apiDelete(endpoint, options = {}) {
+async function apiDelete(endpoint, options = {}) {
   return safeApiCall(endpoint, { method: "DELETE", ...options });
 }
 
 /**
- * 캐시 관리 함수들
+ * 캐시 관리 함수들을 묶어서 내보냅니다.
  */
 export const cacheManager = {
   get: cacheUtils.get,
   set: cacheUtils.set,
   clear: cacheUtils.clear,
   delete: cacheUtils.delete,
-  invalidateByPattern: (pattern) => {
-    for (const key of cache.keys()) {
-      if (key.includes(pattern)) {
-        cache.delete(key);
-      }
-    }
-  }
+  invalidateByPattern: cacheUtils.invalidateByPattern
 };
 
-// 기존 함수들도 유지 (하위 호환성)
-export { cacheUtils as cache };
+export {
+  safeApiCall,
+  apiGet,
+  apiPost,
+  apiPut,
+  apiDelete,
+  checkBackendHealth,
+  testApiUrl,
+  checkNetworkConnectivity,
+  diagnoseCorsIssue,
+  validateResponse,
+  cacheUtils,
+  apiConfig,
+};
