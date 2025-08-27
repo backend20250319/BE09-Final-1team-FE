@@ -40,87 +40,94 @@ export default function MainPage() {
 
   // 🔁 기존 "인기 뉴스" 로더 → "트렌딩 뉴스" 로더로 교체
   useEffect(() => {
-    const fetchTrendingBanner = async () => {
+    const fetchTrendingBanner = () => {
       console.log('⚡ 트렌딩 뉴스(24h) 로딩...')
       setPopularNewsLoading(true)
 
-      try {
-        // news-service 프록시 경유
-        const res = await fetch('/api/news/trending?hours=24&limit=1')
-        
-        if (!res.ok) {
-          console.error('❌ 트렌딩 API 응답 오류:', res.status, res.statusText)
-          // 폴백: 기존 인기 뉴스 API 사용
-          console.log('🔄 기존 인기 뉴스 API로 폴백...')
-          const fallbackRes = await fetch('/api/news?page=0&size=1')
-          if (!fallbackRes.ok) {
-            throw new Error(`폴백 API도 실패: ${fallbackRes.status}`)
+      // news-service 프록시 경유
+      fetch('/api/news/trending?hours=24&limit=1')
+        .then(res => {
+          if (!res.ok) {
+            console.error('❌ 트렌딩 API 응답 오류:', res.status, res.statusText)
+            // 폴백: 기존 인기 뉴스 API 사용
+            console.log('🔄 기존 인기 뉴스 API로 폴백...')
+            return fetch('/api/news?page=0&size=1')
+              .then(fallbackRes => {
+                if (!fallbackRes.ok) {
+                  throw new Error(`폴백 API도 실패: ${fallbackRes.status}`)
+                }
+                return fallbackRes.json()
+              })
+              .then(fallbackData => {
+                if (fallbackData.content && fallbackData.content.length > 0) {
+                  const news = fallbackData.content[0]
+                  setPopularNews({
+                    id: news.newsId,
+                    title: news.title,
+                    content: news.content || news.summary || "내용을 불러올 수 없습니다.",
+                    source: news.press,
+                    publishedAt: news.publishedAt,
+                    category: news.categoryName,
+                    image: news.imageUrl || "/placeholder.jpg",
+                    views: news.viewCount || 0
+                  })
+                }
+                return null // 폴백 성공 시 더 이상 진행하지 않음
+              })
           }
-          const fallbackData = await fallbackRes.json()
+          return res.json()
+        })
+        .then(data => {
+          if (!data) return // 폴백 성공 시 여기서 종료
           
-          if (fallbackData.content && fallbackData.content.length > 0) {
-            const news = fallbackData.content[0]
+          console.log('📄 트렌딩 뉴스 응답:', data)
+
+          // 에러 응답 체크
+          if (data.error) {
+            console.error('❌ API 에러:', data.error)
+            throw new Error(data.error)
+          }
+
+          // 백엔드 응답 구조에 맞게 수정
+          const list = data.content || data.data || []
+          if (list.length > 0) {
+            const news = list[0]
+            console.log('📰 트렌딩 뉴스 상세:', news)
+            
+            // sourceUrl → hostname 폴백
+            const source = news.press || '알 수 없음'
+
             setPopularNews({
-              id: news.newsId,
+              id: news.newsId,                             // ✅ newsId 필드 사용
               title: news.title,
               content: news.content || news.summary || "내용을 불러올 수 없습니다.",
-              source: news.press,
+              source,                                      // ✅ press 필드 사용
               publishedAt: news.publishedAt,
-              category: news.categoryName,
+              category: news.categoryName,                 // ✅ categoryName 필드 사용
               image: news.imageUrl || "/placeholder.jpg",
-              views: news.viewCount || 0
+              views: news.viewCount || 0                   // 없으면 0
             })
+          } else {
+            console.log('⚡ 트렌딩 뉴스 결과 없음:', data)
           }
-          return
-        }
-        
-        const data = await res.json()
-        console.log('📄 트렌딩 뉴스 응답:', data)
-
-        // 에러 응답 체크
-        if (data.error) {
-          console.error('❌ API 에러:', data.error)
-          throw new Error(data.error)
-        }
-
-        // 백엔드 응답 구조에 맞게 수정
-        const list = data.content || data.data || []
-        if (list.length > 0) {
-          const news = list[0]
-          console.log('📰 트렌딩 뉴스 상세:', news)
-          
-          // sourceUrl → hostname 폴백
-          const source = news.press || '알 수 없음'
-
-          setPopularNews({
-            id: news.newsId,                             // ✅ newsId 필드 사용
-            title: news.title,
-            content: news.content || news.summary || "내용을 불러올 수 없습니다.",
-            source,                                      // ✅ press 필드 사용
-            publishedAt: news.publishedAt,
-            category: news.categoryName,                 // ✅ categoryName 필드 사용
-            image: news.imageUrl || "/placeholder.jpg",
-            views: news.viewCount || 0                   // 없으면 0
-          })
-        } else {
-          console.log('⚡ 트렌딩 뉴스 결과 없음:', data)
-        }
-      } catch (e) {
-        console.error('❌ 트렌딩 뉴스 로딩 실패:', e)
-        // 에러 시 더미 데이터 설정
-        setPopularNews({
-          id: 1,
-          title: "트렌딩 뉴스를 불러올 수 없습니다",
-          content: "현재 트렌딩 뉴스를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.",
-          source: "시스템",
-          publishedAt: new Date().toISOString(),
-          category: "GENERAL",
-          image: "/placeholder.jpg",
-          views: 0
         })
-      } finally {
-        setPopularNewsLoading(false)
-      }
+        .catch(e => {
+          console.error('❌ 트렌딩 뉴스 로딩 실패:', e)
+          // 에러 시 더미 데이터 설정
+          setPopularNews({
+            id: 1,
+            title: "트렌딩 뉴스를 불러올 수 없습니다",
+            content: "현재 트렌딩 뉴스를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.",
+            source: "시스템",
+            publishedAt: new Date().toISOString(),
+            category: "GENERAL",
+            image: "/placeholder.jpg",
+            views: 0
+          })
+        })
+        .finally(() => {
+          setPopularNewsLoading(false)
+        })
     }
 
     fetchTrendingBanner()
@@ -128,83 +135,85 @@ export default function MainPage() {
 
   // 카테고리별 필터링 및 페이지네이션
   useEffect(() => {
-    const fetchNews = async () => {
+    const fetchNews = () => {
       console.log('🔄 뉴스 데이터 로딩...', { selectedCategory, currentPage })
       setLoading(true)
       setError(null)
       
-      try {
-        // 백엔드 API 호출 (0-based pagination 사용)
-        const backendPage = currentPage - 1 // 프론트엔드는 1-based, 백엔드는 0-based
-        const categoryParam = selectedCategory === "전체" ? "" : `&category=${selectedCategory}`
-        const response = await fetch(`/api/news?page=${backendPage}&size=${itemsPerPage}${categoryParam}`)
-        
-        if (!response.ok) {
-          throw new Error(`API 응답 오류: ${response.status} ${response.statusText}`)
-        }
-        
-        const data = await response.json()
-        console.log('📰 뉴스 데이터:', data)
-        
-        // 백엔드 API 응답 구조에 맞게 데이터 매핑
-        const mappedNews = (data.content || []).map(news => ({
-          id: news.newsId,
-          title: news.title,
-          content: news.content,
-          source: news.press,
-          publishedAt: news.publishedAt,
-          category: news.categoryName,
-          image: news.imageUrl,
-          views: news.viewCount || 0
-        }))
-        
-        console.log('📰 매핑된 뉴스 데이터:', mappedNews)
-        
-        setNewsItems(mappedNews)
-        setTotalPages(data.totalPages || 1)
-        setTotalElements(data.totalElements || 0)
-        setLoading(false)
-        setIsLoaded(true)
-      } catch (error) {
-        console.error('❌ 뉴스 데이터 로딩 실패:', error)
-        console.error('❌ 오류 상세:', {
-          message: error.message,
-          stack: error.stack,
-          url: `/api/news?page=${currentPage - 1}&size=${itemsPerPage}&category=${selectedCategory}`
-        })
-        
-        setError(error.message)
-        
-        // 임시 더미 데이터 사용
-        const dummyData = [
-          {
-            id: 1,
-            title: "테스트 뉴스 제목 1",
-            content: "테스트 뉴스 내용입니다.",
-            source: "테스트 언론사",
-            publishedAt: "2025-01-01T00:00:00",
-            category: "POLITICS",
-            image: "/placeholder.jpg",
-            views: 1234
-          },
-          {
-            id: 2,
-            title: "테스트 뉴스 제목 2",
-            content: "테스트 뉴스 내용입니다.",
-            source: "테스트 언론사",
-            publishedAt: "2025-01-01T00:00:00",
-            category: "ECONOMY",
-            image: "/placeholder.jpg",
-            views: 5678
+      // 백엔드 API 호출 (0-based pagination 사용)
+      const backendPage = currentPage - 1 // 프론트엔드는 1-based, 백엔드는 0-based
+      const categoryParam = selectedCategory === "전체" ? "" : `&category=${selectedCategory}`
+      
+      fetch(`/api/news?page=${backendPage}&size=${itemsPerPage}${categoryParam}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`API 응답 오류: ${response.status} ${response.statusText}`)
           }
-        ]
-        
-        setNewsItems(dummyData)
-        setTotalPages(1)
-        setTotalElements(2)
-        setLoading(false)
-        setIsLoaded(true)
-      }
+          return response.json()
+        })
+        .then(data => {
+          console.log('📰 뉴스 데이터:', data)
+          
+          // 백엔드 API 응답 구조에 맞게 데이터 매핑
+          const mappedNews = (data.content || []).map(news => ({
+            id: news.newsId,
+            title: news.title,
+            content: news.content,
+            source: news.press,
+            publishedAt: news.publishedAt,
+            category: news.categoryName,
+            image: news.imageUrl,
+            views: news.viewCount || 0
+          }))
+          
+          console.log('📰 매핑된 뉴스 데이터:', mappedNews)
+          
+          setNewsItems(mappedNews)
+          setTotalPages(data.totalPages || 1)
+          setTotalElements(data.totalElements || 0)
+          setLoading(false)
+          setIsLoaded(true)
+        })
+        .catch(error => {
+          console.error('❌ 뉴스 데이터 로딩 실패:', error)
+          console.error('❌ 오류 상세:', {
+            message: error.message,
+            stack: error.stack,
+            url: `/api/news?page=${currentPage - 1}&size=${itemsPerPage}&category=${selectedCategory}`
+          })
+          
+          setError(error.message)
+          
+          // 임시 더미 데이터 사용
+          const dummyData = [
+            {
+              id: 1,
+              title: "테스트 뉴스 제목 1",
+              content: "테스트 뉴스 내용입니다.",
+              source: "테스트 언론사",
+              publishedAt: "2025-01-01T00:00:00",
+              category: "POLITICS",
+              image: "/placeholder.jpg",
+              views: 1234
+            },
+            {
+              id: 2,
+              title: "테스트 뉴스 제목 2",
+              content: "테스트 뉴스 내용입니다.",
+              source: "테스트 언론사",
+              publishedAt: "2025-01-01T00:00:00",
+              category: "ECONOMY",
+              image: "/placeholder.jpg",
+              views: 5678
+            }
+          ]
+          
+          setNewsItems(dummyData)
+          setTotalPages(1)
+          setTotalElements(2)
+          setLoading(false)
+          setIsLoaded(true)
+        })
     }
 
     fetchNews()

@@ -56,7 +56,7 @@ export async function GET(request) {
     const token = authHeader ? authHeader.replace('Bearer ', '') : cookieToken
     const authHeaderValue = token ? `Bearer ${token}` : null
 
-    const backendUrl = `http://localhost:8085/api/newsletter/category/${backendCategory}/headlines?limit=${limit}`;
+    const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/newsletter/category/${backendCategory}/headlines?limit=${limit}`;
     console.log('🌐 백엔드 API 호출:', backendUrl);
 
     // 백엔드 API 호출 (토큰이 있으면 헤더에 포함, 없으면 제외)
@@ -120,7 +120,7 @@ export async function GET(request) {
           statsHeaders['Authorization'] = authHeaderValue;
         }
         
-        const statsResponse = await fetch(`http://localhost:8085/api/newsletter/stats/subscribers/category/${backendCategory}`, {
+        const statsResponse = await fetch(`${process.env.BACKEND_URL || 'http://localhost:8000'}/api/newsletter/stats/subscribers/category/${backendCategory}`, {
           method: 'GET',
           headers: statsHeaders
         });

@@ -169,10 +169,12 @@ export function useCategoryArticles(category, limit = 5) {
     queryKey: ['category-articles', category, limit],
     queryFn: () => newsletterService.getCategoryArticles(category, limit),
     enabled: !!category,
-    staleTime: 5 * 60 * 1000, // 5분간 fresh 상태 유지
-    cacheTime: 15 * 60 * 1000, // 15분간 캐시 유지
+    staleTime: 10 * 60 * 1000, // 10분간 fresh 상태 유지 (5분에서 증가)
+    cacheTime: 30 * 60 * 1000, // 30분간 캐시 유지 (15분에서 증가)
     retry: 1, // 재시도 횟수 제한
     retryDelay: 1000, // 재시도 간격
+    refetchOnWindowFocus: false, // 윈도우 포커스 시 재요청 방지
+    refetchOnMount: false, // 컴포넌트 마운트 시 재요청 방지
     onError: (error) => {
       console.warn(`카테고리 ${category} 기사 조회 실패:`, error.message)
     }
@@ -202,9 +204,9 @@ export function useCategoryHeadlines(category, limit = 5) {
   return useQuery({
     queryKey: ['category-headlines', category, limit],
     queryFn: () => newsletterService.getCategoryHeadlines(category, limit),
-    enabled: !!category,
-    staleTime: 30 * 60 * 1000, // 30분간 fresh 상태 유지 (15분에서 증가)
-    cacheTime: 60 * 60 * 1000, // 1시간간 캐시 유지 (45분에서 증가)
+    enabled: !!category && category !== "전체", // "전체" 카테고리일 때는 비활성화
+    staleTime: 60 * 60 * 1000, // 1시간간 fresh 상태 유지 (더 길게 설정)
+    cacheTime: 2 * 60 * 60 * 1000, // 2시간간 캐시 유지 (더 길게 설정)
     retry: 1, // 재시도 횟수 제한
     retryDelay: 3000, // 재시도 간격
     refetchOnWindowFocus: false, // 윈도우 포커스 시 재요청 방지

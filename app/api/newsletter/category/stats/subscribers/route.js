@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const response = await fetch('http://localhost:8085/api/newsletter/category/stats/subscribers', {
+    const response = await fetch(`${process.env.BACKEND_URL || 'http://localhost:8000'}/api/newsletter/category/stats/subscribers`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

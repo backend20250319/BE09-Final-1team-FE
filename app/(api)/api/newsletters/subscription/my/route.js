@@ -11,7 +11,7 @@ export async function GET(request) {
     }
 
     // 백엔드 API 호출
-    const response = await fetch('http://localhost:8085/api/newsletter/subscription/my', {
+    const response = await fetch(`${process.env.BACKEND_URL || 'http://localhost:8000'}/api/newsletter/subscription/my`, {
       method: 'GET',
       headers: {
         'Authorization': authHeader,

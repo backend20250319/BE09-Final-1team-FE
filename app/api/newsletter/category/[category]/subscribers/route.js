@@ -6,7 +6,7 @@ export async function GET(request, { params }) {
   try {
     // 백엔드 API 호출
     const encodedCategory = encodeURIComponent(category);
-    const response = await fetch(`http://localhost:8085/api/newsletter/category/${encodedCategory}/subscribers`, {
+    const response = await fetch(`${process.env.BACKEND_URL || 'http://localhost:8000'}/api/newsletter/category/${encodedCategory}/subscribers`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
