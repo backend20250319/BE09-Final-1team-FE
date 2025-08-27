@@ -8,54 +8,29 @@ import { useRouter } from 'next/navigation';
 import FontSizeButton from "./FontSizeButton";
 import FontSizeSelector from "./FontSizeSelector";
 import { useScrap } from "@/contexts/ScrapContext";
-import ReportModal from './ReportModal'; // 신고 모달 컴포넌트 import
-import LoginConfirmModal from '@/components/auth/LoginConfirmModal'; // 로그인 확인 모달 import
+import ReportModal from './ReportModal';
+import LoginConfirmModal from './LoginConfirmModal';
 
 const NewsActions = ({ newsData, onSummaryOpen, onShareOpen, isFontSizeSelectorOpen, onFontSizeSelectorToggle, fontSize, onFontSizeChange }) => {
   const { addScrap } = useScrap();
   const router = useRouter();
 
   const [isScrapLoading, setIsScrapLoading] = useState(false);
-  const [isReportModalOpen, setIsReportModalOpen] = useState(false); // 신고 모달 상태
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false); // 로그인 확인 모달 상태
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   const handleScrap = async () => {
     const authToken = localStorage.getItem('accessToken');
-
     if (!authToken) {
       setIsLoginModalOpen(true);
       return;
     }
 
+    if (isScrapLoading) return;
+
     setIsScrapLoading(true);
-
     try {
-      const response = await fetch(`/api/news/${newsData.newsId}/scrap`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        addScrap(newsData);
-        toast.success("기사가 스크랩되었습니다.");
-      } else {
-        const errorData = await response.json().catch(() => ({ message: "서버 응답을 파싱할 수 없습니다." }));
-
-        if (response.status === 401) {
-          toast.error("세션이 만료되었습니다. 다시 로그인해주세요.");
-          router.push("/auth");
-        } else if (response.status === 403) {
-          toast.error("이 기사는 관리자에 의해 비공개 처리되었습니다.");
-        } else {
-          toast.error(errorData.message || "요청 처리 중 오류가 발생했습니다.");
-        }
-      }
-    } catch (error) {
-      console.error(`Error during scrap:`, error);
-      toast.error("네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+      await addScrap(newsData);
     } finally {
       setIsScrapLoading(false);
     }
