@@ -193,7 +193,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
     error: subscriptionsError,
     refetch: refetchSubscriptions 
   } = useUserSubscriptions({
-    enabled: !!userRole, // 사용자 역할이 있을 때만 활성화
+    enabled: !!userRole && isClient, // 사용자 역할이 있고 클라이언트에서만 활성화
     retry: 1,
     retryDelay: 1000,
     staleTime: 5 * 60 * 1000, // 5분간 fresh 상태 유지
@@ -307,9 +307,17 @@ export default function NewsletterPageClient({ initialNewsletters }) {
     return () => clearTimeout(timer)
   }, [])
 
+  // 사용자 역할이 설정되면 구독 정보 새로고침
+  useEffect(() => {
+    if (userRole && isClient && refetchSubscriptions) {
+      console.log('🔄 사용자 역할 설정됨, 구독 정보 새로고침 시작');
+      refetchSubscriptions();
+    }
+  }, [userRole, isClient, refetchSubscriptions]);
+
   // 서버 구독 목록이 업데이트되면 로컬 상태 동기화
   useEffect(() => {
-    if (Array.isArray(userSubscriptions)) {
+    if (Array.isArray(userSubscriptions) && !subscriptionsLoading) {
       // 이전 데이터와 비교하여 실제 변경사항이 있는지 확인
       const prevData = prevUserSubscriptionsRef.current;
       const currentData = JSON.stringify(userSubscriptions);
@@ -327,11 +335,17 @@ export default function NewsletterPageClient({ initialNewsletters }) {
       userSubscriptions.forEach(sub => {
         console.log('📋 구독 정보 처리:', sub);
         
-        // preferredCategories 배열 처리 (백엔드에서 이 필드로 카테고리 정보를 제공)
-        if (sub.preferredCategories && Array.isArray(sub.preferredCategories)) {
-          console.log('📋 preferredCategories:', sub.preferredCategories);
+        // 매핑된 구독 데이터에서 카테고리 추출
+        if (sub.category) {
+          serverCategories.add(sub.category);
+          console.log(`✅ ${sub.category} 추가됨 (직접 매핑)`);
+        }
+        
+        // 백엔드 원본 데이터에서 preferredCategories 처리 (fallback)
+        if (sub._backendData && sub._backendData.preferredCategories && Array.isArray(sub._backendData.preferredCategories)) {
+          console.log('📋 백엔드 preferredCategories:', sub._backendData.preferredCategories);
           
-          sub.preferredCategories.forEach(prefCat => {
+          sub._backendData.preferredCategories.forEach(prefCat => {
             console.log('🔍 카테고리 매핑 중:', prefCat);
             
             // 백엔드 카테고리명을 프론트엔드 카테고리명으로 변환
@@ -352,13 +366,11 @@ export default function NewsletterPageClient({ initialNewsletters }) {
             
             if (frontendCategory) {
               serverCategories.add(frontendCategory);
-              console.log(`✅ ${frontendCategory} 추가됨`);
+              console.log(`✅ ${frontendCategory} 추가됨 (백엔드 매핑)`);
             } else {
               console.log(`❌ 매핑 실패: ${prefCat}`);
             }
           });
-        } else {
-          console.log('❌ preferredCategories가 없거나 배열이 아님:', sub.preferredCategories);
         }
       });
       
@@ -389,7 +401,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
         console.log('🔄 서버 구독 목록 동기화: 변경사항 없음');
       }
     }
-  }, [userSubscriptions]);
+  }, [userSubscriptions, subscriptionsLoading]);
 
 
 
@@ -421,24 +433,18 @@ export default function NewsletterPageClient({ initialNewsletters }) {
 
   // 구독 여부 판단
   const isSubscribedByCategory = (category) => {
-    // 로컬 상태에서 먼저 확인
-    if (localSubscriptions.has(category)) {
-      console.log(`✅ ${category}: 로컬 상태에서 구독 중`);
-      return true;
-    }
-    
-    // 서버 구독 목록에서 확인
+    // 서버 구독 목록에서 먼저 확인 (더 정확함)
     if (Array.isArray(userSubscriptions)) {
       const isSubscribed = userSubscriptions.some(sub => {
-        // 카테고리 직접 매칭
+        // 매핑된 카테고리 직접 매칭
         if (sub.category === category) {
           console.log(`✅ ${category}: 서버 구독에서 직접 매칭`);
           return true;
         }
         
-        // preferredCategories 배열에서 확인
-        if (sub.preferredCategories && Array.isArray(sub.preferredCategories)) {
-          return sub.preferredCategories.some(prefCat => {
+        // 백엔드 원본 데이터에서 preferredCategories 확인 (fallback)
+        if (sub._backendData && sub._backendData.preferredCategories && Array.isArray(sub._backendData.preferredCategories)) {
+          return sub._backendData.preferredCategories.some(prefCat => {
             // 백엔드 카테고리명을 프론트엔드 카테고리명으로 변환
             const categoryMapping = {
               'POLITICS': '정치',
@@ -463,13 +469,18 @@ export default function NewsletterPageClient({ initialNewsletters }) {
         return false;
       });
       
-      if (!isSubscribed) {
-        console.log(`❌ ${category}: 구독하지 않음`);
+      if (isSubscribed) {
+        return true;
       }
-      return isSubscribed;
     }
     
-    console.log(`❌ ${category}: userSubscriptions가 배열이 아님`);
+    // 로컬 상태에서 확인 (서버 상태가 없을 때 fallback)
+    if (localSubscriptions.has(category)) {
+      console.log(`✅ ${category}: 로컬 상태에서 구독 중 (서버 상태 없음)`);
+      return true;
+    }
+    
+    console.log(`❌ ${category}: 구독하지 않음`);
     return false;
   };
 
@@ -496,12 +507,12 @@ export default function NewsletterPageClient({ initialNewsletters }) {
       return;
     }
 
+    // 서버에서 최신 구독 상태를 먼저 확인
+    const isCurrentlySubscribed = isSubscribedByCategory(newsletter.category);
+    
     if (checked) {
-      // 구독 제한 확인 (최대 3개 카테고리)
-      const currentSubscriptions = Array.from(localSubscriptions);
-      
-      // 이미 구독 중인 카테고리인지 확인
-      if (currentSubscriptions.includes(newsletter.category)) {
+      // 이미 구독 중인 카테고리인지 확인 (서버 상태 기준)
+      if (isCurrentlySubscribed) {
         toast({
           title: "이미 구독 중",
           description: `${newsletter.category} 카테고리는 이미 구독 중입니다.`,
@@ -510,6 +521,9 @@ export default function NewsletterPageClient({ initialNewsletters }) {
         });
         return;
       }
+      
+      // 구독 제한 확인 (최대 3개 카테고리)
+      const currentSubscriptions = Array.from(localSubscriptions);
       
       // 3개 제한 확인
       if (currentSubscriptions.length >= 3) {
@@ -522,6 +536,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
         return;
       }
 
+      // 로컬 상태 업데이트 (낙관적 업데이트)
       setLocalSubscriptions(prev => new Set([...prev, newsletter.category]));
       
       subscribeMutation.mutate(
@@ -586,41 +601,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
         return newSet;
       });
       
-      // 해당 카테고리의 구독을 찾아서 해제
-      const sub = (userSubscriptions || []).find(s => {
-        // preferredCategories 배열에서 확인
-        if (s.preferredCategories && Array.isArray(s.preferredCategories)) {
-          const categoryMapping = {
-            'POLITICS': '정치',
-            'ECONOMY': '경제',
-            'SOCIETY': '사회',
-            'LIFE': '생활',
-            'INTERNATIONAL': '세계',
-            'IT_SCIENCE': 'IT/과학',
-            'VEHICLE': '자동차/교통',
-            'TRAVEL_FOOD': '여행/음식',
-            'ART': '예술'
-          };
-          
-          return s.preferredCategories.some(prefCat => {
-            const frontendCategory = categoryMapping[prefCat];
-            return frontendCategory === newsletter.category;
-          });
-        }
-        
-        return false;
-      });
-      
-      if (!sub) {
-        toast({
-          title: "구독 정보 오류",
-          description: "해당 카테고리의 구독 정보를 찾을 수 없습니다.",
-          variant: "destructive",
-          icon: <AlertCircle className="h-4 w-4 text-red-500" />
-        });
-        return;
-      }
-      
+      // 구독 해제 시 카테고리명을 직접 전달
       unsubscribeMutation.mutate(newsletter.category, {
         onSuccess: () => {
           // 성공 시 로컬 상태에서 즉시 제거하고 서버에서 최신 구독 정보를 가져옴
@@ -1265,28 +1246,47 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                                     }
                                   });
                                   
-                                  unsubscribeMutation.mutate(subscription.id, {
-                                    onError: () => {
-                                      // 실패 시 로컬 상태 복원
-                                      categories.forEach(cat => {
-                                        const categoryMapping = {
-                                          'POLITICS': '정치',
-                                          'ECONOMY': '경제',
-                                          'SOCIETY': '사회',
-                                          'LIFE': '생활',
-                                          'INTERNATIONAL': '세계',
-                                          'IT_SCIENCE': 'IT/과학',
-                                          'VEHICLE': '자동차/교통',
-                                          'TRAVEL_FOOD': '여행/음식',
-                                          'ART': '예술'
-                                        };
-                                        const frontendCategory = categoryMapping[cat];
-                                        if (frontendCategory) {
-                                          setLocalSubscriptions(prev => new Set([...prev, frontendCategory]));
+                                  // 첫 번째 카테고리를 기준으로 구독 해제 (일관성을 위해)
+                                  const firstCategory = categories[0];
+                                  if (firstCategory) {
+                                    const categoryMapping = {
+                                      'POLITICS': '정치',
+                                      'ECONOMY': '경제',
+                                      'SOCIETY': '사회',
+                                      'LIFE': '생활',
+                                      'INTERNATIONAL': '세계',
+                                      'IT_SCIENCE': 'IT/과학',
+                                      'VEHICLE': '자동차/교통',
+                                      'TRAVEL_FOOD': '여행/음식',
+                                      'ART': '예술'
+                                    };
+                                    const frontendCategory = categoryMapping[firstCategory];
+                                    
+                                    if (frontendCategory) {
+                                      unsubscribeMutation.mutate(frontendCategory, {
+                                        onError: () => {
+                                          // 실패 시 로컬 상태 복원
+                                          categories.forEach(cat => {
+                                            const categoryMapping = {
+                                              'POLITICS': '정치',
+                                              'ECONOMY': '경제',
+                                              'SOCIETY': '사회',
+                                              'LIFE': '생활',
+                                              'INTERNATIONAL': '세계',
+                                              'IT_SCIENCE': 'IT/과학',
+                                              'VEHICLE': '자동차/교통',
+                                              'TRAVEL_FOOD': '여행/음식',
+                                              'ART': '예술'
+                                            };
+                                            const frontendCategory = categoryMapping[cat];
+                                            if (frontendCategory) {
+                                              setLocalSubscriptions(prev => new Set([...prev, frontendCategory]));
+                                            }
+                                          });
                                         }
                                       });
                                     }
-                                  });
+                                  }
                                 }}
                                 disabled={unsubscribeMutation.isPending}
                                 className="hover-glow text-red-500 hover:text-red-700"

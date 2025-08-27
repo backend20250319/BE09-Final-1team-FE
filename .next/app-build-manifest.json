@@ -16,15 +16,15 @@
       "static/chunks/main-app.js",
       "static/chunks/app/page.js"
     ],
-    "/api/news/trending/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/news/trending/route.js"
-    ],
     "/api/news/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/api/news/route.js"
+    ],
+    "/api/news/trending/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/news/trending/route.js"
     ],
     "/api/news/trending-keywords/route": [
       "static/chunks/webpack.js",
@@ -50,6 +50,21 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/api/newsletter/stats/subscribers/route.js"
+    ],
+    "/(api)/api/newsletters/user-subscriptions/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(api)/api/newsletters/user-subscriptions/route.js"
+    ],
+    "/(api)/api/newsletters/unsubscribe/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(api)/api/newsletters/unsubscribe/route.js"
+    ],
+    "/(api)/api/newsletters/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(api)/api/newsletters/route.js"
     ]
   }
 }

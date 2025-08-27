@@ -1,5 +1,8 @@
 {
+  "/(api)/api/newsletters/unsubscribe/route": "app/(api)/api/newsletters/unsubscribe/route.js",
+  "/(api)/api/newsletters/route": "app/(api)/api/newsletters/route.js",
   "/api/newsletters/category/articles/route": "app/api/newsletters/category/articles/route.js",
+  "/(api)/api/newsletters/user-subscriptions/route": "app/(api)/api/newsletters/user-subscriptions/route.js",
   "/api/newsletter/category/trending-keywords/route": "app/api/newsletter/category/trending-keywords/route.js",
   "/api/newsletter/stats/subscribers/route": "app/api/newsletter/stats/subscribers/route.js",
   "/page": "app/page.js",
