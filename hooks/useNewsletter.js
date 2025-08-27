@@ -46,6 +46,8 @@ export function useSubscribeNewsletter() {
     onSuccess: (data, variables) => {
       // 구체적인 쿼리만 무효화하여 불필요한 리로딩 방지
       queryClient.invalidateQueries(['user-subscriptions'])
+      // 구독자 통계도 무효화하여 실시간 업데이트
+      queryClient.invalidateQueries(['newsletter-stats-subscribers'])
       
       toast({
         title: "구독 완료!",
@@ -77,6 +79,8 @@ export function useUnsubscribeNewsletter() {
     onSuccess: (data, variables) => {
       // 구체적인 쿼리만 무효화하여 불필요한 리로딩 방지
       queryClient.invalidateQueries(['user-subscriptions'])
+      // 구독자 통계도 무효화하여 실시간 업데이트
+      queryClient.invalidateQueries(['newsletter-stats-subscribers'])
       
       toast({
         title: "구독 해제 완료",

@@ -20,73 +20,39 @@ import Link from "next/link"
 import { getUserRole, getUserInfo } from "@/lib/auth"
 import Header from "@/components/header"
 import { useNewsletters, useUserSubscriptions, useSubscribeNewsletter, useUnsubscribeNewsletter, useCategoryArticles, useTrendingKeywords, useCategoryHeadlines } from "@/hooks/useNewsletter"
+import { useQuery } from '@tanstack/react-query'
 
 // 카테고리별 구독자 수를 한 번에 가져오는 커스텀 훅
 const useCategorySubscriberCounts = (categories) => {
-  const [counts, setCounts] = useState({});
-  const [loading, setLoading] = useState(true);
-  const hasInitializedRef = useRef(false);
-
-  useEffect(() => {
-    if (hasInitializedRef.current) {
-      return;
-    }
-
-    const fetchAllCategoryCounts = async () => {
+  const { data: counts = {}, isLoading: loading } = useQuery({
+    queryKey: ['newsletter-stats-subscribers'],
+    queryFn: async () => {
       console.log('🔄 카테고리별 구독자 수 로딩 시작');
-      setLoading(true);
       
-      try {
-        // 기본값을 0으로 설정
-        const initialCounts = {};
-        categories.forEach(category => {
-          initialCounts[category] = 0;
-        });
-        setCounts(initialCounts);
+      const response = await fetch('/api/newsletter/stats/subscribers');
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('📊 API 응답 데이터:', data);
         
-        // API 호출 (백그라운드에서 실행)
-        const response = await fetch('/api/newsletter/stats/subscribers');
-        
-        if (response.ok) {
-          const data = await response.json();
-          console.log('📊 API 응답 데이터:', data);
-          
-          if (data.success && data.data) {
-            const newCounts = { ...initialCounts };
-            
-            // API 응답으로 실제 데이터 업데이트
-            if (typeof data.data === 'object' && data.data !== null) {
-              Object.keys(data.data).forEach(category => {
-                if (newCounts[category] !== undefined && typeof data.data[category] === 'number') {
-                  newCounts[category] = data.data[category];
-                }
-              });
-            }
-            
-            setCounts(newCounts);
-            console.log('✅ 카테고리별 구독자 수 설정 완료:', newCounts);
-          } else {
-            console.warn("전체 통계 API 응답 구조 오류:", data);
-          }
+        if (data.success && data.data) {
+          console.log('✅ 카테고리별 구독자 수 설정 완료:', data.data);
+          return data.data;
         } else {
-          console.warn("전체 통계 API 호출 실패:", response.status);
+          console.warn("전체 통계 API 응답 구조 오류:", data);
+          return {};
         }
-      } catch (error) {
-        console.error("카테고리별 구독자 수 로딩 실패:", error);
-      } finally {
-        console.log('🏁 카테고리별 구독자 수 로딩 완료');
-        setLoading(false);
-        hasInitializedRef.current = true;
+      } else {
+        console.warn("전체 통계 API 호출 실패:", response.status);
+        return {};
       }
-    };
-
-    if (categories && categories.length > 0) {
-      fetchAllCategoryCounts();
-    } else {
-      setLoading(false);
-      hasInitializedRef.current = true;
-    }
-  }, []); // 빈 의존성 배열로 한 번만 실행
+    },
+    staleTime: 30 * 1000, // 30초간 fresh 상태 유지
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
+    retry: 1,
+    retryDelay: 1000,
+  });
 
   return { counts, loading };
 };
@@ -318,7 +284,11 @@ export default function NewsletterPageClient({ initialNewsletters }) {
         }
       });
       
-      console.log('서버 구독 목록 동기화:', Array.from(serverCategories));
+      console.log('🔄 서버 구독 목록 동기화:', {
+        userSubscriptions: userSubscriptions,
+        serverCategories: Array.from(serverCategories),
+        currentLocalSubscriptions: Array.from(localSubscriptions)
+      });
       setLocalSubscriptions(serverCategories);
     }
   }, [userSubscriptions]);
@@ -354,13 +324,19 @@ export default function NewsletterPageClient({ initialNewsletters }) {
   // 구독 여부 판단
   const isSubscribedByCategory = (category) => {
     // 로컬 상태에서 먼저 확인
-    if (localSubscriptions.has(category)) return true;
+    if (localSubscriptions.has(category)) {
+      console.log(`✅ ${category}: 로컬 상태에서 구독 중`);
+      return true;
+    }
     
     // 서버 구독 목록에서 확인
     if (Array.isArray(userSubscriptions)) {
-      return userSubscriptions.some(sub => {
+      const isSubscribed = userSubscriptions.some(sub => {
         // 카테고리 직접 매칭
-        if (sub.category === category) return true;
+        if (sub.category === category) {
+          console.log(`✅ ${category}: 서버 구독에서 직접 매칭`);
+          return true;
+        }
         
         // preferredCategories 배열에서 확인
         if (sub.preferredCategories && Array.isArray(sub.preferredCategories)) {
@@ -378,14 +354,24 @@ export default function NewsletterPageClient({ initialNewsletters }) {
               'ART': '예술'
             };
             const frontendCategory = categoryMapping[prefCat];
-            return frontendCategory === category;
+            if (frontendCategory === category) {
+              console.log(`✅ ${category}: 서버 구독에서 preferredCategories 매칭 (${prefCat} -> ${frontendCategory})`);
+              return true;
+            }
+            return false;
           });
         }
         
         return false;
       });
+      
+      if (!isSubscribed) {
+        console.log(`❌ ${category}: 구독하지 않음`);
+      }
+      return isSubscribed;
     }
     
+    console.log(`❌ ${category}: userSubscriptions가 배열이 아님`);
     return false;
   };
 
@@ -415,6 +401,19 @@ export default function NewsletterPageClient({ initialNewsletters }) {
     if (checked) {
       // 구독 제한 확인 (최대 3개 카테고리)
       const currentSubscriptions = Array.from(localSubscriptions);
+      
+      // 이미 구독 중인 카테고리인지 확인
+      if (currentSubscriptions.includes(newsletter.category)) {
+        toast({
+          title: "이미 구독 중",
+          description: `${newsletter.category} 카테고리는 이미 구독 중입니다.`,
+          variant: "destructive",
+          icon: <AlertCircle className="h-4 w-4 text-red-500" />
+        });
+        return;
+      }
+      
+      // 3개 제한 확인
       if (currentSubscriptions.length >= 3) {
         toast({
           title: "구독 제한",
@@ -433,9 +432,24 @@ export default function NewsletterPageClient({ initialNewsletters }) {
           onSuccess: () => {
             // 성공 시 서버에서 최신 구독 정보를 가져옴
             refetchSubscriptions();
+            
+            // 구독자 통계 즉시 업데이트
+            const queryClient = subscribeMutation.queryClient;
+            if (queryClient) {
+              queryClient.setQueryData(['newsletter-stats-subscribers'], (oldData) => {
+                if (oldData && typeof oldData === 'object') {
+                  const newData = { ...oldData };
+                  // 새로 구독한 카테고리 +1
+                  newData[newsletter.category] = (newData[newsletter.category] || 0) + 1;
+                  return newData;
+                }
+                return oldData;
+              });
+            }
+            
             toast({
               title: "구독 완료",
-              description: `${newsletter.category} 카테고리를 구독했습니다. (${currentSubscriptions.length + 1}/3)`,
+              description: `${newsletter.category} 카테고리를 구독했습니다. (${Array.from(localSubscriptions).length}/3)`,
               icon: <CheckCircle className="h-4 w-4 text-green-500" />
             });
           },
@@ -518,6 +532,20 @@ export default function NewsletterPageClient({ initialNewsletters }) {
             return newSet;
           });
           refetchSubscriptions();
+          
+          // 구독자 통계 즉시 업데이트
+          const queryClient = unsubscribeMutation.queryClient;
+          if (queryClient) {
+            queryClient.setQueryData(['newsletter-stats-subscribers'], (oldData) => {
+              if (oldData && typeof oldData === 'object') {
+                const newData = { ...oldData };
+                newData[newsletter.category] = Math.max(0, (newData[newsletter.category] || 0) - 1);
+                return newData;
+              }
+              return oldData;
+            });
+          }
+          
           toast({
             title: "구독 해제",
             description: `${newsletter.category} 카테고리 구독을 해제했습니다.`,
@@ -1004,14 +1032,14 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                             <div>
                               <span className="font-medium text-blue-600">'{newsletter.category}' 카테고리를 구독하고 있습니다.</span>
                               <div className="mt-1 text-gray-500">
-                                현재 구독: {localSubscriptions.size}/3개 카테고리
+                                현재 구독: {Array.from(localSubscriptions).length}/3개 카테고리
                               </div>
                             </div>
                           ) : (
                             <div>
                               <span>이 토글은 <span className="font-medium">'{newsletter.category}'</span> 카테고리 구독을 전환합니다.</span>
                               <div className="mt-1 text-gray-500">
-                                현재 구독: {localSubscriptions.size}/3개 카테고리
+                                현재 구독: {Array.from(localSubscriptions).length}/3개 카테고리
                               </div>
                             </div>
                           )}
@@ -1065,7 +1093,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                       </Link>
                     </CardTitle>
                     <CardDescription>
-                      현재 구독 중인 뉴스레터 ({localSubscriptions.size}/3개)
+                      현재 구독 중인 뉴스레터 ({Array.from(localSubscriptions).length}/3개)
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
