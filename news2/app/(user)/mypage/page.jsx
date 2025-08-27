@@ -17,6 +17,7 @@ import ProfileTab from "./_components/ProfileTab";
 import ScrapsTab from "./_components/ScrapsTab";
 import HistoryTab from "./_components/HistoryTab";
 import SettingsTab from "./_components/SettingsTab";
+import CollectionsTab from "./_components/CollectionsTab"; // 새로 추가
 
 function MyPageContent() {
   const searchParams = useSearchParams();
@@ -27,7 +28,7 @@ function MyPageContent() {
     const tab = searchParams.get("tab");
     if (
       tab &&
-      ["profile", "interests", "scraps", "history", "settings"].includes(tab)
+      ["profile", "scraps", "collections", "history", "settings"].includes(tab) // "collections" 추가
     ) {
       setActiveTab(tab);
     }
@@ -52,9 +53,10 @@ function MyPageContent() {
                 className="w-full"
               >
                 {/* 탭 메뉴 */}
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-5">
                   <TabsTrigger value="profile">프로필</TabsTrigger>
                   <TabsTrigger value="scraps">스크랩</TabsTrigger>
+                  <TabsTrigger value="collections">컬렉션</TabsTrigger>
                   <TabsTrigger value="history">읽기 기록</TabsTrigger>
                   <TabsTrigger value="settings">설정</TabsTrigger>
                 </TabsList>
@@ -66,6 +68,10 @@ function MyPageContent() {
 
                 <TabsContent value="scraps">
                   <ScrapsTab />
+                </TabsContent>
+
+                <TabsContent value="collections">
+                  <CollectionsTab />
                 </TabsContent>
 
                 <TabsContent value="history">
