@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -19,37 +19,22 @@ import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import { getUserRole, getUserInfo } from "@/lib/auth"
 import Header from "@/components/header"
-import { useNewsletters, useUserSubscriptions, useSubscribeNewsletter, useUnsubscribeNewsletter, useCategoryArticles, useCategoryHeadlines } from "@/hooks/useNewsletter"
+import { useNewsletters, useUserSubscriptions, useSubscribeNewsletter, useUnsubscribeNewsletter, useCategoryArticles, useTrendingKeywords, useCategoryHeadlines } from "@/hooks/useNewsletter"
 
 // 카테고리별 구독자 수를 한 번에 가져오는 커스텀 훅
 const useCategorySubscriberCounts = (categories) => {
-  const [state, setState] = useState({
-    counts: {},
-    loading: true,
-    hasData: false
-  });
+  const [counts, setCounts] = useState({});
+  const [loading, setLoading] = useState(true);
   const hasInitializedRef = useRef(false);
-  const isFetchingRef = useRef(false);
 
   useEffect(() => {
-    // 이미 초기화되었거나 현재 fetch 중이면 중단
-    if (hasInitializedRef.current || isFetchingRef.current) {
-      return;
-    }
-
-    // 카테고리가 없으면 로딩 완료
-    if (!categories || categories.length === 0) {
-      setState(prev => ({
-        ...prev,
-        loading: false
-      }));
-      hasInitializedRef.current = true;
+    if (hasInitializedRef.current) {
       return;
     }
 
     const fetchAllCategoryCounts = async () => {
       console.log('🔄 카테고리별 구독자 수 로딩 시작');
-      isFetchingRef.current = true;
+      setLoading(true);
       
       try {
         // 기본값을 즉시 설정하여 UI 반응성 향상
@@ -69,13 +54,7 @@ const useCategorySubscriberCounts = (categories) => {
         categories.forEach(category => {
           initialCounts[category] = categoryDefaults[category] || 10000;
         });
-        
-        // 상태를 한 번에 업데이트 (배치화)
-        setState(prev => ({
-          ...prev,
-          counts: initialCounts,
-          hasData: true
-        }));
+        setCounts(initialCounts);
         
         // API 호출 (백그라운드에서 실행)
         const response = await fetch('/api/newsletter/stats/subscribers');
@@ -90,12 +69,7 @@ const useCategorySubscriberCounts = (categories) => {
                 newCounts[category] = data.data[category];
               }
             });
-            
-            // 최종 상태를 한 번에 업데이트
-            setState(prev => ({
-              ...prev,
-              counts: newCounts
-            }));
+            setCounts(newCounts);
             console.log('✅ 카테고리별 구독자 수 설정 완료:', newCounts);
           } else {
             console.warn("전체 통계 API 응답 오류:", response.status);
@@ -107,23 +81,20 @@ const useCategorySubscriberCounts = (categories) => {
         console.error("카테고리별 구독자 수 로딩 실패:", error);
       } finally {
         console.log('🏁 카테고리별 구독자 수 로딩 완료');
-        setState(prev => ({
-          ...prev,
-          loading: false
-        }));
+        setLoading(false);
         hasInitializedRef.current = true;
-        isFetchingRef.current = false;
       }
     };
 
-    fetchAllCategoryCounts();
-  }, [categories]); // categories를 의존성으로 추가
+    if (categories && categories.length > 0) {
+      fetchAllCategoryCounts();
+    } else {
+      setLoading(false);
+      hasInitializedRef.current = true;
+    }
+  }, []); // 빈 의존성 배열로 한 번만 실행
 
-  return { 
-    counts: state.counts, 
-    loading: state.loading, 
-    hasData: state.hasData 
-  };
+  return { counts, loading };
 };
 
 // 카테고리별 주제 생성 함수
@@ -145,48 +116,6 @@ const generateTopicsForCategory = (category) => {
 // 최근 헤드라인 생성 함수
 const generateRecentHeadlines = (category) => {
   const headlinesMap = {
-    "정치": [
-      { title: "국정감사 시작, 여야 간 주요 쟁점 논의 예정", time: "1시간 전", views: "3.5K" },
-      { title: "외교부, 주요국과 양자회담 개최 계획 발표", time: "3시간 전", views: "2.8K" },
-      { title: "국회 예산안 심의, 내년도 재정운용 방향 논의", time: "5시간 전", views: "2.1K" },
-      { title: "정책발표, 경제 활성화를 위한 새로운 방안 제시", time: "1일 전", views: "4.2K" },
-      { title: "선거제도 개편 논의, 정치 개혁안 주요 내용", time: "2일 전", views: "3.1K" }
-    ],
-    "경제": [
-      { title: "주식시장 상승세 지속, 외국인 투자자 순매수 확대", time: "30분 전", views: "5.2K" },
-      { title: "부동산 시장 안정화 정책, 새로운 규제 방안 발표", time: "2시간 전", views: "4.8K" },
-      { title: "금리 인하 기대감 확산, 중앙은행 정책 방향 주목", time: "4시간 전", views: "3.9K" },
-      { title: "환율 변동성 확대, 수출입업계 영향 분석", time: "1일 전", views: "3.2K" },
-      { title: "기업실적 발표 시즌, 주요 기업들 실적 전망", time: "2일 전", views: "2.7K" }
-    ],
-    "사회": [
-      { title: "교육정책 개편안 발표, 학생 중심 교육으로 전환", time: "1시간 전", views: "4.1K" },
-      { title: "의료진 부족 현상 심화, 의사 수급 대책 마련", time: "3시간 전", views: "3.6K" },
-      { title: "환경보호 정책 강화, 탄소중립 목표 달성 방안", time: "5시간 전", views: "2.9K" },
-      { title: "교통사고 감소를 위한 새로운 안전정책 시행", time: "1일 전", views: "2.4K" },
-      { title: "복지정책 확대, 취약계층 지원 방안 발표", time: "2일 전", views: "3.3K" }
-    ],
-    "생활": [
-      { title: "건강관리 트렌드, 올해 주목할 건강법 5가지", time: "2시간 전", views: "3.8K" },
-      { title: "요리 레시피 공유, 집에서 만드는 건강한 한끼", time: "4시간 전", views: "2.5K" },
-      { title: "패션 트렌드 리포트, 올해의 인기 스타일 분석", time: "6시간 전", views: "2.1K" },
-      { title: "육아 정보, 아이와 함께하는 창의적 놀이법", time: "1일 전", views: "1.9K" },
-      { title: "취미 생활 가이드, 새로운 취미로 삶의 질 향상", time: "2일 전", views: "1.7K" }
-    ],
-    "세계": [
-      { title: "국제정치 동향, 주요국 정상회담 결과 분석", time: "1시간 전", views: "4.3K" },
-      { title: "글로벌경제 전망, 세계 경제 성장률 예측", time: "3시간 전", views: "3.7K" },
-      { title: "외교 관계 변화, 새로운 국제 협력 체계 구축", time: "5시간 전", views: "2.8K" },
-      { title: "국제 분쟁 해결 노력, 평화 협상 진행 상황", time: "1일 전", views: "3.4K" },
-      { title: "문화교류 확대, 한류의 세계적 영향력 분석", time: "2일 전", views: "2.6K" }
-    ],
-    "IT/과학": [
-      { title: "인공지능 기술 발전, 새로운 AI 모델 출시", time: "30분 전", views: "6.1K" },
-      { title: "블록체인 기술 응용, 금융권 디지털 혁신 가속", time: "2시간 전", views: "4.9K" },
-      { title: "클라우드 서비스 확대, 기업 디지털 전환 가속화", time: "4시간 전", views: "3.8K" },
-      { title: "모바일 기술 혁신, 새로운 스마트폰 기능 소개", time: "1일 전", views: "4.5K" },
-      { title: "연구개발 성과, 혁신적 과학기술 발전 현황", time: "2일 전", views: "3.2K" }
-    ],
     "자동차/교통": [
       { title: "전기차 시장 급성장, 올해 판매량 전년 대비 150% 증가", time: "2시간 전", views: "2.1K" },
       { title: "자율주행 기술 발전, 도로교통법 개정안 발표", time: "4시간 전", views: "1.8K" },
@@ -219,7 +148,7 @@ const generateRecentHeadlines = (category) => {
   ];
 };
 
-const NewsletterPageClient = React.memo(function NewsletterPageClient({ initialNewsletters }) {
+export default function NewsletterPageClient({ initialNewsletters }) {
   const [selectedCategory, setSelectedCategory] = useState("전체")
   const [isLoaded, setIsLoaded] = useState(false)
   const [localSubscriptions, setLocalSubscriptions] = useState(new Set())
@@ -272,8 +201,8 @@ const NewsletterPageClient = React.memo(function NewsletterPageClient({ initialN
   const travelFoodData = useCategoryArticles("여행/음식", 5);
   const artData = useCategoryArticles("예술", 5);
   
-  // 카테고리별 데이터 맵 생성 (메모이제이션)
-  const categoryDataMap = useMemo(() => ({
+  // 카테고리별 데이터 맵 생성
+  const categoryDataMap = {
     "정치": politicsData.data,
     "경제": economyData.data,
     "사회": societyData.data,
@@ -283,100 +212,31 @@ const NewsletterPageClient = React.memo(function NewsletterPageClient({ initialN
     "자동차/교통": vehicleData.data,
     "여행/음식": travelFoodData.data,
     "예술": artData.data
-  }), [
-    politicsData.data,
-    economyData.data,
-    societyData.data,
-    lifeData.data,
-    worldData.data,
-    itScienceData.data,
-    vehicleData.data,
-    travelFoodData.data,
-    artData.data
-  ]);
+  };
   
-  // 각 카테고리별 트렌딩 키워드 조회 (최적화된 버전)
-  const [keywordsState, setKeywordsState] = useState({
-    categoryKeywordsMap: {},
-    loading: true
-  });
-  const keywordsFetchedRef = useRef(false);
-
-  // 트렌드 키워드를 한 번에 가져오는 함수
-  const fetchAllTrendingKeywords = useCallback(async () => {
-    if (keywordsFetchedRef.current) return;
-    
-    console.log('🔄 모든 카테고리 트렌드 키워드 로딩 시작');
-    keywordsFetchedRef.current = true;
-    
-    try {
-      const categories = ["정치", "경제", "사회", "생활", "세계", "IT/과학", "자동차/교통", "여행/음식", "예술"];
-      const keywordsMap = {};
-      
-      // 순차적으로 처리하여 타임아웃 문제 해결
-      for (const category of categories) {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 30000); // 30초로 타임아웃 증가
-          
-          console.log(`🔄 ${category} 카테고리 트렌드 키워드 조회 시작`);
-          
-          const response = await fetch(`/api/newsletter/category/trending-keywords?category=${encodeURIComponent(category)}&limit=8`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            signal: controller.signal,
-          });
-          
-          clearTimeout(timeoutId);
-          
-          if (response.ok) {
-            const data = await response.json();
-            console.log(`✅ ${category} 카테고리 트렌드 키워드 조회 성공:`, data.data?.length || 0, '개');
-            keywordsMap[category] = data.success ? data.data : [];
-          } else {
-            console.warn(`트렌드 키워드 조회 실패 (${response.status}): ${category}`);
-            keywordsMap[category] = [];
-          }
-        } catch (error) {
-          if (error.name === 'AbortError') {
-            console.warn(`트렌드 키워드 조회 타임아웃: ${category}`);
-          } else {
-            console.error(`트렌드 키워드 조회 오류 (${category}):`, error);
-          }
-          keywordsMap[category] = [];
-        }
-        
-        // 각 요청 사이에 짧은 지연 추가 (서버 부하 방지)
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-      
-      // 상태를 한 번에 업데이트 (배치화)
-      setKeywordsState(prev => ({
-        ...prev,
-        categoryKeywordsMap: keywordsMap,
-        loading: false
-      }));
-      console.log('✅ 모든 카테고리 트렌드 키워드 로딩 완료');
-    } catch (error) {
-      console.error('트렌드 키워드 로딩 실패:', error);
-      setKeywordsState(prev => ({
-        ...prev,
-        loading: false
-      }));
-    }
-  }, []);
-
-  // 컴포넌트 마운트 시 한 번만 실행 (의존성 배열 제거)
-  useEffect(() => {
-    fetchAllTrendingKeywords();
-  }, []); // 빈 의존성 배열로 변경
+  // 각 카테고리별 트렌딩 키워드 조회 (개별 훅으로 분리)
+  const politicsKeywords = useTrendingKeywords("정치", 8);
+  const economyKeywords = useTrendingKeywords("경제", 8);
+  const societyKeywords = useTrendingKeywords("사회", 8);
+  const lifeKeywords = useTrendingKeywords("생활", 8);
+  const worldKeywords = useTrendingKeywords("세계", 8);
+  const itScienceKeywords = useTrendingKeywords("IT/과학", 8);
+  const vehicleKeywords = useTrendingKeywords("자동차/교통", 8);
+  const travelFoodKeywords = useTrendingKeywords("여행/음식", 8);
+  const artKeywords = useTrendingKeywords("예술", 8);
   
-  // 카테고리별 트렌딩 키워드 맵 추출
-  const categoryKeywordsMap = keywordsState.categoryKeywordsMap;
-  const keywordsLoading = keywordsState.loading;
+  // 카테고리별 트렌딩 키워드 맵 생성
+  const categoryKeywordsMap = {
+    "정치": politicsKeywords.data,
+    "경제": economyKeywords.data,
+    "사회": societyKeywords.data,
+    "생활": lifeKeywords.data,
+    "세계": worldKeywords.data,
+    "IT/과학": itScienceKeywords.data,
+    "자동차/교통": vehicleKeywords.data,
+    "여행/음식": travelFoodKeywords.data,
+    "예술": artKeywords.data
+  };
   
   // 선택된 카테고리의 데이터 (현재 선택된 카테고리용)
   const selectedCategoryData = selectedCategory === "전체" ? null : categoryDataMap[selectedCategory];
@@ -384,23 +244,18 @@ const NewsletterPageClient = React.memo(function NewsletterPageClient({ initialN
   // 선택된 카테고리의 트렌딩 키워드 (현재 선택된 카테고리용)
   const selectedCategoryKeywords = selectedCategory === "전체" ? null : categoryKeywordsMap[selectedCategory];
   
-  // 카테고리별 헤드라인 조회 (선택된 카테고리만, "전체"가 아닐 때만)
-  const headlinesQuery = useCategoryHeadlines(
-    selectedCategory && selectedCategory !== "전체" ? selectedCategory : null, 
-    5
-  )
+  // 카테고리별 헤드라인 조회 (선택된 카테고리만)
+  const headlinesQuery = useCategoryHeadlines(selectedCategory === "전체" ? null : selectedCategory, 5)
 
   // 카테고리별 구독자 수 조회
-  const { counts: categorySubscriberCounts, loading: categoryCountsLoading, hasData: hasSubscriberData } = useCategorySubscriberCounts(allCategories)
+  const { counts: categorySubscriberCounts, loading: categoryCountsLoading } = useCategorySubscriberCounts(allCategories)
   
-  // 디버깅용 로그 (개발 환경에서만)
-  if (process.env.NODE_ENV === 'development') {
-    console.log('카테고리 구독자 수 상태:', {
-      counts: categorySubscriberCounts,
-      loading: categoryCountsLoading,
-      hasData: hasSubscriberData
-    });
-  }
+  // 디버깅용 로그
+  console.log('카테고리 구독자 수 상태:', {
+    counts: categorySubscriberCounts,
+    loading: categoryCountsLoading,
+    hasData: Object.keys(categorySubscriberCounts).length > 0
+  });
 
   // 뮤테이션 훅들
   const subscribeMutation = useSubscribeNewsletter()
@@ -830,8 +685,8 @@ const NewsletterPageClient = React.memo(function NewsletterPageClient({ initialN
                   const headlinesData = isCurrentCategorySelected && headlinesQuery?.data ? headlinesQuery.data : null;
                   const isHeadlinesLoading = isCurrentCategorySelected && headlinesQuery?.isLoading || false;
                   
-                  // 헤드라인 데이터 디버깅 (개발 환경에서만, 선택된 카테고리만)
-                  if (process.env.NODE_ENV === 'development' && selectedCategory === newsletter.category) {
+                  // 헤드라인 데이터 디버깅 (개발 환경에서만)
+                  if (process.env.NODE_ENV === 'development') {
                     console.log(`🔍 헤드라인 데이터 (${newsletter.category}):`, {
                       data: headlinesData?.length || 0,
                       isLoading: isHeadlinesLoading,
@@ -851,6 +706,559 @@ const NewsletterPageClient = React.memo(function NewsletterPageClient({ initialN
                     ? categoryData.mainTopics
                     : generateTopicsForCategory(newsletter.category);
                   
-                  // 디버깅용 로그 (개발 환경에서만, 선택된 카테고리만)
-                  if (process.env.NODE_ENV === 'development' && selectedCategory === newsletter.category) {
-                    console.log(`
+                  // 디버깅용 로그 (개발 환경에서만)
+                  if (process.env.NODE_ENV === 'development') {
+                    console.log(`🔍 주요 주제 데이터 (${newsletter.category}):`, {
+                      trendingKeywordsData: trendingKeywordsData?.length || 0,
+                      categoryDataTrendingKeywords: categoryData?.trendingKeywords?.length || 0,
+                      categoryDataMainTopics: categoryData?.mainTopics?.length || 0,
+                      finalMainTopics: mainTopics?.length || 0,
+                      mainTopics: mainTopics
+                    });
+                  }
+                  
+                  const totalArticles = categoryData?.totalArticles || newsletter.stats?.totalArticles || 20;
+                  
+                  return (
+                    <Card
+                      key={newsletter.id}
+                      className={`glass hover-lift animate-slide-in transition-all duration-300 ${
+                        isLoaded ? 'opacity-100' : 'opacity-0'
+                      } ${isSubscribed ? 'ring-2 ring-blue-500 bg-blue-50/30' : ''} ${
+                        isExpanded ? 'md:col-span-2' : ''
+                      }`}
+                      style={{ animationDelay: `${(index + 1) * 0.1}s` }}
+                    >
+                      <CardHeader>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <Badge className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full shadow">
+                                {newsletter.category}
+                              </Badge>
+                              <Badge className="bg-green-600 text-white text-xs px-3 py-1 rounded-full shadow">
+                                {newsletter.frequency}
+                              </Badge>
+                              {isSubscribed && (
+                                <Badge className="bg-purple-600 text-white text-xs px-3 py-1 rounded-full shadow animate-pulse">
+                                  구독 중
+                                </Badge>
+                              )}
+                            </div>
+                            
+                            <CardTitle className="text-lg mb-2 flex items-center justify-between">
+                              <TextWithTooltips text={newsletter.title} />
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleCardExpansion(newsletter.id)}
+                                className="ml-2 h-6 w-6 p-0 hover:bg-gray-100 rounded-full"
+                              >
+                                {isExpanded ? (
+                                  <ChevronUp className="h-4 w-4" />
+                                ) : (
+                                  <ChevronDown className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </CardTitle>
+                            
+                            <CardDescription className="line-clamp-2">
+                              <TextWithTooltips text={newsletter.description} />
+                            </CardDescription>
+                          </div>
+
+                          {/* 구독 토글 */}
+                          <div className="flex items-center space-x-2 ml-4">
+                            <Switch
+                              checked={isSubscribed}
+                              onCheckedChange={(checked) => handleToggleSubscribe(newsletter, checked)}
+                              disabled={subscribeMutation.isPending || unsubscribeMutation.isPending}
+                              className="data-[state=checked]:bg-blue-600"
+                            />
+                            <Label
+                              className={`text-xs font-medium whitespace-nowrap ${
+                                isSubscribed ? "text-blue-600" : "text-gray-600"
+                              }`}
+                            >
+                              {subscribeMutation.isPending || unsubscribeMutation.isPending ? "처리 중..." :
+                               isSubscribed ? "구독 중" : "구독"}
+                            </Label>
+                          </div>
+                        </div>
+                      </CardHeader>
+
+                      <CardContent>
+                        {/* 주요 통계 */}
+                        <div className="grid grid-cols-3 gap-4 mb-4 p-3 bg-gray-50/50 rounded-lg">
+                          <div className="text-center">
+                            <div className="flex items-center justify-center mb-1">
+                              <Hash className="h-3 w-3 text-blue-500 mr-1" />
+                              <span className="text-xs text-gray-500">총 기사</span>
+                            </div>
+                            <div className="font-semibold text-sm">{totalArticles}</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="flex items-center justify-center mb-1">
+                              <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
+                              <span className="text-xs text-gray-500">주간 성장</span>
+                            </div>
+                            <div className="font-semibold text-sm text-green-600">+{newsletter.stats?.weeklyGrowth}%</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="flex items-center justify-center mb-1">
+                              <Clock className="h-3 w-3 text-orange-500 mr-1" />
+                              <span className="text-xs text-gray-500">읽기 시간</span>
+                            </div>
+                            <div className="font-semibold text-sm">{newsletter.stats?.averageReadTime}분</div>
+                          </div>
+                        </div>
+
+                        {/* 카테고리별 주제들 */}
+                        <div className="mb-4">
+                          <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                            <Zap className="h-3 w-3 mr-1" />
+                            주요 주제
+                          </h4>
+                          <div className="flex flex-wrap gap-1">
+                            {mainTopics && mainTopics.length > 0 ? (
+                              <>
+                                {mainTopics.slice(0, isTopicsExpanded ? mainTopics.length : 4).map((topic, idx) => (
+                                  <Badge 
+                                    key={`${newsletter.id}-${idx}`} 
+                                    className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs px-2 py-1 rounded-full shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                                  >
+                                    #{topic}
+                                  </Badge>
+                                ))}
+                                {!isTopicsExpanded && mainTopics.length > 4 && (
+                                  <Badge 
+                                    className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full hover:bg-gray-200 cursor-pointer transition-colors"
+                                    onClick={() => toggleTopicsExpansion(newsletter.id)}
+                                  >
+                                    +{mainTopics.length - 4}개
+                                  </Badge>
+                                )}
+                                {isTopicsExpanded && mainTopics.length > 4 && (
+                                  <Badge 
+                                    className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full hover:bg-gray-200 cursor-pointer transition-colors"
+                                    onClick={() => toggleTopicsExpansion(newsletter.id)}
+                                  >
+                                    접기
+                                  </Badge>
+                                )}
+                              </>
+                            ) : (
+                              <div className="text-gray-400 text-xs">주제 정보를 불러오는 중...</div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* 확장 시 최근 헤드라인 표시 */}
+                        {isExpanded && (
+                          <div className="mb-4 border-t pt-4">
+                            <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                              <Calendar className="h-3 w-3 mr-1" />
+                              최근 헤드라인
+                            </h4>
+                            <ScrollArea className="h-32">
+                              <div className="space-y-2">
+                                {isHeadlinesLoading ? (
+                                  // 로딩 중일 때 스켈레톤 UI 표시
+                                  Array.from({ length: 3 }).map((_, idx) => (
+                                    <div key={idx} className="flex items-start space-x-2 text-xs animate-pulse">
+                                      <div className="w-1 h-1 bg-gray-300 rounded-full mt-2 flex-shrink-0"></div>
+                                      <div className="flex-1">
+                                        <div className="h-3 bg-gray-200 rounded mb-1"></div>
+                                        <div className="flex items-center space-x-2 mt-1">
+                                          <div className="h-2 w-12 bg-gray-200 rounded"></div>
+                                          <div className="flex items-center space-x-1">
+                                            <div className="h-2 w-2 bg-gray-200 rounded"></div>
+                                            <div className="h-2 w-8 bg-gray-200 rounded"></div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))
+                                ) : (headlinesData && headlinesData.length > 0) ? (
+                                  headlinesData.map((headline, idx) => (
+                                    <div key={idx} className="flex items-start space-x-2 text-xs">
+                                      <div className="w-1 h-1 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                                      <div className="flex-1">
+                                        <p className="text-gray-700 leading-relaxed">{headline.title}</p>
+                                        <div className="flex items-center space-x-2 mt-1">
+                                          <span className="text-gray-400">{headline.time}</span>
+                                          <div className="flex items-center space-x-1 text-gray-400">
+                                            <Users className="h-2.5 w-2.5" />
+                                            <span>
+                                              {categoryCountsLoading ? (
+                                                <span className="animate-pulse">로딩 중...</span>
+                                              ) : (
+                                                `${categorySubscriberCount?.toLocaleString() || 0}명 구독`
+                                              )}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))
+                                ) : articles.length > 0 ? (
+                                  articles.map((article, idx) => (
+                                    <div key={article.id || idx} className="flex items-start space-x-2 text-xs">
+                                      <div className="w-1 h-1 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                                      <div className="flex-1">
+                                        <p className="text-gray-700 leading-relaxed">{article.title}</p>
+                                        <div className="flex items-center space-x-2 mt-1">
+                                          <span className="text-gray-400">
+                                            {article.publishedAt ? new Date(article.publishedAt).toLocaleDateString() : '최근'}
+                                          </span>
+                                          {article.summary && (
+                                            <div className="flex items-center space-x-1 text-gray-400">
+                                              <span className="truncate">{article.summary.substring(0, 30)}...</span>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))
+                                ) : (
+                                  newsletter.recentHeadlines?.map((headline, idx) => (
+                                    <div key={idx} className="flex items-start space-x-2 text-xs">
+                                      <div className="w-1 h-1 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                                      <div className="flex-1">
+                                        <p className="text-gray-700 leading-relaxed">{headline.title}</p>
+                                        <div className="flex items-center space-x-2 mt-1">
+                                          <span className="text-gray-400">{headline.time}</span>
+                                          <div className="flex items-center space-x-1 text-gray-400">
+                                            <Users className="h-2.5 w-2.5" />
+                                            <span>
+                                              {categoryCountsLoading ? (
+                                                <span className="animate-pulse">로딩 중...</span>
+                                              ) : (
+                                                `${categorySubscriberCount?.toLocaleString() || 0}명 구독`
+                                              )}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))
+                                )}
+                              </div>
+                            </ScrollArea>
+                          </div>
+                        )}
+
+                        <Separator className="mb-4" />
+
+                        {/* 기존 Tags */}
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {newsletter.tags.map((tag) => (
+                            <Badge key={tag} className="bg-indigo-100 text-indigo-800 text-xs px-3 py-1 rounded-full">
+                              #{tag}
+                            </Badge>
+                          ))}
+                        </div>
+
+                        {/* Stats */}
+                        <div className="flex items-center justify-between text-sm text-gray-500">
+                          <div className="flex items-center space-x-4">
+                            <div className="flex items-center space-x-1">
+                              <Users className="h-3 w-3" />
+                              <span>
+                                {categoryCountsLoading ? (
+                                  <span className="animate-pulse">로딩 중...</span>
+                                ) : (
+                                  `${categorySubscriberCount?.toLocaleString() || 0}`
+                                )}
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <Clock className="h-3 w-3" />
+                              <span>{newsletter.lastSent}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Star className="h-3 w-3 fill-current text-yellow-400" />
+                            <span>4.8</span>
+                          </div>
+                        </div>
+
+                        {/* 구독 상태 안내 */}
+                        <div className="mt-3 p-2 bg-blue-50/50 rounded text-xs text-gray-600">
+                          {isSubscribed ? (
+                            <div>
+                              <span className="font-medium text-blue-600">'{newsletter.category}' 카테고리를 구독하고 있습니다.</span>
+                              <div className="mt-1 text-gray-500">
+                                현재 구독: {localSubscriptions.size}/3개 카테고리
+                              </div>
+                            </div>
+                          ) : (
+                            <div>
+                              <span>이 토글은 <span className="font-medium">'{newsletter.category}'</span> 카테고리 구독을 전환합니다.</span>
+                              <div className="mt-1 text-gray-500">
+                                현재 구독: {localSubscriptions.size}/3개 카테고리
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })
+              )}
+
+              {/* 결과 없음 처리 */}
+              {!isLoading && enhancedNewsletters.length === 0 && (
+                <div className="col-span-2 text-center py-12">
+                  <Mail className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    {selectedCategory} 카테고리의 뉴스레터가 없습니다
+                  </h3>
+                  <p className="text-gray-500 mb-4">
+                    다른 카테고리를 선택하거나 나중에 다시 확인해보세요.
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setSelectedCategory("전체")}
+                    className="hover-lift"
+                  >
+                    전체 뉴스레터 보기
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Sidebar - 기존 사이드바 유지 */}
+          <div className="lg:col-span-1">
+            <div className="space-y-6">
+              {/* My Subscriptions */}
+              {userRole && (
+                <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.3s' }}>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center justify-between">
+                      <div className="flex items-center">
+                        <Bell className="h-5 w-5 mr-2 text-blue-500" />
+                        내 구독
+                      </div>
+                      <Link 
+                        href="/newsletter/dashboard" 
+                        className="text-sm text-blue-600 hover:text-blue-800 transition-colors flex items-center"
+                      >
+                        대시보드
+                        <ArrowRight className="h-3 w-3 ml-1" />
+                      </Link>
+                    </CardTitle>
+                    <CardDescription>
+                      현재 구독 중인 뉴스레터 ({localSubscriptions.size}/3개)
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {subscriptionsLoading ? (
+                        <div className="text-center py-4">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"></div>
+                          <p className="text-sm text-gray-500 mt-2">구독 정보 로딩 중...</p>
+                        </div>
+                      ) : userSubscriptions.length > 0 ? (
+                        userSubscriptions.map((subscription) => {
+                          // 구독 정보에서 카테고리 추출
+                          const categories = subscription.preferredCategories || [];
+                          const categoryNames = categories.map(cat => {
+                            const categoryMapping = {
+                              'POLITICS': '정치',
+                              'ECONOMY': '경제',
+                              'SOCIETY': '사회',
+                              'LIFE': '생활',
+                              'INTERNATIONAL': '세계',
+                              'IT_SCIENCE': 'IT/과학',
+                              'VEHICLE': '자동차/교통',
+                              'TRAVEL_FOOD': '여행/음식',
+                              'ART': '예술'
+                            };
+                            return categoryMapping[cat] || cat;
+                          }).join(', ');
+                          
+                          return (
+                            <div key={subscription.id} className="flex items-center justify-between p-3 bg-white/50 rounded-lg hover:bg-white/70 transition-all duration-300">
+                              <div className="flex-1">
+                                <h4 className="font-medium text-sm">
+                                  <TextWithTooltips text={categoryNames || '일반 뉴스레터'} />
+                                </h4>
+                                <p className="text-xs text-gray-500">
+                                  {subscription.frequency === 'DAILY' ? '매일' : 
+                                   subscription.frequency === 'WEEKLY' ? '주간' : 
+                                   subscription.frequency === 'MONTHLY' ? '월간' : '즉시'}
+                                </p>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  // 구독 해제 시 로컬 상태에서도 제거
+                                  const categories = subscription.preferredCategories || [];
+                                  categories.forEach(cat => {
+                                    const categoryMapping = {
+                                      'POLITICS': '정치',
+                                      'ECONOMY': '경제',
+                                      'SOCIETY': '사회',
+                                      'LIFE': '생활',
+                                      'INTERNATIONAL': '세계',
+                                      'IT_SCIENCE': 'IT/과학',
+                                      'VEHICLE': '자동차/교통',
+                                      'TRAVEL_FOOD': '여행/음식',
+                                      'ART': '예술'
+                                    };
+                                    const frontendCategory = categoryMapping[cat];
+                                    if (frontendCategory) {
+                                      setLocalSubscriptions(prev => {
+                                        const newSet = new Set(prev);
+                                        newSet.delete(frontendCategory);
+                                        return newSet;
+                                      });
+                                    }
+                                  });
+                                  
+                                  unsubscribeMutation.mutate(subscription.id, {
+                                    onError: () => {
+                                      // 실패 시 로컬 상태 복원
+                                      categories.forEach(cat => {
+                                        const categoryMapping = {
+                                          'POLITICS': '정치',
+                                          'ECONOMY': '경제',
+                                          'SOCIETY': '사회',
+                                          'LIFE': '생활',
+                                          'INTERNATIONAL': '세계',
+                                          'IT_SCIENCE': 'IT/과학',
+                                          'VEHICLE': '자동차/교통',
+                                          'TRAVEL_FOOD': '여행/음식',
+                                          'ART': '예술'
+                                        };
+                                        const frontendCategory = categoryMapping[cat];
+                                        if (frontendCategory) {
+                                          setLocalSubscriptions(prev => new Set([...prev, frontendCategory]));
+                                        }
+                                      });
+                                    }
+                                  });
+                                }}
+                                disabled={unsubscribeMutation.isPending}
+                                className="hover-glow text-red-500 hover:text-red-700"
+                              >
+                                {unsubscribeMutation.isPending ? "처리 중..." : "구독해제"}
+                              </Button>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="text-center py-4">
+                          <p className="text-sm text-gray-500 mb-3">
+                            구독 중인 뉴스레터가 없습니다
+                          </p>
+                          <Link href="/newsletter/dashboard">
+                            <Button variant="outline" size="sm" className="hover-lift">
+                              구독 대시보드 보기
+                            </Button>
+                          </Link>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* 로그인 안내 */}
+              {!userRole && (
+                <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.3s' }}>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center">
+                      <User className="h-5 w-5 mr-2 text-gray-500" />
+                      로그인 필요
+                    </CardTitle>
+                    <CardDescription>
+                      뉴스레터 구독을 위해 로그인해주세요
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-4">
+                      <p className="text-sm text-gray-500 mb-3">
+                        뉴스레터를 구독하고 관리하려면 로그인이 필요합니다.
+                      </p>
+                      <Link href="/auth">
+                        <Button className="w-full hover-lift">
+                          로그인하기
+                        </Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Newsletter Preferences */}
+              {userRole && (
+                <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.4s' }}>
+                  <CardHeader>
+                    <CardTitle className="text-lg">알림 설정</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="email-notifications" className="text-sm">
+                          이메일 알림
+                        </Label>
+                        <Switch id="email-notifications" defaultChecked />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="push-notifications" className="text-sm">
+                          푸시 알림
+                        </Label>
+                        <Switch id="push-notifications" defaultChecked />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="weekly-digest" className="text-sm">
+                          주간 요약
+                        </Label>
+                        <Switch id="weekly-digest" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Popular Newsletters */}
+              <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.5s' }}>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center">
+                    <TrendingUp className="h-5 w-5 mr-2 text-green-500" />
+                    인기 뉴스레터
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {newsletters
+                      .sort((a, b) => b.subscribers - a.subscribers)
+                      .slice(0, 5)
+                      .map((newsletter, index) => (
+                        <div key={newsletter.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-white/50 transition-all duration-300">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm font-medium text-blue-600">{index + 1}</span>
+                            <div>
+                              <p className="text-sm font-medium">
+                                <TextWithTooltips text={newsletter.title} />
+                              </p>
+                              <p className="text-xs text-gray-500">{newsletter.subscribers.toLocaleString()} 구독자</p>
+                            </div>
+                          </div>
+                          <TrendingUp className="h-4 w-4 text-green-500" />
+                        </div>
+                      ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </div> 
+    </>
+  )
+}

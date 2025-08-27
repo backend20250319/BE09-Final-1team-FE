@@ -64,7 +64,7 @@ export async function GET(request) {
     const token = authHeader ? authHeader.replace('Bearer ', '') : cookieToken
     const authHeaderValue = `Bearer ${token}`
 
-    const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/newsletter/category/${backendCategory}/articles?limit=${limit}`;
+    const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/news/category/${backendCategory}/articles?limit=${limit}`;
     console.log('🌐 백엔드 API 호출:', backendUrl);
 
     // 백엔드 API 호출

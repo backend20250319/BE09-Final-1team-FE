@@ -52,8 +52,8 @@ export async function GET(request) {
     const backendCategory = categoryMapping[category] || category;
 
     const backendUrl = category 
-          ? `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/newsletter/stats/subscribers/category/${backendCategory}`
-    : `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/newsletter/stats/subscribers`;
+                  ? `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/newsletter/stats/subscribers/category/${backendCategory}`
+        : `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/newsletter/stats/subscribers`;
     
     console.log('🌐 백엔드 API 호출:', backendUrl);
 
