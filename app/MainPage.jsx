@@ -11,8 +11,13 @@ import { Label } from "@/components/ui/label"
 import Header from "@/components/header"
 import { TextWithTooltips } from "@/components/tooltip"
 import { getUserRole } from "@/lib/auth"
-import RealTimeKeywordWidget from "@/components/RealTimeKeywordWidget"
+import dynamic from "next/dynamic"
 import useSWR from "swr"
+
+const RealTimeKeywordWidget = dynamic(() => import("@/components/RealTimeKeywordWidget"), {
+  ssr: false,
+  loading: () => <div className="h-10 rounded bg-white/50 animate-pulse" />
+})
 
 export default function MainPage({
   initialTrending,
@@ -54,25 +59,31 @@ export default function MainPage({
 
   const { data: listData, isLoading: listLoading } = useSWR(listKey, fetcher, {
     fallbackData: { content: initialList, totalPages: initialTotalPages, totalElements: initialTotalElements },
-    revalidateOnMount: true
+    revalidateOnMount: true,
+    revalidateOnFocus: false, // 포커스 시 재검증 비활성화
+    revalidateOnReconnect: true, // 네트워크 재연결 시 재검증
+    dedupingInterval: 5000 // 5초 내 중복 요청 방지
   })
 
   const { data: trendingData } = useSWR('/api/news/trending?hours=24&limit=1', fetcher, {
     fallbackData: initialTrending ? { content: [initialTrending] } : undefined,
-    revalidateOnMount: true
+    revalidateOnMount: true,
+    revalidateOnFocus: false,
+    revalidateOnReconnect: true,
+    dedupingInterval: 10000 // 트렌딩은 10초 내 중복 요청 방지
   })
 
   // 리스트 데이터 처리
   useEffect(() => {
     if (!listData) return
     const mapped = (listData.content ?? []).map((news) => ({
-      id: news.newsId,
-      title: news.title,
-      content: news.content,
-      source: news.press,
-      publishedAt: news.publishedAt,
-      category: news.categoryName,
-      image: news.imageUrl,
+            id: news.newsId,
+            title: news.title,
+            content: news.content,
+            source: news.press,
+            publishedAt: news.publishedAt,
+            category: news.categoryName,
+            image: news.imageUrl,
       views: news.viewCount ?? 0
     }))
     setNewsItems(mapped)
@@ -85,6 +96,7 @@ export default function MainPage({
   useEffect(() => {
     const src = trendingData?.content?.[0]
     if (!src) return
+    
     setPopularNews({
       id: src.newsId ?? src.id,
       title: src.title,
@@ -95,7 +107,7 @@ export default function MainPage({
       image: src.imageUrl ?? src.image ?? "/placeholder.jpg",
       views: src.viewCount ?? src.views ?? 0
     })
-  }, [trendingData])
+  }, [trendingData?.content?.[0]?.newsId]) // 특정 필드만 의존성으로 사용
 
   // 카테고리 변경 시 첫 페이지로 리셋
   useEffect(() => {
@@ -204,6 +216,7 @@ export default function MainPage({
                         src={popularNews.image}
                         alt={popularNews.title}
                         className="w-full h-full object-cover"
+                        loading="eager"
                         onError={(e) => {
                           e.target.src = "/placeholder.jpg"
                         }}
@@ -284,6 +297,7 @@ export default function MainPage({
                       src={item.image || "/placeholder.jpg"}
                       alt={item.title}
                       className="w-24 h-24 object-cover rounded-lg flex-shrink-0"
+                      loading="eager"
                       onError={(e) => {
                         e.target.src = "/placeholder.jpg"
                       }}
@@ -355,6 +369,7 @@ export default function MainPage({
                       src={news.image || "/placeholder.jpg"}
                       alt={news.title}
                       className="w-full h-72 object-cover rounded-lg"
+                      loading="eager"
                       onError={(e) => {
                         e.target.src = "/placeholder.jpg"
                       }}

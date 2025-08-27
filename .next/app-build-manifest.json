@@ -22,13 +22,6 @@
       "static/chunks/common.js",
       "static/chunks/app/page.js"
     ],
-    "/api/news/trending-keywords/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/vendor.js",
-      "static/chunks/main-app.js",
-      "static/chunks/common.js",
-      "static/chunks/app/api/news/trending-keywords/route.js"
-    ],
     "/api/news/route": [
       "static/chunks/webpack.js",
       "static/chunks/vendor.js",
@@ -42,6 +35,33 @@
       "static/chunks/main-app.js",
       "static/chunks/common.js",
       "static/chunks/app/api/news/trending/route.js"
+    ],
+    "/api/news/trending-keywords/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/vendor.js",
+      "static/chunks/main-app.js",
+      "static/chunks/common.js",
+      "static/chunks/app/api/news/trending-keywords/route.js"
+    ],
+    "/api/news/[id]/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/vendor.js",
+      "static/chunks/main-app.js",
+      "static/chunks/common.js",
+      "static/chunks/app/api/news/[id]/route.js"
+    ],
+    "/(newsletter)/newsletter/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/vendor.js",
+      "static/chunks/main-app.js",
+      "static/chunks/common.js",
+      "static/chunks/app/(newsletter)/newsletter/page.js"
+    ],
+    "/_not-found/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/vendor.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/_not-found/page.js"
     ]
   }
 }

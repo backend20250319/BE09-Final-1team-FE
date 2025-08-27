@@ -7,11 +7,11 @@ async function fetchJSON(url, init) {
 }
 
 export default async function Page() {
-  // 임시로 기본 데이터로 시작 (API 호출 문제 해결 후 제거)
+  // 임시로 기본 데이터 사용 (서버 컴포넌트 API 호출 문제 해결 후 제거)
   const initialTrending = {
     id: 1,
-    title: "서버 컴포넌트 초기화 중...",
-    content: "데이터를 불러오는 중입니다.",
+    title: "최신 뉴스를 불러오는 중...",
+    content: "잠시만 기다려주세요.",
     source: "시스템",
     publishedAt: new Date().toISOString(),
     category: "GENERAL",
@@ -19,25 +19,23 @@ export default async function Page() {
     views: 0
   }
 
-  const initialList = [
-    {
-      id: 1,
-      title: "초기 뉴스 데이터",
-      content: "서버에서 데이터를 불러오는 중입니다.",
-      source: "시스템",
-      publishedAt: new Date().toISOString(),
-      category: "GENERAL",
-      image: "/placeholder.jpg",
-      views: 0
-    }
-  ]
+  const initialList = Array.from({ length: 6 }, (_, i) => ({
+    id: i + 1,
+    title: `뉴스 제목 ${i + 1}`,
+    content: "뉴스 내용을 불러오는 중입니다.",
+    source: "시스템",
+    publishedAt: new Date().toISOString(),
+    category: "GENERAL",
+    image: "/placeholder.jpg",
+    views: 0
+  }))
 
   return (
     <MainPage
       initialTrending={initialTrending}
       initialList={initialList}
       initialTotalPages={1}
-      initialTotalElements={1}
+      initialTotalElements={6}
     />
   )
 }
