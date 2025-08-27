@@ -34,7 +34,7 @@ export default function NewsPage() {
     POLITICS: "정치",
     ECONOMY: "경제",
     SOCIETY: "사회",
-    CULTURE: "생활/문화",
+    LIFE: "생활/문화",
     INTERNATIONAL: "세계",
     IT_SCIENCE: "IT/과학",
   };

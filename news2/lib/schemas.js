@@ -5,7 +5,7 @@ export const CategoryId = z.enum([
   "POLITICS",
   "ECONOMY", 
   "SOCIETY",
-  "CULTURE",
+  "LIFE",
   "INTERNATIONAL",
   "IT_SCIENCE",
   "VEHICLE",
@@ -189,4 +189,28 @@ export const TrendingKeywordSchema = z.object({
 export const TrendingKeywordsResponseSchema = z.object({
   keywords: z.array(TrendingKeywordSchema),
   period: z.string().optional()
+});
+
+// 컬렉션 스키마
+export const CollectionSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  userId: z.number(),
+  newsCount: z.number().optional(), // 컬렉션에 포함된 뉴스 개수
+});
+
+// 컬렉션 생성 요청 스키마
+export const CollectionCreateRequestSchema = z.object({
+  name: z.string().min(1, "컬렉션 이름을 입력해주세요."),
+});
+
+// 컬렉션 목록 응답 스키마
+export const CollectionsResponseSchema = z.object({
+  success: z.boolean().optional(),
+  data: z.array(CollectionSchema),
+});
+
+// 컬렉션에 뉴스 추가 요청 스키마
+export const AddNewsToCollectionRequestSchema = z.object({
+  newsId: z.string(),
 });

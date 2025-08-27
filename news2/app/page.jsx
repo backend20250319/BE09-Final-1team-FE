@@ -114,7 +114,7 @@ export default function MainPage() {
     }
   }, [selectedCategory, isLoaded])
 
-  const categories = ["전체", "POLITICS", "ECONOMY", "SOCIETY", "CULTURE", "INTERNATIONAL", "IT_SCIENCE", "VEHICLE", "TRAVEL_FOOD", "ART"]
+  const categories = ["전체", "POLITICS", "ECONOMY", "SOCIETY", "LIFE", "INTERNATIONAL", "IT_SCIENCE", "VEHICLE", "TRAVEL_FOOD", "ART"]
   
   // 카테고리 표시명 매핑 (백엔드 Category enum과 일치)
   const categoryDisplayNames = {
@@ -122,7 +122,7 @@ export default function MainPage() {
     "POLITICS": "정치",
     "ECONOMY": "경제", 
     "SOCIETY": "사회",
-    "CULTURE": "생활",
+    "LIFE": "생활",
     "INTERNATIONAL": "세계",
     "IT_SCIENCE": "IT/과학",
     "VEHICLE": "자동차/교통",
