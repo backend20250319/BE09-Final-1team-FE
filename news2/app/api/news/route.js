@@ -4,7 +4,7 @@ import { getNewsServiceUrl } from '@/lib/config'
 // Mock 데이터 생성 함수
 function generateMockNews(page, size, category) {
   const mockNews = []
-  const categories = ["POLITICS", "ECONOMY", "SOCIETY", "CULTURE", "INTERNATIONAL", "IT_SCIENCE", "VEHICLE", "TRAVEL_FOOD", "ART"]
+  const categories = ["POLITICS", "ECONOMY", "SOCIETY", "LIFE", "INTERNATIONAL", "IT_SCIENCE", "VEHICLE", "TRAVEL_FOOD", "ART"]
   const sources = ["조선일보", "중앙일보", "동아일보", "한겨레", "경향신문", "서울신문", "국민일보", "세계일보"]
   
   for (let i = 0; i < size; i++) {
