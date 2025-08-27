@@ -1,8 +1,6 @@
 {
   "/api/news/trending-keywords/route": "app/api/news/trending-keywords/route.js",
-  "/_not-found/page": "app/_not-found/page.js",
   "/api/news/route": "app/api/news/route.js",
   "/api/news/trending/route": "app/api/news/trending/route.js",
-  "/page": "app/page.js",
-  "/(news)/news/[id]/page": "app/(news)/news/[id]/page.js"
+  "/page": "app/page.js"
 }
