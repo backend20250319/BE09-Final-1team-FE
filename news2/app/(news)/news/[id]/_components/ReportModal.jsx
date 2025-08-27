@@ -29,13 +29,15 @@ export default function ReportModal({ isOpen, onClose, newsId }) {
   const [reason, setReason] = useState(reportReasons[0].id);
   const [details, setDetails] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = async () => {
-    if (!window.confirm('정말 신고하시겠습니까?')) {
-      return;
-    }
+  const handleReportClick = () => {
+    setIsConfirmModalOpen(true);
+  };
 
+  const handleConfirmSubmit = async () => {
+    setIsConfirmModalOpen(false);
     setIsLoading(true);
 
     try {
@@ -51,7 +53,7 @@ export default function ReportModal({ isOpen, onClose, newsId }) {
 
       if (response.ok) {
         toast.success('기사가 정상적으로 신고되었습니다.');
-        onClose(); // 모달 닫기
+        onClose();
       } else {
         const errorData = await response.json().catch(() => ({ message: '서버 응답을 파싱할 수 없습니다.' }));
         toast.error(errorData.message || '신고 처리 중 오류가 발생했습니다.');
@@ -65,6 +67,7 @@ export default function ReportModal({ isOpen, onClose, newsId }) {
   };
 
   return (
+    <>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -90,11 +93,32 @@ export default function ReportModal({ isOpen, onClose, newsId }) {
             <DialogClose asChild>
               <Button type="button" variant="secondary">취소</Button>
             </DialogClose>
-            <Button type="button" onClick={handleSubmit} disabled={isLoading}>
+            <Button type="button" variant="destructive" onClick={handleReportClick} disabled={isLoading}>
               {"신고하기"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Confirmation Modal */}
+      <Dialog open={isConfirmModalOpen} onOpenChange={setIsConfirmModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>신고 확인</DialogTitle>
+            <DialogDescription>
+              정말 신고하시겠습니까?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setIsConfirmModalOpen(false)}>
+              아니오
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmSubmit} disabled={isLoading}>
+              예
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
