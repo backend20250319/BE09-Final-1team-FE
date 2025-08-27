@@ -61,18 +61,24 @@ const useCategorySubscriberCounts = (categories) => {
         
         if (response.ok) {
           const data = await response.json();
+          console.log('📊 API 응답 데이터:', data);
+          
           if (data.success && data.data) {
             const newCounts = { ...initialCounts };
+            
             // API 응답으로 기본값 업데이트
-            Object.keys(data.data).forEach(category => {
-              if (newCounts[category] !== undefined) {
-                newCounts[category] = data.data[category];
-              }
-            });
+            if (typeof data.data === 'object' && data.data !== null) {
+              Object.keys(data.data).forEach(category => {
+                if (newCounts[category] !== undefined && typeof data.data[category] === 'number') {
+                  newCounts[category] = data.data[category];
+                }
+              });
+            }
+            
             setCounts(newCounts);
             console.log('✅ 카테고리별 구독자 수 설정 완료:', newCounts);
           } else {
-            console.warn("전체 통계 API 응답 오류:", response.status);
+            console.warn("전체 통계 API 응답 구조 오류:", data);
           }
         } else {
           console.warn("전체 통계 API 호출 실패:", response.status);

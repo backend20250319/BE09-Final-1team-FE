@@ -94,7 +94,30 @@ export async function GET(request) {
       })
     }
     
-    return Response.json(data)
+    // 백엔드 데이터를 프론트엔드 형식으로 매핑
+    let mappedData = data.data;
+    
+    // 특정 카테고리 요청인 경우
+    if (category) {
+      // subscriberCounts에서 해당 카테고리 값 추출
+      if (data.data.subscriberCounts && data.data.subscriberCounts[category] !== undefined) {
+        mappedData = { [category]: data.data.subscriberCounts[category] };
+      } else {
+        mappedData = { [category]: 0 };
+      }
+    } else {
+      // 전체 통계인 경우 subscriberCounts 사용
+      if (data.data.subscriberCounts) {
+        mappedData = data.data.subscriberCounts;
+      }
+    }
+    
+    console.log('🔄 매핑된 데이터:', mappedData);
+    
+    return Response.json({
+      success: true,
+      data: mappedData
+    })
   } catch (error) {
     console.error('🚨 구독자 통계 조회 실패:', error)
     
@@ -111,8 +134,23 @@ export async function GET(request) {
   }
 }
 
-// 더미 구독자 통계 생성 함수 (임시 제거)
+// 더미 구독자 통계 생성 함수
 function generateDummySubscriberStats(category) {
-  // 더미 데이터 제거 - 빈 객체 반환
-  return {};
+  const defaultCounts = {
+    "정치": 15420,
+    "경제": 8920,
+    "사회": 18760,
+    "생활": 12340,
+    "세계": 9870,
+    "IT/과학": 12350,
+    "자동차/교통": 11230,
+    "여행/음식": 14560,
+    "예술": 8760
+  };
+
+  if (category) {
+    return { [category]: defaultCounts[category] || 10000 };
+  }
+
+  return defaultCounts;
 }
