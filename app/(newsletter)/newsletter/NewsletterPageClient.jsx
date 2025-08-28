@@ -21,6 +21,7 @@ import { getUserRole, getUserInfo } from "@/lib/auth"
 import Header from "@/components/header"
 import { useNewsletters, useUserSubscriptions, useSubscribeNewsletter, useUnsubscribeNewsletter, useCategoryArticles, useTrendingKeywords, useCategoryHeadlines } from "@/hooks/useNewsletter"
 import { useQuery } from '@tanstack/react-query'
+import KakaoShare from '@/components/KakaoShare'
 
 // 카테고리별 구독자 수를 한 번에 가져오는 커스텀 훅
 const useCategorySubscriberCounts = (categories) => {
@@ -727,6 +728,8 @@ export default function NewsletterPageClient({ initialNewsletters }) {
               <p className="text-gray-600">관심 있는 주제의 뉴스레터를 구독하고 최신 정보를 받아보세요</p>
             </div>
 
+
+
             {/* Error Display */}
             {(newslettersError || subscriptionsError) && (
               <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -1371,8 +1374,34 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                 </Card>
               )}
 
-              {/* Popular Newsletters */}
+              {/* 뉴스레터 공유 섹션 */}
               <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.5s' }}>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center">
+                    <ExternalLink className="h-5 w-5 mr-2 text-yellow-500" />
+                    뉴스레터 공유
+                  </CardTitle>
+                  <CardDescription>
+                    친구들과 유용한 정보를 나눠보세요!
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <KakaoShare 
+                    newsletterData={{
+                      id: 'newsletter-main',
+                      title: '📰 NewSphere - 최신 뉴스를 한눈에!',
+                      description: `🔥 ${newsletters.length}개의 뉴스레터 | 📊 ${newsletters.reduce((sum, n) => sum + n.subscribers, 0).toLocaleString()}명 구독 | 🎯 정치, 경제, 사회, IT/과학 등 다양한 카테고리의 최신 정보를 받아보세요!`,
+                      imageUrl: 'https://via.placeholder.com/800x400/667eea/ffffff?text=NewSphere+Newsletter'
+                    }}
+                    showStats={true}
+                    showFloating={false}
+                    className="mt-2"
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Popular Newsletters */}
+              <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.6s' }}>
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center">
                     <TrendingUp className="h-5 w-5 mr-2 text-green-500" />
@@ -1401,6 +1430,8 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                   </div>
                 </CardContent>
               </Card>
+
+
             </div>
           </div>
         </div>
