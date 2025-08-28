@@ -8,8 +8,9 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Header from "@/components/header";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
+import { isAuthenticated } from "@/lib/auth";
 
 // 분리된 컴포넌트들 import
 import ProfileSidebar from "./_components/ProfileSidebar";
@@ -21,7 +22,23 @@ import { MypageProvider } from "@/contexts/MypageContext";
 
 function MyPageContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("profile");
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
+
+  useEffect(() => {
+    // 인증 상태 체크
+    const checkAuth = () => {
+      if (!isAuthenticated()) {
+        console.log("❌ 인증되지 않은 사용자, 로그인 페이지로 리다이렉트");
+        router.replace("/auth");
+        return;
+      }
+      setIsAuthChecking(false);
+    };
+
+    checkAuth();
+  }, [router]);
 
   useEffect(() => {
     // URL 파라미터에서 탭 정보 확인
@@ -33,6 +50,26 @@ function MyPageContent() {
       setActiveTab(tab);
     }
   }, [searchParams]);
+
+  // 인증 체크 중이면 로딩 표시
+  if (isAuthChecking) {
+    return (
+      <>
+        <Header />
+        <div className="min-h-screen bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+              <div className="h-64 bg-gray-200 rounded mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
