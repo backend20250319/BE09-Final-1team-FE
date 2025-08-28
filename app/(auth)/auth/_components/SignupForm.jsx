@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -30,10 +30,15 @@ import {
   SignupResponseSchema,
   NewsletterSubscriptionSchema,
   NewsletterSubscriptionResponseSchema,
+  AdditionalInfoRequestSchema,
 } from "@/lib/schemas";
 
-export default function SignupForm({ onSignupSuccess }) {
+export default function SignupForm({ mode = "signup", onSignupSuccess }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  //소셜 로그인 모드일 때 URL에서 임시 토큰 가져옴
+  const tempToken = mode === "social" ? searchParams.get("token") : null;
 
   // --- 상태 관리 ---
   const [name, setName] = useState("");
@@ -101,6 +106,13 @@ export default function SignupForm({ onSignupSuccess }) {
     );
   };
 
+  useEffect(() => {
+    if (mode === "social" && !tempToken) {
+      alert("잘못된 접근입니다. 다시 로그인해주세요.");
+      router.push("/login");
+    }
+  }, [mode, tempToken, router]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -113,7 +125,8 @@ export default function SignupForm({ onSignupSuccess }) {
       setIsLoading(false);
       return;
     }
-    if (password.length < 8) {
+    // 일반 회원가입일 때만 비밀번호 검증
+    if (mode === "signup" && password.length < 8) {
       setError("비밀번호는 최소 8자 이상이어야 합니다.");
       setIsLoading(false);
       return;
@@ -122,102 +135,154 @@ export default function SignupForm({ onSignupSuccess }) {
     setIsLoading(true);
 
     try {
-      // zod 스키마로 요청 데이터 검증
-      const requestData = {
-        name,
-        email,
-        password,
-        birthYear: parseInt(birthYear, 10),
-        gender,
-        hobbies: selectedInterests,
-      };
+      let requestBody;
+      let apiEndpoint;
 
-      try {
-        SignupRequestSchema.parse(requestData);
-        console.log("✅ 회원가입 요청 데이터:", requestData); // 디버깅 로그 추가
-      } catch (validationError) {
-        console.error("스키마 검증 에러:", validationError);
-        const errorMessage =
-          validationError.errors?.[0]?.message ||
-          "입력 데이터 형식이 올바르지 않습니다";
-        setError(errorMessage);
-        setIsLoading(false);
-        return;
+      if (mode === "signup") {
+        // --- 기존 회원가입 로직 ---
+        apiEndpoint = "/api/users/signup";
+        requestBody = {
+          name,
+          email,
+          password,
+          birthYear: parseInt(birthYear, 10),
+          gender,
+          hobbies: selectedInterests,
+        };
+
+        // zod 스키마로 요청 데이터 검증
+        try {
+          SignupRequestSchema.parse(requestBody);
+          console.log("✅ 회원가입 요청 데이터:", requestBody);
+        } catch (validationError) {
+          console.error("스키마 검증 에러:", validationError);
+          const errorMessage =
+            validationError.errors?.[0]?.message ||
+            "입력 데이터 형식이 올바르지 않습니다";
+          setError(errorMessage);
+          setIsLoading(false);
+          return;
+        }
+      } else {
+        // --- 소셜 로그인 추가 정보 전송 로직 ---
+        apiEndpoint = "/api/auth/oauth2/additional-info";
+        requestBody = {
+          birthYear: parseInt(birthYear, 10),
+          gender,
+          hobbies: selectedInterests,
+        };
+
+        // 새로운 Zod 스키마로 검증
+        try {
+          AdditionalInfoRequestSchema.parse(requestBody);
+          console.log("✅ 추가 정보 요청 데이터:", requestBody);
+        } catch (validationError) {
+          console.error("추가 정보 스키마 검증 에러:", validationError);
+          const errorMessage =
+            validationError.errors?.[0]?.message ||
+            "입력 데이터 형식이 올바르지 않습니다";
+          setError(errorMessage);
+          setIsLoading(false);
+          return;
+        }
       }
 
-      const response = await fetch("/api/users/signup", {
+      const response = await fetch(apiEndpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestData),
+        headers: {
+          "Content-Type": "application/json",
+          // 소셜 모드일 때 임시 토큰을 Authorization 헤더에 담아 보냅니다.
+          ...(mode === "social" && { Authorization: `Bearer ${tempToken}` }),
+        },
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error("회원가입 에러:", errorData);
+        console.error("API 요청 에러:", errorData);
         throw new Error(
           errorData.message ||
             errorData.error ||
-            `회원가입 중 오류가 발생했습니다. (${response.status})`
+            `요청 중 오류가 발생했습니다. (${response.status})`
         );
       }
 
-      // 응답 스키마 검증 (선택사항)
-      try {
-        const responseData = await response.json().catch(() => ({}));
-        SignupResponseSchema.parse(responseData);
-      } catch (validationError) {
-        console.warn("회원가입 응답 스키마 불일치:", validationError);
-        // 응답 검증 실패해도 성공으로 처리 (선택사항)
-      }
+      const responseData = await response.json();
 
-      // 2) (선택) 뉴스레터 구독
-      if (newsletter && email) {
+      if (mode === "social") {
+        // 소셜 모드에서는 응답으로 최종 Access/Refresh 토큰이 옵니다.
+        const { accessToken, refreshToken } = responseData.data || {};
+        if (accessToken && refreshToken) {
+          // setTokens 함수를 사용하여 안전하게 토큰 저장
+          const { setTokens } = await import("@/lib/auth");
+          setTokens(accessToken, refreshToken);
+
+          setSuccess("정보 입력이 완료되었습니다! 메인 페이지로 이동합니다.");
+          setTimeout(() => router.push("/"), 1500);
+        } else {
+          throw new Error("최종 토큰을 받지 못했습니다.");
+        }
+      } else {
+        // 기존 회원가입 성공 로직
+        // 응답 스키마 검증 (선택사항)
         try {
-          // 뉴스레터 구독 요청 데이터 검증
-          const subscriptionData = { email };
+          SignupResponseSchema.parse(responseData);
+        } catch (validationError) {
+          console.warn("회원가입 응답 스키마 불일치:", validationError);
+          // 응답 검증 실패해도 성공으로 처리 (선택사항)
+        }
+
+        // 뉴스레터 구독 로직
+        if (newsletter && email) {
           try {
-            NewsletterSubscriptionSchema.parse(subscriptionData);
-          } catch (validationError) {
-            console.warn(
-              "뉴스레터 구독 요청 데이터 검증 실패:",
-              validationError
-            );
-            // 검증 실패해도 구독 시도는 계속
-          }
-
-          const subscriptionResponse = await fetch("/api/subscribe", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(subscriptionData),
-          });
-
-          if (subscriptionResponse.ok) {
-            // 응답 스키마 검증 (선택사항)
+            // 뉴스레터 구독 요청 데이터 검증
+            const subscriptionData = { email };
             try {
-              const responseData = await subscriptionResponse
-                .json()
-                .catch(() => ({}));
-              NewsletterSubscriptionResponseSchema.parse(responseData);
+              NewsletterSubscriptionSchema.parse(subscriptionData);
             } catch (validationError) {
               console.warn(
-                "뉴스레터 구독 응답 스키마 불일치:",
+                "뉴스레터 구독 요청 데이터 검증 실패:",
                 validationError
               );
+              // 검증 실패해도 구독 시도는 계속
             }
-          }
-        } catch {
-          // 구독 실패해도 가입 자체는 성공으로 진행
-        }
-      }
 
-      setSuccess("회원가입이 완료되었습니다! 로그인 화면으로 이동합니다.");
-      setTimeout(() => {
-        if (onSignupSuccess) {
-          onSignupSuccess();
-        } else {
-          router.push("/auth");
+            const subscriptionResponse = await fetch("/api/subscribe", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(subscriptionData),
+            });
+
+            if (subscriptionResponse.ok) {
+              // 응답 스키마 검증 (선택사항)
+              try {
+                const subscriptionResponseData = await subscriptionResponse
+                  .json()
+                  .catch(() => ({}));
+                NewsletterSubscriptionResponseSchema.parse(
+                  subscriptionResponseData
+                );
+              } catch (validationError) {
+                console.warn(
+                  "뉴스레터 구독 응답 스키마 불일치:",
+                  validationError
+                );
+              }
+            }
+          } catch {
+            // 구독 실패해도 가입 자체는 성공으로 진행
+          }
         }
-      }, 1500);
+
+        setSuccess("회원가입이 완료되었습니다! 로그인 화면으로 이동합니다.");
+        setTimeout(() => {
+          if (onSignupSuccess) {
+            onSignupSuccess();
+          } else {
+            router.push("/auth");
+          }
+        }, 1500);
+      }
     } catch (e) {
       setError(e.message || "처리 중 오류가 발생했습니다.");
     } finally {
@@ -235,61 +300,71 @@ export default function SignupForm({ onSignupSuccess }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>회원가입</CardTitle>
+        {/* 모드에 따라 제목 변경 */}
+        <CardTitle>
+          {mode === "signup" ? "회원가입" : "추가 정보 입력"}
+        </CardTitle>
         <CardDescription>
-          새 계정을 만들어 개인 맞춤 뉴스 서비스를 시작하세요
+          {mode === "signup"
+            ? "새 계정을 만들어 개인 맞춤 뉴스 서비스를 시작하세요"
+            : "정확한 뉴스 추천을 위해 추가 정보를 입력해주세요."}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* 이름, 이메일, 비밀번호 필드 */}
-          <div className="space-y-2">
-            <Label htmlFor="signup-name">이름</Label>
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                id="signup-name"
-                placeholder="이름을 입력하세요"
-                className="pl-10"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                disabled={isLoading}
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="signup-email">이메일</Label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                id="signup-email"
-                type="email"
-                placeholder="이메일을 입력하세요"
-                className="pl-10"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={isLoading}
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="signup-password">비밀번호</Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                id="signup-password"
-                type="password"
-                placeholder="8자 이상 입력하세요"
-                className="pl-10"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={isLoading}
-              />
-            </div>
-          </div>
+          {/* mode가 'signup'일 때만 이름, 이메일, 비밀번호 필드를 보여줍니다. */}
+          {mode === "signup" && (
+            <>
+              {/* 이름, 이메일, 비밀번호 필드 */}
+              <div className="space-y-2">
+                <Label htmlFor="signup-name">이름</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    id="signup-name"
+                    placeholder="이름을 입력하세요"
+                    className="pl-10"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="signup-email">이메일</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    id="signup-email"
+                    type="email"
+                    placeholder="이메일을 입력하세요"
+                    className="pl-10"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="signup-password">비밀번호</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    id="signup-password"
+                    type="password"
+                    placeholder="8자 이상 입력하세요"
+                    className="pl-10"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+            </>
+          )}
 
           {/* 출생연도 및 성별 선택 (가로 배치) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -440,10 +515,12 @@ export default function SignupForm({ onSignupSuccess }) {
             disabled={isLoading || isLoadingInterests || !!success}
           >
             {isLoading
-              ? "가입 처리 중..."
+              ? "처리 중..."
               : success
-              ? "가입 완료!"
-              : "회원가입"}
+              ? "완료!"
+              : mode === "signup"
+              ? "회원가입"
+              : "가입 완료"}
           </Button>
         </form>
       </CardContent>
