@@ -146,8 +146,8 @@ export default function MainPage({
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
         <Card className="glass hover-lift shadow-lg border-0 px-8 py-12 text-center max-w-md">
           <div className="text-6xl mb-4">⚠️</div>
-          <h3 className="text-2xl font-bold text-gray-800 mb-4">오류가 발생했습니다</h3>
-          <p className="text-gray-600 mb-6">{error}</p>
+          <h3 className="text-2xl font-bold text-gray-800 mb-4 korean-text">오류가 발생했습니다</h3>
+          <p className="text-gray-600 mb-6 korean-text">{error}</p>
           <Button 
             onClick={() => window.location.reload()} 
             className="bg-blue-600 hover:bg-blue-700 text-white"
@@ -180,7 +180,7 @@ export default function MainPage({
                         variant={selectedCategory === category ? "default" : "outline"}
                         size="default"
                         onClick={() => setSelectedCategory(category)}
-                        className={`whitespace-nowrap hover-lift text-base px-4 py-2 ${
+                        className={`whitespace-nowrap hover-lift text-base px-4 py-2 korean-text ${
                           isLoaded ? 'animate-slide-in' : 'opacity-0'
                         }`}
                         style={{ animationDelay: `${index * 0.1}s` }}
@@ -225,10 +225,10 @@ export default function MainPage({
                           <Badge className="bg-red-600 text-white px-4 py-1 rounded-full shadow-lg font-bold tracking-wider mb-3 w-fit">
                             트렌딩 (24시간)
                           </Badge>
-                          <h2 className="text-lg lg:text-xl font-bold mb-2 line-clamp-2">
+                          <h2 className="text-lg lg:text-xl font-bold mb-2 line-clamp-2 korean-text">
                             {popularNews.title}
                           </h2>
-                          <p className="text-sm mb-4 line-clamp-2">
+                          <p className="text-sm mb-4 line-clamp-2 korean-text">
                             <TextWithTooltips text={
                               popularNews.content && popularNews.content.length > 150 
                                 ? popularNews.content.substring(0, 150) + "..." 
@@ -301,7 +301,7 @@ export default function MainPage({
                         }}
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="text-base font-semibold line-clamp-2 text-gray-800 mb-2 hover:text-blue-600 transition-colors">
+                        <p className="text-base font-semibold line-clamp-2 text-gray-800 mb-2 hover:text-blue-600 transition-colors korean-text">
                           {item.title}
                         </p>
                         <p className="text-sm text-gray-500 mb-2">
@@ -355,7 +355,7 @@ export default function MainPage({
                     className="block"
                   >
                     <Card
-                      className={`min-h-[500px] max-h-[500px] w-full max-w-[600px] flex flex-col justify-between glass hover-lift animate-slide-in cursor-pointer transition-all duration-300 hover:shadow-lg ${
+                      className={`min-h-[600px] max-h-[500px] w-full max-w-[800px] flex flex-col justify-between glass hover-lift animate-slide-in cursor-pointer transition-all duration-300 hover:shadow-lg ${
                         isLoaded ? 'opacity-100' : 'opacity-0'
                       }`}
                       style={{ animationDelay: `${(index + 1) * 0.2}s` }}
@@ -385,21 +385,22 @@ export default function MainPage({
                             {new Date(news.publishedAt).toLocaleDateString("ko-KR", {
                               month: "short",
                               day: "numeric",
+                              weekday: "short",
                               hour: "2-digit",
                               minute: "2-digit"
                             })}
                           </span>
                         </div>
 
-                        {/* 제목 */}
-                        <div className="flex-1 mb-3 min-h-0">
-                          <h3 className="text-xl font-bold hover:text-blue-600 transition-colors line-clamp-2 leading-relaxed">
+                        {/* 제목 - 완전 표시되도록 설정 */}
+                        <div className="flex-1 mb-6 min-h-0">
+                          <h3 className="text-2xl font-bold hover:text-blue-600 transition-colors leading-relaxed korean-text min-h-[4rem]">
                             <TextWithTooltips text={news.title} />
                           </h3>
                         </div>
 
-                        {/* 하단 출처 + 버튼 */}
-                        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                        {/* 하단 출처 + 버튼 - 고정 높이로 설정 */}
+                        <div className="flex items-center justify-between pt-6 border-t border-gray-100 h-8">
                           <span className="text-sm text-gray-500 font-medium truncate mr-2">{news.source}</span>
                           <div className="flex items-center space-x-2 flex-shrink-0">
                             <span className="text-sm text-gray-500 flex items-center">
@@ -431,10 +432,10 @@ export default function MainPage({
               ) : (
                 // 데이터가 없을 때 표시할 메시지
                 <div className="col-span-full flex flex-col items-center justify-center py-20">
-                  <Card className="glass hover-lift shadow-lg border-0 px-8 py-12 text-center">
+                  <Card className="glass hover-lift shadow-lg border-0 px-8 py-12 text-center korean-text">
                     <div className="text-6xl mb-4">📰</div>
-                    <h3 className="text-2xl font-bold text-gray-800 mb-4">뉴스를 불러올 수 없습니다</h3>
-                    <p className="text-gray-600 mb-6">현재 뉴스 데이터를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.</p>
+                    <h3 className="text-2xl font-bold text-gray-800 mb-4 korean-text">뉴스를 불러올 수 없습니다</h3>
+                    <p className="text-gray-600 mb-6 korean-text">현재 뉴스 데이터를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.</p>
                     <Button 
                       onClick={() => window.location.reload()} 
                       className="bg-blue-600 hover:bg-blue-700 text-white"
@@ -452,10 +453,10 @@ export default function MainPage({
                 {/* 페이지 정보 카드 */}
                 <Card className="glass hover-lift shadow-lg border-0 px-6 py-4">
                   <div className="text-center">
-                    <p className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    <p className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent korean-text">
                       {currentPage} / {totalPages} 페이지
                     </p>
-                    <p className="text-base text-gray-600 mt-2">
+                    <p className="text-base text-gray-600 mt-2 korean-text">
                       총 {totalElements?.toLocaleString() || "0"}개의 뉴스
                     </p>
                   </div>

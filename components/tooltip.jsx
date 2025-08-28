@@ -16,10 +16,33 @@ export default function TermTooltip({ term, definition, children }) {
       const mouseX = event.clientX
       const mouseY = event.clientY
       
-      // 마우스 커서 근처에 툴팁 위치 설정
+      // 툴팁을 가로로 표시하기 위해 위치 조정
+      // 화면 너비를 고려하여 툴팁이 화면 밖으로 나가지 않도록 조정
+      const tooltipWidth = 400 // max-w-[400px]
+      const tooltipHeight = 120 // 예상 높이 (더 여유있게)
+      const windowWidth = window.innerWidth
+      const windowHeight = window.innerHeight
+      
+      let left = mouseX + 10
+      let top = mouseY + 10
+      
+      // 오른쪽으로 나가는 경우 왼쪽에 표시
+      if (left + tooltipWidth > windowWidth) {
+        left = mouseX - tooltipWidth - 10
+      }
+      
+      // 아래로 나가는 경우 위에 표시
+      if (top + tooltipHeight > windowHeight) {
+        top = mouseY - tooltipHeight - 10
+      }
+      
+      // 최소값 보장
+      left = Math.max(10, left)
+      top = Math.max(10, top)
+      
       setTooltipPosition({
-        top: mouseY + 10, // 마우스 커서 아래 10px
-        left: mouseX + 10  // 마우스 커서 오른쪽 10px
+        top: top,
+        left: left
       })
     }
   }
@@ -35,18 +58,62 @@ export default function TermTooltip({ term, definition, children }) {
       window.addEventListener('scroll', () => {
         if (triggerRef.current) {
           const rect = triggerRef.current.getBoundingClientRect()
+          const tooltipWidth = 400
+          const tooltipHeight = 120
+          const windowWidth = window.innerWidth
+          const windowHeight = window.innerHeight
+          
+          let left = rect.left + window.scrollX
+          let top = rect.bottom + window.scrollY + 5
+          
+          // 오른쪽으로 나가는 경우 왼쪽에 표시
+          if (left + tooltipWidth > windowWidth) {
+            left = rect.right + window.scrollX - tooltipWidth - 5
+          }
+          
+          // 아래로 나가는 경우 위에 표시
+          if (top + tooltipHeight > windowHeight) {
+            top = rect.top + window.scrollY - tooltipHeight - 5
+          }
+          
+          // 최소값 보장
+          left = Math.max(10, left)
+          top = Math.max(10, top)
+          
           setTooltipPosition({
-            top: rect.bottom + window.scrollY + 5,
-            left: rect.left + window.scrollX
+            top: top,
+            left: left
           })
         }
       })
       window.addEventListener('resize', () => {
         if (triggerRef.current) {
           const rect = triggerRef.current.getBoundingClientRect()
+          const tooltipWidth = 400
+          const tooltipHeight = 120
+          const windowWidth = window.innerWidth
+          const windowHeight = window.innerHeight
+          
+          let left = rect.left + window.scrollX
+          let top = rect.bottom + window.scrollY + 5
+          
+          // 오른쪽으로 나가는 경우 왼쪽에 표시
+          if (left + tooltipWidth > windowWidth) {
+            left = rect.right + window.scrollX - tooltipWidth - 5
+          }
+          
+          // 아래로 나가는 경우 위에 표시
+          if (top + tooltipHeight > windowHeight) {
+            top = rect.top + window.scrollY - tooltipHeight - 5
+          }
+          
+          // 최소값 보장
+          left = Math.max(10, left)
+          top = Math.max(10, top)
+          
           setTooltipPosition({
-            top: rect.bottom + window.scrollY + 5,
-            left: rect.left + window.scrollX
+            top: top,
+            left: left
           })
         }
       })
@@ -75,6 +142,7 @@ export default function TermTooltip({ term, definition, children }) {
         className="inline-flex items-center cursor-help border-b border-dashed border-blue-400 text-blue-600 hover:text-blue-800 transition-colors"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        style={{ display: 'inline-flex' }}
       >
         {children}
         <Info className="h-3 w-3 ml-1" />
@@ -82,18 +150,18 @@ export default function TermTooltip({ term, definition, children }) {
       
       {isVisible && typeof window !== 'undefined' && createPortal(
         <div 
-          className="fixed z-[9999] animate-slide-in"
+          className="fixed z-[9999] animate-tooltip-fade-in"
           style={{
             top: tooltipPosition.top,
             left: tooltipPosition.left,
             transform: 'none' // 중앙 정렬 제거
           }}
         >
-          <Card className="glass shadow-xl border-blue-200 min-w-[280px] max-w-[320px]">
+          <Card className="glass shadow-xl border-blue-200 min-w-[280px] max-w-[400px]">
             <CardContent className="p-3">
               <div className="text-sm">
-                <div className="font-semibold text-blue-800 mb-1">{term}</div>
-                <div className="text-gray-600 text-xs leading-relaxed">{definition}</div>
+                <div className="font-semibold text-blue-800 mb-2 break-words leading-normal">{term}</div>
+                <div className="text-gray-600 text-xs leading-normal break-words">{definition}</div>
               </div>
             </CardContent>
           </Card>
@@ -110,10 +178,10 @@ export function TextWithTooltips({ text }) {
   const segments = renderTextWithTooltips(text)
   
   return (
-    <>
+    <span className="inline">
       {segments.map((segment, index) => {
         if (typeof segment === 'string') {
-          return <span key={index}>{segment}</span>
+          return <span key={index} className="inline">{segment}</span>
         } else if (segment.type === 'tooltip') {
           return (
             <TermTooltip
@@ -125,8 +193,8 @@ export function TextWithTooltips({ text }) {
             </TermTooltip>
           )
         }
-        return segment
+        return <span key={index} className="inline">{segment}</span>
       })}
-    </>
+    </span>
   )
 } 

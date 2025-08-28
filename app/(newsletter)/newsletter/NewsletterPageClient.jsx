@@ -871,8 +871,10 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                               )}
                             </div>
                             
-                            <CardTitle className="text-lg mb-2 flex items-center justify-between">
-                              <TextWithTooltips text={newsletter.title} />
+                            <CardTitle className="text-lg mb-2 flex items-start justify-between">
+                              <div className="flex-1">
+                                <TextWithTooltips text={newsletter.title} />
+                              </div>
                               <Button
                                 variant="ghost"
                                 size="sm"
