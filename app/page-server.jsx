@@ -1,4 +1,4 @@
-import MainPage from "./MainPage"
+import MainPage from "./page"
 import { siteUrl } from "../lib/api-url"
 
 async function fetchJSON(url, init) {
@@ -9,13 +9,13 @@ async function fetchJSON(url, init) {
 
 export default async function Page() {
   try {
-    // 내부 프록시를 사용하여 초기 데이터 가져오기
+    // 내부 프록시를 그대로 써도 되고, 백엔드 직접 호출도 가능
     const [trending, list] = await Promise.all([
       fetchJSON(siteUrl(`/api/news/trending?hours=24&limit=1`)),
       fetchJSON(siteUrl(`/api/news?page=0&size=21`))
     ])
 
-    // 백엔드 응답에 맞춰 매핑
+    // 백엔드 응답에 맞춰 매핑(당신의 MainPage에서 하던 그대로)
     const initialTrending = (() => {
       const src = (trending.content ?? trending.data ?? [])[0]
       if (!src) return null
@@ -51,37 +51,15 @@ export default async function Page() {
       />
     )
   } catch (error) {
-    console.error('Failed to fetch initial data:', error)
+    console.error('서버 컴포넌트 데이터 로딩 실패:', error)
     
-    // 에러 시 기본 데이터 사용
-    const initialTrending = {
-      id: 1,
-      title: "뉴스를 불러오는 중...",
-      content: "잠시만 기다려주세요.",
-      source: "시스템",
-      publishedAt: new Date().toISOString(),
-      category: "GENERAL",
-      image: "/placeholder.jpg",
-      views: 0
-    }
-
-    const initialList = Array.from({ length: 6 }, (_, i) => ({
-      id: i + 1,
-      title: `뉴스 제목 ${i + 1}`,
-      content: "뉴스 내용을 불러오는 중입니다.",
-      source: "시스템",
-      publishedAt: new Date().toISOString(),
-      category: "GENERAL",
-      image: "/placeholder.jpg",
-      views: 0
-    }))
-
+    // 에러 시에도 기본 구조 유지
     return (
       <MainPage
-        initialTrending={initialTrending}
-        initialList={initialList}
+        initialTrending={null}
+        initialList={[]}
         initialTotalPages={1}
-        initialTotalElements={6}
+        initialTotalElements={0}
       />
     )
   }

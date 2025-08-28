@@ -21,7 +21,7 @@ export async function PUT(request, { params }) {
     }
 
     // 백엔드 API 호출
-    const response = await fetch(`http://localhost:8085/api/newsletter/subscription/${subscriptionId}/status`, {
+    const response = await fetch(`${process.env.BACKEND_URL || 'http://localhost:8000'}/api/newsletter/subscription/${subscriptionId}/status`, {
       method: 'PUT',
       headers: {
         'Authorization': authHeader,

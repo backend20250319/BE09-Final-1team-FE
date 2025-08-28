@@ -14,7 +14,8 @@ export async function GET(req) {
     
     const resp = await fetch(url, { 
       headers: { 'Content-Type': 'application/json' }, 
-      cache: 'no-store' 
+      cache: 'no-store',
+      timeout: 10000 // 10초 타임아웃 추가
     })
     
     console.log('📡 응답 상태:', resp.status, resp.statusText)
@@ -28,11 +29,11 @@ export async function GET(req) {
     }
     
     const text = await resp.text()
-    console.log('📄 응답 텍스트:', text)
+    console.log('📄 응답 텍스트 길이:', text.length)
     
     if (!text) {
       console.warn('⚠️ 빈 응답')
-      return NextResponse.json({ data: [] })
+      return NextResponse.json({ content: [] })
     }
     
     let data
@@ -46,13 +47,19 @@ export async function GET(req) {
       )
     }
     
-    console.log('✅ 파싱된 데이터:', data)
+    console.log('✅ 파싱된 데이터 구조:', {
+      hasContent: !!data.content,
+      contentLength: data.content?.length,
+      hasData: !!data.data,
+      dataLength: data.data?.length
+    })
+    
     return NextResponse.json(data, { status: 200 })
     
   } catch (error) {
     console.error('❌ 프록시 오류:', error)
     return NextResponse.json(
-      { error: '서버 오류가 발생했습니다' },
+      { error: '서버 오류가 발생했습니다', details: error.message },
       { status: 500 }
     )
   }
