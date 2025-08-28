@@ -202,7 +202,7 @@ export default function MainPage({
               {/* Left: Featured News */}
               <div className="w-full lg:w-2/3">
                 <Link href={`/news/${popularNews?.id}`}>
-                  <Card className="relative overflow-hidden glass hover-lift animate-slide-in h-[560px] rounded-xl cursor-pointer">
+                  <Card className="relative overflow-hidden glass hover-lift animate-slide-in h-[680px] rounded-xl cursor-pointer">
                     {popularNewsLoading && !initialTrending ? (
                       <div className="w-full h-full flex items-center justify-center">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -279,32 +279,32 @@ export default function MainPage({
               </div>
 
               {/* Right: Sidebar */}
-              <div className="w-full lg:w-1/3 space-y-4">
-                {/* Side News List - 트렌딩 뉴스와 겹치지 않도록 별도 데이터 사용 */}
-                {filteredNewsItems.slice(0, 4).map((item, index) => (
+              <div className="w-full lg:w-1/3 space-y-6">
+                {/* Side News List - 관련 기사 2개만 표시 */}
+                {filteredNewsItems.slice(0, 2).map((item, index) => (
                   <Link 
                     key={`sidebar-news-${item.id || index}-${index}`} 
                     href={`/news/${item.id}`}
                     className="block"
                   >
                     <Card 
-                      className="flex items-center gap-4 p-4 glass hover-lift rounded-xl h-[130px] transition animate-slide-in cursor-pointer"
+                      className="flex flex-col p-5 glass hover-lift rounded-xl transition animate-slide-in cursor-pointer"
                       style={{ animationDelay: `${0.3 + index * 0.1}s` }}
                     >
                       <img
                         src={item.image || "/placeholder.jpg"}
                         alt={item.title}
-                        className="w-24 h-24 object-cover rounded-lg flex-shrink-0"
+                        className="w-full h-40 object-cover rounded-lg mb-4"
                         loading="eager"
                         onError={(e) => {
                           e.target.src = "/placeholder.jpg"
                         }}
                       />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-base font-semibold line-clamp-2 text-gray-800 mb-2 hover:text-blue-600 transition-colors korean-text">
+                      <div className="flex-1">
+                        <p className="text-lg font-semibold line-clamp-2 text-gray-800 mb-3 hover:text-blue-600 transition-colors korean-text">
                           {item.title}
                         </p>
-                        <p className="text-sm text-gray-500 mb-2">
+                        <p className="text-sm text-gray-500 mb-3">
                           {new Date(item.publishedAt).toLocaleDateString("ko-KR", {
                             month: "short",
                             day: "numeric"
