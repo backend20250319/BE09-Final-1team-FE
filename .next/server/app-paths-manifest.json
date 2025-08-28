@@ -1,5 +1,1 @@
-{
-  "/(api)/api/newsletters/user-subscriptions/route": "app/(api)/api/newsletters/user-subscriptions/route.js",
-  "/page": "app/page.js",
-  "/(newsletter)/newsletter/page": "app/(newsletter)/newsletter/page.js"
-}
+{}

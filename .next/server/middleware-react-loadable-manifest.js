@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST="{\"app/MainPage.jsx -> @/components/RealTimeKeywordWidget\":{\"id\":\"app/MainPage.jsx -> @/components/RealTimeKeywordWidget\",\"files\":[\"static/chunks/_app-pages-browser_components_RealTimeKeywordWidget_tsx.js\"]}}"
+self.__REACT_LOADABLE_MANIFEST="{}"
