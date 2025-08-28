@@ -47,7 +47,7 @@ export default function MainPage({
   const [popularNewsLoading, setPopularNewsLoading] = useState(false) // 초기엔 false
 
   // 페이지당 아이템 수
-  const itemsPerPage = 21
+  const itemsPerPage = 20
 
   // SWR fetcher 함수
   const fetcher = (url) => fetch(url).then(r => r.json())
@@ -167,7 +167,7 @@ export default function MainPage({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-3">
-          {/* Category Tabs, Newsletter Subscription, and Real-time Keywords */}
+            {/* Category Tabs, Newsletter Subscription, and Real-time Keywords */}
             <div className="mb-2">
               {/* 카테고리 버튼과 뉴스레터 구독 */}
               <div className="grid grid-cols-12 gap-4 items-stretch mb-2">
@@ -195,258 +195,255 @@ export default function MainPage({
                     <RealTimeKeywordWidget width="100%" />
                   </div>
                 </div>
-
-            
               </div>
             </div>
 
-          <div className="flex flex-col lg:flex-row items-start gap-6">
-            {/* Left: Featured News */}
-            <div className="w-full lg:w-2/3">
-              <Link href={`/news/${popularNews?.id}`}>
-                <Card className="relative overflow-hidden glass hover-lift animate-slide-in h-[560px] rounded-xl cursor-pointer">
-                  {popularNewsLoading && !initialTrending ? (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                    </div>
-                  ) : popularNews ? (
-                    <>
-                      {/* 이미지 영역 */}
+            <div className="flex flex-col lg:flex-row items-start gap-6">
+              {/* Left: Featured News */}
+              <div className="w-full lg:w-2/3">
+                <Link href={`/news/${popularNews?.id}`}>
+                  <Card className="relative overflow-hidden glass hover-lift animate-slide-in h-[560px] rounded-xl cursor-pointer">
+                    {popularNewsLoading && !initialTrending ? (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                      </div>
+                    ) : popularNews ? (
+                      <>
+                        {/* 이미지 영역 */}
+                        <img
+                          src={popularNews.image}
+                          alt={popularNews.title}
+                          className="w-full h-full object-cover"
+                          loading="eager"
+                          onError={(e) => {
+                            e.target.src = "/placeholder.jpg"
+                          }}
+                        />
+
+                        {/* 텍스트 오버레이 */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent p-4 md:p-6 flex flex-col justify-end text-white">
+                          <Badge className="bg-red-600 text-white px-4 py-1 rounded-full shadow-lg font-bold tracking-wider mb-3 w-fit">
+                            트렌딩 (24시간)
+                          </Badge>
+                          <h2 className="text-lg lg:text-xl font-bold mb-2 line-clamp-2">
+                            {popularNews.title}
+                          </h2>
+                          <p className="text-sm mb-4 line-clamp-2">
+                            <TextWithTooltips text={
+                              popularNews.content && popularNews.content.length > 150 
+                                ? popularNews.content.substring(0, 150) + "..." 
+                                : popularNews.content || "내용을 불러올 수 없습니다."
+                            } />
+                          </p>
+
+                          {/* 하단 메타정보 */}
+                          <div className="flex items-center justify-between text-xs text-gray-300">
+                            <span>{popularNews.source} • {new Date(popularNews.publishedAt).toLocaleDateString('ko-KR', { 
+                              month: 'short', 
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}</span>
+                            <div className="flex items-center space-x-4">
+                              <span className="flex items-center">
+                                <Eye className="h-4 w-4 mr-1" />
+                                {popularNews.views.toLocaleString()}
+                              </span>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="hover-glow text-white"
+                                onClick={(e) => e.preventDefault()}
+                              >
+                                <Share2 className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="hover-glow text-white"
+                                onClick={(e) => e.preventDefault()}
+                              >
+                                <Bookmark className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-500">
+                        인기 뉴스를 불러올 수 없습니다.
+                      </div>
+                    )}
+                  </Card>
+                </Link>
+              </div>
+
+              {/* Right: Sidebar */}
+              <div className="w-full lg:w-1/3 space-y-4">
+                {/* Side News List - 트렌딩 뉴스와 겹치지 않도록 별도 데이터 사용 */}
+                {filteredNewsItems.slice(0, 4).map((item, index) => (
+                  <Link 
+                    key={`sidebar-news-${item.id || index}-${index}`} 
+                    href={`/news/${item.id}`}
+                    className="block"
+                  >
+                    <Card 
+                      className="flex items-center gap-4 p-4 glass hover-lift rounded-xl h-[130px] transition animate-slide-in cursor-pointer"
+                      style={{ animationDelay: `${0.3 + index * 0.1}s` }}
+                    >
                       <img
-                        src={popularNews.image}
-                        alt={popularNews.title}
-                        className="w-full h-full object-cover"
+                        src={item.image || "/placeholder.jpg"}
+                        alt={item.title}
+                        className="w-24 h-24 object-cover rounded-lg flex-shrink-0"
                         loading="eager"
                         onError={(e) => {
                           e.target.src = "/placeholder.jpg"
                         }}
                       />
-
-                      {/* 텍스트 오버레이 */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent p-4 md:p-6 flex flex-col justify-end text-white">
-                        <Badge className="bg-red-600 text-white px-4 py-1 rounded-full shadow-lg font-bold tracking-wider mb-3 w-fit">
-                          트렌딩 (24시간)
-                        </Badge>
-                        <h2 className="text-lg lg:text-xl font-bold mb-2 line-clamp-2">
-                          {popularNews.title}
-                        </h2>
-                        <p className="text-sm mb-4 line-clamp-2">
-                          <TextWithTooltips text={
-                            popularNews.content && popularNews.content.length > 150 
-                              ? popularNews.content.substring(0, 150) + "..." 
-                              : popularNews.content || "내용을 불러올 수 없습니다."
-                          } />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-base font-semibold line-clamp-2 text-gray-800 mb-2 hover:text-blue-600 transition-colors">
+                          {item.title}
                         </p>
+                        <p className="text-sm text-gray-500 mb-2">
+                          {new Date(item.publishedAt).toLocaleDateString("ko-KR", {
+                            month: "short",
+                            day: "numeric"
+                          })}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <Badge variant="outline" className="text-xs">
+                            {categoryDisplayNames[item.category] || item.category}
+                          </Badge>
+                          <span className="text-xs text-gray-500 flex items-center">
+                            <Eye className="h-3 w-3 mr-1" />
+                            {item.views?.toLocaleString() || "0"}
+                          </span>
+                        </div>
+                      </div>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            </div>
 
-                        {/* 하단 메타정보 */}
-                        <div className="flex items-center justify-between text-xs text-gray-300">
-                          <span>{popularNews.source} • {new Date(popularNews.publishedAt).toLocaleDateString('ko-KR', { 
-                            month: 'short', 
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}</span>
-                          <div className="flex items-center space-x-4">
-                            <span className="flex items-center">
+            {/* News List */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10 max-w-[1200px] mx-auto">
+              {listLoading && !initialList?.length ? (
+                // 초기 데이터가 없을 때만 로딩 스켈레톤 표시
+                Array.from({ length: 20 }, (_, index) => (
+                  <Card key={`loading-${index}`} className="min-h-[500px] max-h-[500px] w-full max-w-[600px] flex flex-col justify-between glass animate-pulse">
+                    <div className="h-[352px] w-full bg-gray-200 rounded-lg"></div>
+                    <div className="flex flex-col justify-between flex-1 px-4 py-3">
+                      <div className="space-y-3">
+                        <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                        <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                      </div>
+                      <div className="flex items-center justify-between pt-2">
+                        <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                        <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                      </div>
+                    </div>
+                  </Card>
+                ))
+              ) : filteredNewsItems.length > 0 ? (
+                filteredNewsItems.map((news, index) => (
+                  <Link 
+                    key={`main-news-${news.id || index}-${index}`} 
+                    href={`/news/${news.id}`} 
+                    prefetch={false}
+                    className="block"
+                  >
+                    <Card
+                      className={`min-h-[500px] max-h-[500px] w-full max-w-[600px] flex flex-col justify-between glass hover-lift animate-slide-in cursor-pointer transition-all duration-300 hover:shadow-lg ${
+                        isLoaded ? 'opacity-100' : 'opacity-0'
+                      }`}
+                      style={{ animationDelay: `${(index + 1) * 0.2}s` }}
+                    >
+                      {/* 이미지 영역 */}
+                      <div className="h-[352px] w-full relative">
+                        <img
+                          src={news.image || "/placeholder.jpg"}
+                          alt={news.title}
+                          className="w-full h-[352px] object-cover rounded-lg"
+                          loading="eager"
+                          onError={(e) => {
+                            e.target.src = "/placeholder.jpg"
+                          }}
+                        />
+                      </div>
+                      
+                      {/* 텍스트 영역 */}
+                      <div className="flex flex-col justify-between flex-1 px-4 py-3 min-h-0">
+                        {/* 카테고리 뱃지 */}
+                        <div className="flex justify-between items-start mb-3">
+                          <Badge className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full shadow">
+                            {categoryDisplayNames[news.category] || news.category}
+                          </Badge>
+                          <span className="text-sm text-gray-500 flex items-center">
+                            <Clock className="h-4 w-4 mr-1" />
+                            {new Date(news.publishedAt).toLocaleDateString("ko-KR", {
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit"
+                            })}
+                          </span>
+                        </div>
+
+                        {/* 제목 */}
+                        <div className="flex-1 mb-3 min-h-0">
+                          <h3 className="text-xl font-bold hover:text-blue-600 transition-colors line-clamp-2 leading-relaxed">
+                            <TextWithTooltips text={news.title} />
+                          </h3>
+                        </div>
+
+                        {/* 하단 출처 + 버튼 */}
+                        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                          <span className="text-sm text-gray-500 font-medium truncate mr-2">{news.source}</span>
+                          <div className="flex items-center space-x-2 flex-shrink-0">
+                            <span className="text-sm text-gray-500 flex items-center">
                               <Eye className="h-4 w-4 mr-1" />
-                              {popularNews.views.toLocaleString()}
+                              {news.views?.toLocaleString() || "0"}
                             </span>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="hover-glow text-white"
-                              onClick={(e) => e.preventDefault()}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="hover-glow p-1"
+                              onClick={(e) => e.stopPropagation()}
                             >
                               <Share2 className="h-4 w-4" />
                             </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="hover-glow text-white"
-                              onClick={(e) => e.preventDefault()}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="hover-glow p-1"
+                              onClick={(e) => e.stopPropagation()}
                             >
                               <Bookmark className="h-4 w-4" />
                             </Button>
                           </div>
                         </div>
                       </div>
-                    </>
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-500">
-                      인기 뉴스를 불러올 수 없습니다.
-                    </div>
-                  )}
-                </Card>
-              </Link>
-            </div>
-
-            {/* Right: Sidebar */}
-            <div className="w-full lg:w-1/3 space-y-4">
-              {/* Side News List - 트렌딩 뉴스와 겹치지 않도록 별도 데이터 사용 */}
-              {filteredNewsItems.slice(0, 4).map((item, index) => (
-                <Link 
-                  key={`sidebar-news-${item.id || index}-${index}`} 
-                  href={`/news/${item.id}`}
-                  className="block"
-                >
-                  <Card 
-                    className="flex items-center gap-4 p-4 glass hover-lift rounded-xl h-[130px] transition animate-slide-in cursor-pointer"
-                    style={{ animationDelay: `${0.3 + index * 0.1}s` }}
-                  >
-                    <img
-                      src={item.image || "/placeholder.jpg"}
-                      alt={item.title}
-                      className="w-24 h-24 object-cover rounded-lg flex-shrink-0"
-                      loading="eager"
-                      onError={(e) => {
-                        e.target.src = "/placeholder.jpg"
-                      }}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-base font-semibold line-clamp-2 text-gray-800 mb-2 hover:text-blue-600 transition-colors">
-                        {item.title}
-                      </p>
-                      <p className="text-sm text-gray-500 mb-2">
-                        {new Date(item.publishedAt).toLocaleDateString("ko-KR", {
-                          month: "short",
-                          day: "numeric"
-                        })}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <Badge variant="outline" className="text-xs">
-                          {categoryDisplayNames[item.category] || item.category}
-                        </Badge>
-                        <span className="text-xs text-gray-500 flex items-center">
-                          <Eye className="h-3 w-3 mr-1" />
-                          {item.views?.toLocaleString() || "0"}
-                        </span>
-                      </div>
-                    </div>
+                    </Card>
+                  </Link>
+                ))
+              ) : (
+                // 데이터가 없을 때 표시할 메시지
+                <div className="col-span-full flex flex-col items-center justify-center py-20">
+                  <Card className="glass hover-lift shadow-lg border-0 px-8 py-12 text-center">
+                    <div className="text-6xl mb-4">📰</div>
+                    <h3 className="text-2xl font-bold text-gray-800 mb-4">뉴스를 불러올 수 없습니다</h3>
+                    <p className="text-gray-600 mb-6">현재 뉴스 데이터를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.</p>
+                    <Button 
+                      onClick={() => window.location.reload()} 
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      새로고침
+                    </Button>
                   </Card>
-                </Link>
-              ))}
-            </div>
-          </div>
-
-
-          {/* News List */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
-            {listLoading && !initialList?.length ? (
-              // 초기 데이터가 없을 때만 로딩 스켈레톤 표시
-              Array.from({ length: 6 }, (_, index) => (
-                <Card key={`loading-${index}`} className="min-h-[500px] max-h-[500px] flex flex-col justify-between glass animate-pulse">
-                  <div className="h-72 w-full bg-gray-200 rounded-lg"></div>
-                  <div className="flex flex-col justify-between flex-1 px-4 py-3">
-                    <div className="space-y-3">
-                      <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                      <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-                      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                    </div>
-                    <div className="flex items-center justify-between pt-2">
-                      <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-                      <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                    </div>
-                  </div>
-                </Card>
-              ))
-            ) : filteredNewsItems.length > 0 ? (
-              filteredNewsItems.map((news, index) => (
-                <Link 
-                  key={`main-news-${news.id || index}-${index}`} 
-                  href={`/news/${news.id}`} 
-                  prefetch={false}
-                  className="block"
-                >
-                <Card
-                className={`min-h-[500px] max-h-[500px] flex flex-col justify-between glass hover-lift animate-slide-in cursor-pointer transition-all duration-300 hover:shadow-lg ${
-                  isLoaded ? 'opacity-100' : 'opacity-0'
-                }`}
-                style={{ animationDelay: `${(index + 1) * 0.2}s` }}
-              >
-                   {/* 이미지 영역 */}
-                  <div className="h-72 w-full relative">
-                    <img
-                      src={news.image || "/placeholder.jpg"}
-                      alt={news.title}
-                      className="w-full h-72 object-cover rounded-lg"
-                      loading="eager"
-                      onError={(e) => {
-                        e.target.src = "/placeholder.jpg"
-                      }}
-                    />
-                  </div>
-                  
-                  {/* 텍스트 영역 */}
-                  <div className="flex flex-col justify-between flex-1 px-4 py-3 min-h-0">
-                    {/* 카테고리 뱃지 */}
-                    <div className="flex justify-between items-start mb-3">
-                      <Badge className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full shadow">
-                        {categoryDisplayNames[news.category] || news.category}
-                      </Badge>
-                      <span className="text-sm text-gray-500 flex items-center">
-                        <Clock className="h-4 w-4 mr-1" />
-                        {new Date(news.publishedAt).toLocaleDateString("ko-KR", {
-                          month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit"
-                        })}
-                      </span>
-                    </div>
-
-                    {/* 제목 */}
-                    <div className="flex-1 mb-3 min-h-0">
-                      <h3 className="text-lg font-semibold hover:text-blue-600 transition-colors line-clamp-2 leading-relaxed">
-                        <TextWithTooltips text={news.title} />
-                      </h3>
-                    </div>
-
-                    {/* 하단 출처 + 버튼 */}
-                    <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                      <span className="text-sm text-gray-500 font-medium truncate mr-2">{news.source}</span>
-                      <div className="flex items-center space-x-2 flex-shrink-0">
-                        <span className="text-sm text-gray-500 flex items-center">
-                          <Eye className="h-4 w-4 mr-1" />
-                          {news.views?.toLocaleString() || "0"}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="hover-glow p-1"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Share2 className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="hover-glow p-1"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Bookmark className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-              </Card>
-                </Link>
-              ))
-            ) : (
-              // 데이터가 없을 때 표시할 메시지
-              <div className="col-span-full flex flex-col items-center justify-center py-20">
-                <Card className="glass hover-lift shadow-lg border-0 px-8 py-12 text-center">
-                  <div className="text-6xl mb-4">📰</div>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-4">뉴스를 불러올 수 없습니다</h3>
-                  <p className="text-gray-600 mb-6">현재 뉴스 데이터를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.</p>
-                  <Button 
-                    onClick={() => window.location.reload()} 
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    새로고침
-                  </Button>
-                </Card>
-              </div>
-            )}
+                </div>
+              )}
             </div>
             
             {/* 페이지네이션 */}
@@ -573,11 +570,8 @@ export default function MainPage({
               </div>
             )}
           </div>
-
-       
-
         </div>
       </div>
     </div>
-  )
+  );
 }
