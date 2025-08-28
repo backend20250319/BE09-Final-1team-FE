@@ -17,6 +17,7 @@ import { Eye, EyeOff, Mail, Lock, ArrowLeft } from "lucide-react";
 import { login } from "@/lib/auth";
 import Link from "next/link";
 import KakaoLoginButton from "@/components/KakaoLoginButton";
+import GoogleLoginButton from "@/components/GoogleLoginButton";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
@@ -171,9 +172,10 @@ export default function LoginForm() {
             <span className="bg-white px-2 text-muted-foreground">OR</span>
           </div>
         </div>
-        {/* 카카오 로그인 */}
+        {/* 소셜 로그인 */}
         <div className="relative w-full h-23">
           <KakaoLoginButton />
+          <GoogleLoginButton />
         </div>
       </CardContent>
     </Card>

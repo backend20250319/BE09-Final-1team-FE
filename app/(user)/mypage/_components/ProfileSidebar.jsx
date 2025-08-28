@@ -54,6 +54,18 @@ export default function ProfileSidebar() {
     fetchUserData();
   }, []); // 컴포넌트가 처음 마운트될 때 한 번만 실행
 
+     // --일반 / 소셜 회원 구분--
+    const getAcccountType = (provider) => {
+      switch(provider) {
+        case "kakao":
+          return "카카오 회원";
+        case "google":
+          return "구글 회원";
+        default:
+          return "일반 회원";
+      }
+    }
+
   // --- 로딩 중 UI ---
   if (isLoading) {
     return (
@@ -115,7 +127,7 @@ export default function ProfileSidebar() {
           <p className="text-gray-600">
             {userData?.email || "이메일 정보 없음"}
           </p>
-          <Badge className="mt-2">일반 회원</Badge>
+          <Badge className="mt-2">{getAcccountType(userData?.provider)}</Badge>
         </div>
 
         <Separator className="my-6" />
