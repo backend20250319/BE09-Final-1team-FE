@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { authenticatedFetch } from "@/lib/auth"; // 인증된 요청을 위한 헬퍼 함수
+import { useMypageContext } from "@/contexts/MypageContext";
 
 /**
  * 프로필 사이드바 컴포넌트
@@ -17,11 +18,15 @@ export default function ProfileSidebar() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Context에서 읽은 기사 개수와 스크랩 개수 가져오기
+  const { readArticleCount, scrapCount } = useMypageContext();
+
   // --- 데이터 로딩 ---
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         setIsLoading(true);
+        // 실제 백엔드 API 사용
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
         const response = await authenticatedFetch(`${apiUrl}/api/users/mypage`);
 
@@ -48,6 +53,18 @@ export default function ProfileSidebar() {
 
     fetchUserData();
   }, []); // 컴포넌트가 처음 마운트될 때 한 번만 실행
+
+     // --일반 / 소셜 회원 구분--
+    const getAcccountType = (provider) => {
+      switch(provider) {
+        case "kakao":
+          return "카카오 회원";
+        case "google":
+          return "구글 회원";
+        default:
+          return "일반 회원";
+      }
+    }
 
   // --- 로딩 중 UI ---
   if (isLoading) {
@@ -110,7 +127,7 @@ export default function ProfileSidebar() {
           <p className="text-gray-600">
             {userData?.email || "이메일 정보 없음"}
           </p>
-          <Badge className="mt-2">일반 회원</Badge>
+          <Badge className="mt-2">{getAcccountType(userData?.provider)}</Badge>
         </div>
 
         <Separator className="my-6" />
@@ -123,11 +140,11 @@ export default function ProfileSidebar() {
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-600">읽은 기사</span>
-            <span className="text-sm font-medium">127개</span>
+            <span className="text-sm font-medium">{readArticleCount}개</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-600">스크랩</span>
-            <span className="text-sm font-medium">23개</span>
+            <span className="text-sm font-medium">{scrapCount}개</span>
           </div>
         </div>
       </CardContent>

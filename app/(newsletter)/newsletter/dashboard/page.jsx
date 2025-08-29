@@ -1,6 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { Suspense } from "react"
+
+// 동적 렌더링 설정
+export const dynamic = 'force-dynamic'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -21,45 +25,48 @@ import {
   CheckCircle,
   AlertCircle,
   Bookmark,
-  Share2
+  Share2,
+  RefreshCw
 } from "lucide-react"
 import Header from "@/components/header"
 import { TextWithTooltips } from "@/components/tooltip"
 import Link from "next/link"
-import { getUserRole } from "@/lib/auth"
-import SubscribeForm from "@/components/SubscribeForm"
+import { getUserRole, getUserInfo } from "@/lib/auth"
+import { useUserSubscriptions, useUnsubscribeNewsletter } from "@/hooks/useNewsletter"
+import { useToast } from "@/hooks/use-toast"
 
 export default function NewsletterDashboard() {
   const [userRole, setUserRole] = useState(null)
   const [isLoaded, setIsLoaded] = useState(false)
-  const [subscribedNewsletters, setSubscribedNewsletters] = useState([])
-  const [dashboardStats, setDashboardStats] = useState({
-    totalSubscriptions: 0,
-    totalReads: 0,
-    averageReadTime: 0,
-    engagement: 0
+  const { toast } = useToast()
+
+  // React Query 훅들
+  const { 
+    data: userSubscriptions = [], 
+    isLoading: subscriptionsLoading,
+    error: subscriptionsError,
+    refetch: refetchSubscriptions 
+  } = useUserSubscriptions({
+    enabled: !!userRole,
+    retry: 1,
+    retryDelay: 1000,
   })
+
+  const unsubscribeMutation = useUnsubscribeNewsletter()
 
   useEffect(() => {
     setIsLoaded(true)
     const role = getUserRole()
     setUserRole(role)
-    
-    if (role) {
-      // 로컬 스토리지에서 구독 정보 복원
-      const savedSubscriptions = localStorage.getItem('newsletterSubscriptions')
-      if (savedSubscriptions) {
-        const subscriptions = JSON.parse(savedSubscriptions)
-        setSubscribedNewsletters(subscriptions)
-        setDashboardStats({
-          totalSubscriptions: subscriptions.length,
-          totalReads: subscriptions.reduce((sum, nl) => sum + (nl.reads || 0), 0),
-          averageReadTime: 3.2, // 평균 읽기 시간 (분)
-          engagement: 85 // 참여도 (%)
-        })
-      }
-    }
   }, [])
+
+  // 대시보드 통계 계산
+  const dashboardStats = {
+    totalSubscriptions: userSubscriptions.length,
+    totalReads: userSubscriptions.reduce((sum, sub) => sum + (sub.readCount || 0), 0),
+    averageReadTime: 3.2, // 평균 읽기 시간 (분)
+    engagement: Math.min(85, userSubscriptions.length * 20) // 구독 수에 따른 참여도
+  }
 
   // 카테고리별 읽기 통계 (백엔드 Category enum과 일치)
   const categoryStats = [
@@ -148,12 +155,36 @@ export default function NewsletterDashboard() {
               </Link>
               <h1 className="text-3xl font-bold text-gray-900">뉴스레터 대시보드</h1>
             </div>
-            <Badge className="bg-green-100 text-green-800">
-              활성 구독자
-            </Badge>
+            <div className="flex items-center space-x-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refetchSubscriptions()}
+                disabled={subscriptionsLoading}
+                className="hover-lift"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${subscriptionsLoading ? 'animate-spin' : ''}`} />
+                새로고침
+              </Button>
+              <Badge className="bg-green-100 text-green-800">
+                활성 구독자
+              </Badge>
+            </div>
           </div>
           <p className="text-gray-600">구독 활동과 읽기 패턴을 한눈에 확인하세요</p>
         </div>
+
+        {/* Error Display */}
+        {subscriptionsError && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center">
+              <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
+              <span className="text-red-700">
+                구독 정보를 불러오는 중 오류가 발생했습니다. 새로고침 버튼을 클릭해주세요.
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Featured News Section */}
         <div className="flex flex-col lg:flex-row gap-8 items-stretch mb-8">
@@ -280,6 +311,76 @@ export default function NewsletterDashboard() {
                 </div>
                 <Activity className="h-8 w-8 text-purple-500" />
               </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* My Subscriptions Section */}
+        <div className="mb-8">
+          <Card className="glass hover-lift animate-slide-in">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Mail className="h-5 w-5 mr-2 text-blue-500" />
+                내 구독 정보
+              </CardTitle>
+              <CardDescription>
+                현재 구독 중인 뉴스레터 ({userSubscriptions.length}/3개)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {subscriptionsLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+                  <p className="text-sm text-gray-500 mt-2">구독 정보 로딩 중...</p>
+                </div>
+              ) : userSubscriptions.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {userSubscriptions.map((subscription) => (
+                    <div key={subscription.id} className="p-4 bg-white/50 rounded-lg border hover:bg-white/70 transition-all duration-300">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-sm mb-1">
+                            {subscription.preferredCategories?.join(', ') || '일반 뉴스레터'}
+                          </h4>
+                          <p className="text-xs text-gray-500">
+                            {subscription.frequency === 'DAILY' ? '매일' : 
+                             subscription.frequency === 'WEEKLY' ? '주간' : 
+                             subscription.frequency === 'MONTHLY' ? '월간' : '즉시'}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => unsubscribeMutation.mutate(subscription.id)}
+                          disabled={unsubscribeMutation.isPending}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          {unsubscribeMutation.isPending ? "처리 중..." : "구독해제"}
+                        </Button>
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        <div>구독일: {new Date(subscription.subscribedAt).toLocaleDateString()}</div>
+                        {subscription.lastSentAt && (
+                          <div>마지막 발송: {new Date(subscription.lastSentAt).toLocaleDateString()}</div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Mail className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">구독 중인 뉴스레터가 없습니다</h3>
+                  <p className="text-gray-500 mb-4">
+                    관심 있는 카테고리의 뉴스레터를 구독해보세요.
+                  </p>
+                  <Link href="/newsletter">
+                    <Button className="hover-lift">
+                      뉴스레터 구독하기
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

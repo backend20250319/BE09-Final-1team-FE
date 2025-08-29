@@ -31,32 +31,44 @@ function getRoleFromToken(token: string) {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // admin 경로에 대한 권한 체크
-  if (pathname.startsWith("/admin")) {
+  // 인증이 필요한 경로들 정의
+  const protectedPaths = ["/admin", "/mypage"];
+
+  // 현재 경로가 보호된 경로인지 확인
+  const isProtectedPath = protectedPaths.some((path) =>
+    pathname.startsWith(path)
+  );
+
+  if (isProtectedPath) {
     // 쿠키에서 accessToken 확인
     const accessToken = request.cookies.get("accessToken")?.value;
 
-    console.log("🔍 Admin 접근 시도:", pathname);
+    console.log("🔍 보호된 경로 접근 시도:", pathname);
     console.log("🔍 AccessToken 존재:", !!accessToken);
 
     if (!accessToken) {
-      console.log("❌ 토큰이 없어서 리다이렉트");
-      // 토큰이 없으면 unauthorized 페이지로 리다이렉트
-      return NextResponse.redirect(new URL("/unauthorized", request.url));
+      console.log("❌ 토큰이 없어서 로그인 페이지로 리다이렉트");
+      // 토큰이 없으면 로그인 페이지로 리다이렉트
+      return NextResponse.redirect(new URL("/auth", request.url));
     }
 
-    // JWT 토큰에서 role 추출
-    const role = getRoleFromToken(accessToken);
-    console.log("🔍 추출된 role:", role);
+    // admin 경로인 경우 추가 권한 체크
+    if (pathname.startsWith("/admin")) {
+      // JWT 토큰에서 role 추출
+      const role = getRoleFromToken(accessToken);
+      console.log("🔍 추출된 role:", role);
 
-    // role이 admin이 아니면 unauthorized 페이지로 리다이렉트
-    // 대소문자 구분 없이 비교
-    if (role?.toLowerCase() !== "admin") {
-      console.log(`❌ 권한 부족 (role: ${role}), unauthorized로 리다이렉트`);
-      return NextResponse.redirect(new URL("/unauthorized", request.url));
+      // role이 admin이 아니면 unauthorized 페이지로 리다이렉트
+      // 대소문자 구분 없이 비교
+      if (role?.toLowerCase() !== "admin") {
+        console.log(`❌ 권한 부족 (role: ${role}), unauthorized로 리다이렉트`);
+        return NextResponse.redirect(new URL("/unauthorized", request.url));
+      }
+
+      console.log("✅ Admin 권한 확인됨, 접근 허용");
+    } else {
+      console.log("✅ 인증된 사용자, 접근 허용");
     }
-
-    console.log("✅ Admin 권한 확인됨, 접근 허용");
   }
 
   return NextResponse.next();
