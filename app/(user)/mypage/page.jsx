@@ -1,9 +1,3 @@
-/**
- * 마이페이지 메인 컴포넌트
- * - 사용자 프로필 및 설정 관리
- * - 탭 기반 인터페이스로 구성
- * - 각 기능별 컴포넌트로 분리하여 관리
- */
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,6 +12,7 @@ import ProfileTab from "./_components/ProfileTab";
 import ScrapsTab from "./_components/ScrapsTab";
 import HistoryTab from "./_components/HistoryTab";
 import SettingsTab from "./_components/SettingsTab";
+import CollectionsTab from "./_components/CollectionsTab"; // 컬렉션 탭 추가
 import { MypageProvider } from "@/contexts/MypageContext";
 
 function MyPageContent() {
@@ -44,8 +39,8 @@ function MyPageContent() {
     // URL 파라미터에서 탭 정보 확인
     const tab = searchParams.get("tab");
     if (
-      tab &&
-      ["profile", "interests", "scraps", "history", "settings"].includes(tab)
+        tab &&
+        ["profile", "scraps", "collections", "history", "settings"].includes(tab) // "collections" 추가
     ) {
       setActiveTab(tab);
     }
@@ -54,80 +49,6 @@ function MyPageContent() {
   // 인증 체크 중이면 로딩 표시
   if (isAuthChecking) {
     return (
-      <>
-        <Header />
-        <div className="min-h-screen bg-gray-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="animate-pulse">
-              <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-              <div className="h-64 bg-gray-200 rounded mb-4"></div>
-              <div className="h-4 bg-gray-200 rounded mb-2"></div>
-              <div className="h-4 bg-gray-200 rounded mb-2"></div>
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            </div>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  return (
-    <>
-      <Header />
-      <MypageProvider>
-        <div className="min-h-screen bg-gray-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-              {/* 프로필 사이드바 */}
-              <div className="lg:col-span-1">
-                <ProfileSidebar />
-              </div>
-
-              {/* 메인 콘텐츠 영역 */}
-              <div className="lg:col-span-3">
-                <Tabs
-                  value={activeTab}
-                  onValueChange={setActiveTab}
-                  className="w-full"
-                >
-                  {/* 탭 메뉴 */}
-                  <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="profile">프로필</TabsTrigger>
-                    <TabsTrigger value="scraps">스크랩</TabsTrigger>
-                    <TabsTrigger value="history">읽기 기록</TabsTrigger>
-                    <TabsTrigger value="settings">설정</TabsTrigger>
-                  </TabsList>
-
-                  {/* 각 탭별 컨텐츠 */}
-                  <TabsContent value="profile">
-                    <ProfileTab />
-                  </TabsContent>
-
-                  <TabsContent value="scraps">
-                    <ScrapsTab />
-                  </TabsContent>
-
-                  <TabsContent value="history">
-                    <HistoryTab />
-                  </TabsContent>
-
-                  <TabsContent value="settings">
-                    <SettingsTab />
-                  </TabsContent>
-                </Tabs>
-              </div>
-            </div>
-          </div>
-        </div>
-      </MypageProvider>
-    </>
-  );
-}
-
-export default function MyPage() {
-  return (
-    <Suspense
-      fallback={
         <>
           <Header />
           <div className="min-h-screen bg-gray-50">
@@ -142,9 +63,88 @@ export default function MyPage() {
             </div>
           </div>
         </>
-      }
-    >
-      <MyPageContent />
-    </Suspense>
+    );
+  }
+
+  return (
+      <>
+        <Header />
+        <MypageProvider>
+          <div className="min-h-screen bg-gray-50">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                {/* 프로필 사이드바 */}
+                <div className="lg:col-span-1">
+                  <ProfileSidebar />
+                </div>
+
+                {/* 메인 콘텐츠 영역 */}
+                <div className="lg:col-span-3">
+                  <Tabs
+                      value={activeTab}
+                      onValueChange={setActiveTab}
+                      className="w-full"
+                  >
+                    {/* 탭 메뉴 */}
+                    <TabsList className="grid w-full grid-cols-5">
+                      <TabsTrigger value="profile">프로필</TabsTrigger>
+                      <TabsTrigger value="scraps">스크랩</TabsTrigger>
+                      <TabsTrigger value="collections">컬렉션</TabsTrigger>
+                      <TabsTrigger value="history">읽기 기록</TabsTrigger>
+                      <TabsTrigger value="settings">설정</TabsTrigger>
+                    </TabsList>
+
+                    {/* 각 탭별 컨텐츠 */}
+                    <TabsContent value="profile">
+                      <ProfileTab />
+                    </TabsContent>
+
+                    <TabsContent value="scraps">
+                      <ScrapsTab />
+                    </TabsContent>
+
+                    <TabsContent value="collections">
+                      <CollectionsTab />
+                    </TabsContent>
+
+                    <TabsContent value="history">
+                      <HistoryTab />
+                    </TabsContent>
+
+                    <TabsContent value="settings">
+                      <SettingsTab />
+                    </TabsContent>
+                  </Tabs>
+                </div>
+              </div>
+            </div>
+          </div>
+        </MypageProvider>
+      </>
+  );
+}
+
+export default function MyPage() {
+  return (
+      <Suspense
+          fallback={
+            <>
+              <Header />
+              <div className="min-h-screen bg-gray-50">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                  <div className="animate-pulse">
+                    <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+                    <div className="h-64 bg-gray-200 rounded mb-4"></div>
+                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  </div>
+                </div>
+              </div>
+            </>
+          }
+      >
+        <MyPageContent />
+      </Suspense>
   );
 }
