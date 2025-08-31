@@ -18,7 +18,7 @@ export default function useSummary() {
         const {
             newsId,
             text,
-            type = ".Default",
+            type,
             lines = 3,
             prompt = null,
             force = false,
@@ -36,14 +36,14 @@ export default function useSummary() {
         setLoading(true);
         setError("");
 
-        const body =
-            newsId != null
-                ? { newsId, type, lines, prompt, force }
-                : { text: text ?? "", type, lines, prompt };
+        const body = newsId != null
+          ? { ...(type ? { type } : {}), lines, prompt, force }
+          : { text: text ?? "", ...(type ? { type } : {}), lines, prompt };
 
         const base = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/+$/, "") || "";
-        const url = `${base}/api/news/summary`;
-
+        const url = newsId != null
+          ? `${base}/api/news/${encodeURIComponent(newsId)}/summary`
+              : `${base}/api/news/summary`;
         try {
             const res = await fetch(url, {
                 method: "POST",

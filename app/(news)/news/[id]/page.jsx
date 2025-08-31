@@ -165,12 +165,22 @@ export default function NewsPage() {
   // 요약 모달 열기 (열 때 id 기반으로 요청)
   const openSummary = useCallback(async () => {
     setSummaryModalOpen(true);
-    await requestSummary({ newsId }); // id로 요약(캐시 재사용)
+    await requestSummary({
+        newsId,
+        // 원본 값을 그대로 전달(ENUM 코드가 있으면 그걸, 없으면 한글)
+        type: newsData?.categoryCode || newsData?.category,
+        lines: 3
+    });
   }, [newsId, requestSummary]);
 
-// 다시 요약(재생성) - 관리자만 버튼 노출/사용 권장
+// 다시 요약(재생성) - 관리자만 버튼 노출/사용 권장, 캐시 무시 재생성
   const regenerateSummary = useCallback(async () => {
-    await requestSummary({ newsId, force: true }); // 캐시 무시 재생성
+    await requestSummary({
+      newsId,
+      type: newsData?.categoryCode || newsData?.category,
+      lines: 3,
+      force: true
+    });
   }, [newsId, requestSummary]);
 
 // 요약 복사 summaryData?.summary 사용
