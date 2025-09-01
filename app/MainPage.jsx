@@ -63,6 +63,7 @@ export default function MainPage({
     },
   );
   const [popularNewsLoading, setPopularNewsLoading] = useState(false); // 초기엔 false
+  const [relatedNews, setRelatedNews] = useState([]); // 연관뉴스 상태 추가
 
   // 페이지당 아이템 수
   const itemsPerPage = 20;
@@ -110,6 +111,18 @@ export default function MainPage({
     dedupingInterval: 10000, // 트렌딩은 10초 내 중복 요청 방지
   });
 
+  // 연관뉴스 데이터 fetching (트렌딩 뉴스 ID가 있을 때만)
+  const { data: relatedData } = useSWR(
+    popularNews?.id ? `/api/news/related/${popularNews.id}` : null,
+    fetcher,
+    {
+      revalidateOnMount: true,
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+      dedupingInterval: 15000, // 연관뉴스는 15초 내 중복 요청 방지
+    },
+  );
+
   // 리스트 데이터 처리
   useEffect(() => {
     if (!listData) return;
@@ -145,6 +158,27 @@ export default function MainPage({
       views: src.viewCount ?? src.views ?? 0,
     });
   }, [trendingData?.content?.[0]?.newsId]); // 특정 필드만 의존성으로 사용
+
+  // 연관뉴스 데이터 처리
+  useEffect(() => {
+    if (!relatedData || !Array.isArray(relatedData)) {
+      setRelatedNews([]);
+      return;
+    }
+
+    const mapped = relatedData.slice(0, 2).map((news) => ({
+      id: news.newsId,
+      title: news.title,
+      content: news.summary || '',
+      source: news.press,
+      publishedAt: news.publishedAt,
+      category: news.categoryName,
+      image: news.imageUrl || '/placeholder.jpg',
+      views: 0, // 연관뉴스에는 조회수 정보가 없으므로 0으로 설정
+    }));
+
+    setRelatedNews(mapped);
+  }, [relatedData]);
 
   // 카테고리 변경 시 첫 페이지로 리셋
   useEffect(() => {
@@ -331,49 +365,90 @@ export default function MainPage({
 
               {/* Right: Sidebar */}
               <div className="w-full lg:w-1/3 space-y-6">
-                {/* Side News List - 관련 기사 2개만 표시 */}
-                {filteredNewsItems.slice(0, 2).map((item, index) => (
-                  <Link
-                    key={`sidebar-news-${item.id || index}-${index}`}
-                    href={`/news/${item.id}`}
-                    className="block"
-                  >
-                    <Card
-                      className="flex flex-col p-5 glass hover-lift rounded-xl transition animate-slide-in cursor-pointer"
-                      style={{ animationDelay: `${0.3 + index * 0.1}s` }}
-                    >
-                      <img
-                        src={item.image || '/placeholder.jpg'}
-                        alt={item.title}
-                        className="w-full h-40 object-cover rounded-lg mb-4"
-                        loading="eager"
-                        onError={(e) => {
-                          e.target.src = '/placeholder.jpg';
-                        }}
-                      />
-                      <div className="flex-1">
-                        <p className="text-lg font-semibold line-clamp-2 text-gray-800 mb-3 hover:text-blue-600 transition-colors korean-text">
-                          {item.title}
-                        </p>
-                        <p className="text-sm text-gray-500 mb-3">
-                          {new Date(item.publishedAt).toLocaleDateString('ko-KR', {
-                            month: 'short',
-                            day: 'numeric',
-                          })}
-                        </p>
-                        <div className="flex items-center justify-between">
-                          <Badge variant="outline" className="text-xs">
-                            {categoryDisplayNames[item.category] || item.category}
-                          </Badge>
-                          <span className="text-xs text-gray-500 flex items-center">
-                            <Eye className="h-3 w-3 mr-1" />
-                            {item.views?.toLocaleString() || '0'}
-                          </span>
-                        </div>
-                      </div>
-                    </Card>
-                  </Link>
-                ))}
+                {/* 연관뉴스 2개 표시 */}
+                {relatedNews.length > 0
+                  ? relatedNews.map((item, index) => (
+                      <Link
+                        key={`related-news-${item.id || index}-${index}`}
+                        href={`/news/${item.id}`}
+                        className="block"
+                      >
+                        <Card
+                          className="flex flex-col p-5 glass hover-lift rounded-xl transition animate-slide-in cursor-pointer"
+                          style={{ animationDelay: `${0.3 + index * 0.1}s` }}
+                        >
+                          <img
+                            src={item.image || '/placeholder.jpg'}
+                            alt={item.title}
+                            className="w-full h-40 object-cover rounded-lg mb-4"
+                            loading="eager"
+                            onError={(e) => {
+                              e.target.src = '/placeholder.jpg';
+                            }}
+                          />
+                          <div className="flex-1">
+                            <p className="text-lg font-semibold line-clamp-2 text-gray-800 mb-3 hover:text-blue-600 transition-colors korean-text">
+                              {item.title}
+                            </p>
+                            <p className="text-sm text-gray-500 mb-3">
+                              {new Date(item.publishedAt).toLocaleDateString('ko-KR', {
+                                month: 'short',
+                                day: 'numeric',
+                              })}
+                            </p>
+                            <div className="flex items-center justify-between">
+                              <Badge variant="outline" className="text-xs">
+                                {categoryDisplayNames[item.category] || item.category}
+                              </Badge>
+                              <span className="text-xs text-gray-500">{item.source}</span>
+                            </div>
+                          </div>
+                        </Card>
+                      </Link>
+                    ))
+                  : // 연관뉴스가 없을 때는 기존 방식으로 일반 뉴스 2개 표시
+                    filteredNewsItems.slice(0, 2).map((item, index) => (
+                      <Link
+                        key={`fallback-news-${item.id || index}-${index}`}
+                        href={`/news/${item.id}`}
+                        className="block"
+                      >
+                        <Card
+                          className="flex flex-col p-5 glass hover-lift rounded-xl transition animate-slide-in cursor-pointer"
+                          style={{ animationDelay: `${0.3 + index * 0.1}s` }}
+                        >
+                          <img
+                            src={item.image || '/placeholder.jpg'}
+                            alt={item.title}
+                            className="w-full h-40 object-cover rounded-lg mb-4"
+                            loading="eager"
+                            onError={(e) => {
+                              e.target.src = '/placeholder.jpg';
+                            }}
+                          />
+                          <div className="flex-1">
+                            <p className="text-lg font-semibold line-clamp-2 text-gray-800 mb-3 hover:text-blue-600 transition-colors korean-text">
+                              {item.title}
+                            </p>
+                            <p className="text-sm text-gray-500 mb-3">
+                              {new Date(item.publishedAt).toLocaleDateString('ko-KR', {
+                                month: 'short',
+                                day: 'numeric',
+                              })}
+                            </p>
+                            <div className="flex items-center justify-between">
+                              <Badge variant="outline" className="text-xs">
+                                {categoryDisplayNames[item.category] || item.category}
+                              </Badge>
+                              <span className="text-xs text-gray-500 flex items-center">
+                                <Eye className="h-3 w-3 mr-1" />
+                                {item.views?.toLocaleString() || '0'}
+                              </span>
+                            </div>
+                          </div>
+                        </Card>
+                      </Link>
+                    ))}
               </div>
             </div>
 
