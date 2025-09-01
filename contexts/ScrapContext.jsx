@@ -1,43 +1,173 @@
 "use client";
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
+
+const API_BASE_URL = "/api/news/mypage";
+
+// API 호출 함수들 (기존과 동일)
+const fetchScrapsAPI = async (token, category, page = 0) => {
+  if (!token) {
+    console.log("토큰이 없어 스크랩 목록을 조회하지 않습니다.");
+    return { content: [], totalPages: 0 };
+  }
+  const categoryQuery = (category && category !== '전체') ? `&category=${encodeURIComponent(category)}` : '';
+  const response = await fetch(`${API_BASE_URL}/scraps?page=${page}&size=10${categoryQuery}`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (response.status === 401) {
+    toast.error("세션이 만료되었습니다. 다시 로그인해주세요.");
+    throw new Error("인증 에러");
+  }
+  if (!response.ok) {
+    throw new Error("스크랩 목록을 불러오는데 실패했습니다.");
+  }
+  return response.json();
+};
+
+const addScrapAPI = async (newsId, token) => {
+  const response = await fetch(`/api/news/${newsId}/scrap`, {
+    method: "POST",
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+  if (response.status === 409) {
+    throw new Error("이미 스크랩된 기사입니다.");
+  }
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || "스크랩 추가에 실패했습니다.");
+  }
+  return true;
+};
+
+const removeScrapAPI = async (newsId, token) => {
+  const response = await fetch(`${API_BASE_URL}/scraps/${newsId}`, {
+    method: "DELETE",
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!response.ok) {
+    throw new Error("스크랩 삭제에 실패했습니다.");
+  }
+  return true;
+};
 
 const ScrapContext = createContext();
 
 export function ScrapProvider({ children }) {
   const [scraps, setScraps] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAdding, setIsAdding] = useState(false);
+  const [error, setError] = useState(null);
 
-  // localStorage 연동 (새로고침해도 유지)
-  useEffect(() => {
-    const saved = localStorage.getItem("scraps");
-    if (saved) setScraps(JSON.parse(saved));
+  const [selectedCategory, setSelectedCategory] = useState("전체");
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+
+  const loadScraps = useCallback(async (category, page) => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      setScraps([]);
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await fetchScrapsAPI(token, category, page);
+      setScraps(data.content || []);
+      setTotalPages(data.totalPages || 0);
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+      setScraps([]);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
-  useEffect(() => {
-    localStorage.setItem("scraps", JSON.stringify(scraps));
-  }, [scraps]);
 
-  const addScrap = (news) => {
-    if (!scraps.find((item) => item.newsId === news.newsId)) {
-      setScraps([
-        { ...news, scrapedAt: new Date().toISOString().slice(0, 10) },
-        ...scraps,
-      ]);
+  useEffect(() => {
+    loadScraps(selectedCategory, currentPage);
+  }, [selectedCategory, currentPage, loadScraps]);
+
+  const handleCategoryChange = (category) => {
+    setSelectedCategory(category);
+    setCurrentPage(0);
+  };
+
+  // 수정된 addScrap 함수
+  const addScrap = useCallback(async (news) => {
+    if (isAdding) return; // 중복 실행 방지
+
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      toast.error("로그인이 필요합니다.");
+      return;
+    }
+
+    // 클라이언트 측에서 먼저 중복 확인 (불필요한 API 호출 방지)
+    if (scraps.some((item) => item.newsId === news.newsId)) {
+      toast.info("이미 스크랩한 기사입니다.");
+      return;
+    }
+
+    setIsAdding(true);
+    try {
+      await addScrapAPI(news.newsId, token);
+      // 성공 시 스크랩 목록 다시 로드
+      await loadScraps(selectedCategory, currentPage);
+      toast.success("스크랩에 추가되었습니다.");
+    } catch (error) {
+      // API 에러 메시지를 더 구체적으로 사용자에게 표시
+      if (error.message === "이미 스크랩된 기사입니다.") {
+        toast.info(error.message);
+      } else {
+        toast.error(error.message || "스크랩 추가 중 오류가 발생했습니다.");
+      }
+    } finally {
+      setIsAdding(false);
+    }
+  }, [isAdding, scraps, selectedCategory, currentPage, loadScraps]);
+
+  const removeScrap = async (newsId) => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      toast.error("로그인이 필요합니다.");
+      return;
+    }
+    const originalScraps = [...scraps];
+    setScraps((prevScraps) => prevScraps.filter((item) => item.newsId !== newsId));
+    try {
+      await removeScrapAPI(newsId, token);
+      toast.success("스크랩이 삭제되었습니다.");
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message);
+      setScraps(originalScraps);
     }
   };
-  const removeScrap = (newsId) => {
-    setScraps(scraps.filter((item) => item.newsId !== newsId));
+
+  const value = {
+    scraps,
+    isLoading,
+    error,
+    selectedCategory,
+    handleCategoryChange,
+    addScrap,
+    removeScrap,
+    currentPage,
+    totalPages,
+    setCurrentPage,
   };
 
   return (
-    <ScrapContext.Provider value={{ scraps, addScrap, removeScrap }}>
-      {children}
-    </ScrapContext.Provider>
+      <ScrapContext.Provider value={value}>
+        {children}
+      </ScrapContext.Provider>
   );
 }
 
 export function useScrap() {
-  const context = useContext(ScrapContext);
-  if (context === undefined) {
-    throw new Error('useScrap must be used within a ScrapProvider');
-  }
-  return context;
+  return useContext(ScrapContext);
 }

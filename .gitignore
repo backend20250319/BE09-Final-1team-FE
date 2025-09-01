@@ -3,8 +3,10 @@
 # dependencies
 node_modules
 
-# next.js
-/.next/
+# Next.js
+**/.next/
+**/out/
+.next/
 out/
 
 # production

@@ -9,7 +9,11 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // API 리라이트 설정 (선택사항)
+  // React 19 호환성을 위한 설정
+  experimental: {
+    optimizePackageImports: ['lucide-react'],
+  },
+  // API 리라이트 설정
   async rewrites() {
     return [
       {
