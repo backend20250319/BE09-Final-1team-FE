@@ -550,6 +550,7 @@ export default function NewsPage() {
     fetchRelatedNews();
   }, [articleId]);
 
+  /* 🤖 요약 데이터 관리용 */
   const { data: summaryData, loading: summaryLoading, error: summaryError, requestSummary, reset: resetSummary } = useSummary();
   const [isSummaryModalOpen, setSummaryModalOpen] = useState(false);
 
@@ -721,7 +722,7 @@ export default function NewsPage() {
           </div>
         </div>
 
-        {/* 요약 모달: 요약 텍스트만 노출 + 복사 버튼 */}
+        {/* 🤖 요약 모달: 요약 텍스트만 노출 + 복사 버튼 */}
         {isSummaryModalOpen && (
             <AiSummaryModal
                 data={summaryData}          // { summary, cached, stale, ... }
@@ -736,7 +737,7 @@ export default function NewsPage() {
             />
         )}
 
-        {/* 공유 모달(기존 유지) */}
+        {/* 🤖 공유 모달(기존 유지) */}
         {isShareModalOpen && (
             <div
                 className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
