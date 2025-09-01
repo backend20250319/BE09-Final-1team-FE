@@ -17,6 +17,8 @@ import { Textarea } from '@/components/ui/textarea';
 
 // 서비스 및 커스텀 훅
 
+import AiSummaryButton from "../../../../components/aisummarybot/AiSummaryButton";
+import AiSummaryModal from "../../../../components/aisummarybot/AiSummaryModal"
 import { newsService } from "@/lib/newsService";
 import { useScrap } from "@/contexts/ScrapContext";
 import useSummary from '../../../../hooks/useSummary';
@@ -103,24 +105,15 @@ const reportReasons = [
   { id: 'OTHER', label: '기타' },
 ];
 
-// 요약 버튼/모달/훅 사용
-import AiSummaryButton from "@/components/aisummarybot/AiSummaryButton";
-import AiSummaryModal from "@/components/aisummarybot/AiSummaryModal";
-import useSummary from "../../../../hooks/useSummary";
-
-import Link from "next/link";
-import { Share, X, User, Clock, Siren, Bookmark } from "lucide-react";
-import { Toaster, toast } from "sonner";
-
 const ReportModal = ({ isOpen, onClose, newsId }) => {
-    const [reason, setReason] = useState(reportReasons[0].id);
-    const [details, setDetails] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [reason, setReason] = useState(reportReasons[0].id);
+  const [details, setDetails] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
-    const handleReportClick = () => {
-        setIsConfirmModalOpen(true);
-    };
+  const handleReportClick = () => {
+    setIsConfirmModalOpen(true);
+  };
 
   const handleConfirmSubmit = async () => {
     setIsConfirmModalOpen(false);
@@ -293,145 +286,331 @@ const FontSizeSelector = ({ currentValue, onSelect, onClose }) => {
   );
 };
 
+const NewsActions = ({ newsData, onSummaryOpen, onShareOpen, isFontSizeSelectorOpen, onFontSizeSelectorToggle, fontSize, onFontSizeChange }) => {
+  const { addScrap } = useScrap();
+  const [isScrapLoading, setIsScrapLoading] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+
+  const handleScrap = async () => {
+    if (!localStorage.getItem('accessToken')) {
+      setIsLoginModalOpen(true);
+      return;
+    }
+    if (isScrapLoading) return;
+
+    setIsScrapLoading(true);
+    try {
+      await addScrap(newsData);
+    } finally {
+      setIsScrapLoading(false);
+    }
+  };
+
+  const handleReportClick = () => {
+    if (!localStorage.getItem('accessToken')) {
+      setIsLoginModalOpen(true);
+    } else {
+      setIsReportModalOpen(true);
+    }
+  };
+
+  return (
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <button
+              onClick={handleScrap}
+              disabled={isScrapLoading}
+              className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg transition-colors text-sm disabled:opacity-50"
+          >
+            <Bookmark size={18} />
+            <span>스크랩</span>
+          </button>
+          <button
+              onClick={onSummaryOpen}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors text-sm font-semibold text-white"
+              style={{
+                background: "linear-gradient(135deg, rgba(102, 126, 234, 1) 0%, rgba(118, 75, 162, 1) 50%, rgba(245, 87, 108, 1) 100%)",
+              }}
+          >
+            <Bot size={18} />
+            <span>요약봇</span>
+          </button>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <FontSizeButton onClick={onFontSizeSelectorToggle} />
+            {isFontSizeSelectorOpen && (
+                <FontSizeSelector
+                    currentValue={fontSize}
+                    onSelect={onFontSizeChange}
+                    onClose={() => onFontSizeSelectorToggle(false)}
+                />
+            )}
+          </div>
+          <button onClick={onShareOpen} className="p-2 hover:bg-gray-100 rounded-full hover:shadow-md transition-all duration-200">
+            <Share className="w-5 h-5 text-gray-600" />
+          </button>
+          <button onClick={handleReportClick} className="p-2 hover:bg-gray-100 rounded-full transition-all duration-200">
+            <Siren className="w-6 h-6 text-red-500" />
+          </button>
+        </div>
+        <ReportModal isOpen={isReportModalOpen} onClose={() => setIsReportModalOpen(false)} newsId={newsData.newsId} />
+        <LoginConfirmModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
+      </div>
+  );
+};
+
+const NewsContent = ({ newsData, fontSize }) => {
+  return (
+      <>
+        {newsData.imageUrl && (
+            <div className="my-6">
+              <img src={newsData.imageUrl} alt={newsData.title} className="w-full max-h-[400px] object-cover rounded-xl mx-auto" />
+            </div>
+        )}
+        <article className="prose prose-lg max-w-none text-lg leading-relaxed text-gray-800" style={{ fontSize: `${fontSize}px` }}>
+          <div dangerouslySetInnerHTML={{ __html: newsData.content }} />
+        </article>
+        {newsData.tags && newsData.tags.length > 0 && (
+            <div className="mt-8 pt-6 border-t border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-800 mb-3">관련 키워드</h3>
+              <div className="flex flex-wrap gap-2">
+                {newsData.tags.map((tag, index) => (
+                    <span key={index} className="bg-gray-100 text-gray-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded-full">
+                #{tag}
+              </span>
+                ))}
+              </div>
+            </div>
+        )}
+      </>
+  );
+};
+
+const CommentSection = ({ newsId }) => {
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState("");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userInfo, setUserInfo] = useState({ name: '방문자', avatar: 'https://placehold.co/40x40/E2E8F0/4A5568?text=?' });
+
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    const storedUserInfo = localStorage.getItem('userInfo');
+
+    if (token && storedUserInfo) {
+      setIsLoggedIn(true);
+      const parsedInfo = JSON.parse(storedUserInfo);
+      setUserInfo({
+        name: parsedInfo.name || '사용자',
+        avatar: `https://placehold.co/40x40/C7D2FE/4338CA?text=${parsedInfo.name?.[0] || 'U'}`
+      });
+    } else {
+      setIsLoggedIn(false);
+    }
+    // TODO: 실제 댓글 목록 API 호출
+  }, [newsId]);
+
+  const handleCommentSubmit = () => {
+    if (!isLoggedIn) {
+      toast.error("댓글을 작성하려면 로그인이 필요합니다.");
+      return;
+    }
+    if (newComment.trim() === "") {
+      toast.error("댓글 내용을 입력해주세요.");
+      return;
+    }
+
+    // TODO: 실제 백엔드 API로 댓글 전송
+    const comment = {
+      id: Date.now(),
+      author: userInfo.name,
+      avatar: userInfo.avatar,
+      text: newComment,
+      time: "방금 전",
+    };
+    setComments([comment, ...comments]);
+    setNewComment("");
+    toast.success("댓글이 등록되었습니다. (임시)");
+  };
+
+  return (
+      <section className="mt-12 pt-8 border-t">
+        <h2 className="text-2xl font-bold mb-6">댓글 <span className="text-indigo-600">{comments.length}</span></h2>
+        <div className="space-y-6">
+          {isLoggedIn ? (
+              <div className="flex items-start gap-4">
+                <img src={userInfo.avatar} alt={`${userInfo.name} 프로필`} className="w-10 h-10 rounded-full" />
+                <div className="flex-1">
+              <textarea
+                  className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                  rows="3"
+                  placeholder={`의견을 남겨보세요, ${userInfo.name}님...`}
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleCommentSubmit(); }
+                  }}
+              />
+                  <button onClick={handleCommentSubmit} className="mt-2 bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors float-right">
+                    등록
+                  </button>
+                </div>
+              </div>
+          ) : (
+              <div className="text-center p-6 border-2 border-dashed rounded-lg bg-gray-50">
+                <p className="text-gray-600 mb-4">댓글을 작성하려면 로그인이 필요합니다.</p>
+                <Link href="/auth"><span className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors cursor-pointer">로그인 페이지로 이동</span></Link>
+              </div>
+          )}
+          <div className="space-y-6 pt-6">
+            {comments.map((comment) => (
+                <div key={comment.id} className="flex items-start gap-4">
+                  <img src={comment.avatar} alt={`${comment.author} 프로필`} className="w-10 h-10 rounded-full" />
+                  <div className="flex-1 bg-gray-50 p-4 rounded-lg">
+                    <p className="font-semibold">{comment.author}</p>
+                    <p className="text-gray-700 mt-1">{comment.text}</p>
+                    <p className="text-xs text-gray-500 mt-2">{comment.time}</p>
+                  </div>
+                </div>
+            ))}
+          </div>
+        </div>
+      </section>
+  );
+};
+
+const ShareModal = ({ isOpen, onClose, newsData }) => {
+  if (!isOpen) return null;
+  const copyUrl = () => {
+    navigator.clipboard.writeText(window.location.href).then(() => toast.success("URL이 복사되었습니다."))
+        .catch(() => toast.error("URL 복사에 실패했습니다."));
+  };
+  const shareOnFacebook = () => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}&quote=${encodeURIComponent(newsData.title)}`, "_blank", "width=600,height=400");
+  const shareOnTwitter = () => window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(newsData.title)}`, "_blank", "width=600,height=400");
+
+  return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={onClose}>
+        <div className="bg-white rounded-2xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+          <div className="p-6 border-b flex justify-between items-center">
+            <h2 className="text-xl font-bold">기사 공유하기</h2>
+            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full"><X /></button>
+          </div>
+          <div className="p-6">
+            <p className="text-gray-600 mb-4">아래 링크를 복사하거나 SNS로 공유할 수 있습니다.</p>
+            <div className="flex items-center border rounded-lg p-2 bg-gray-50 mb-4">
+              <input type="text" value={window.location.href} className="flex-1 bg-transparent outline-none text-sm text-gray-700" readOnly />
+              <button onClick={copyUrl} className="bg-indigo-500 text-white px-3 py-1 rounded text-sm font-semibold hover:bg-indigo-600">복사</button>
+            </div>
+            <div className="flex justify-center gap-4">
+              <button onClick={copyUrl} className="w-12 h-12 rounded-full flex items-center justify-center bg-[#FEE500] hover:opacity-80"><img src="/images/Kakaotalk.png" alt="카카오톡" className="w-8 h-8" /></button>
+              <button onClick={shareOnFacebook} className="w-12 h-12 rounded-full flex items-center justify-center bg-[#1877F2] hover:opacity-80"><img src="/images/Facebook.png" alt="페이스북" className="w-8 h-8" /></button>
+              <button onClick={shareOnTwitter} className="w-12 h-12 rounded-full flex items-center justify-center bg-gray-200 hover:opacity-80"><img src="/images/Twitter.png" alt="트위터" className="w-8 h-8" /></button>
+              <button onClick={copyUrl} className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E4405F] hover:opacity-80"><img src="/images/Instagram.png" alt="인스타그램" className="w-8 h-8" /></button>
+            </div>
+          </div>
+        </div>
+      </div>
+  );
+};
+
 export default function NewsPage() {
   const params = useParams();
   const articleId = params?.id;
 
-  const { addScrap } = useScrap();
   const [newsData, setNewsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const [fontSize, setFontSize] = useState(18);
   const [isFontSizeSelectorOpen, setFontSizeSelectorOpen] = useState(false);
-
-  /* 가져올 뉴스데이터 id 및 State 설정 */
-  const newsId = Number(params.id);
-
-  const [isSummaryModalOpen, setSummaryModalOpen] = useState(false);
   const [isShareModalOpen, setShareModalOpen] = useState(false);
-  const [comments, setComments] = useState([
-    {
-      id: 1,
-      author: "김민준",
-      avatar: "https://placehold.co/40x40/C7D2FE/4338CA?text=김",
-      text:
-          "정책의 방향성은 좋다고 생각합니다. 다만, 실행 과정에서 중소기업들에게 실질적인 혜택이 돌아갈 수 있도록 세심한 관리가 필요해 보여요.",
-      time: "2시간 전",
-    },
-    {
-      id: 2,
-      author: "이수진",
-      avatar: "https://placehold.co/40x40/FBCFE8/86198F?text=이",
-      text: "요약봇 기능 너무 좋네요! 긴 기사 읽기 전에 핵심을 파악할 수 있어서 편리해요.",
-      time: "1시간 전",
-    },
-  ]);
-  const [newComment, setNewComment] = useState("");
   const [readingProgress, setReadingProgress] = useState(0);
 
   const [relatedNews, setRelatedNews] = useState([]);
   const [headlineNews, setHeadlineNews] = useState([]);
   const [rankingNews, setRankingNews] = useState([]);
 
-  const backendToFrontendCategory = {
-    POLITICS: "정치",
-    ECONOMY: "경제",
-    SOCIETY: "사회",
-    CULTURE: "생활/문화",
-    LIFE: "생활",
-    INTERNATIONAL: "세계",
-    IT_SCIENCE: "IT/과학",
-  };
-
-  // 요약 훅(요약 표시 + 복사만 사용)
-  const {
-    data: summaryData,
-    loading: summaryLoading,
-    error: summaryError,
-    requestSummary,
-    reset: resetSummary,
-  } = useSummary();
-
-  // 요약 모달 열기 (열 때 id 기반으로 요청)
-  const openSummary = useCallback(async () => {
-    setSummaryModalOpen(true);
-    await requestSummary({ newsId }); // id로 요약(캐시 재사용)
-  }, [newsId, requestSummary]);
-
-// 다시 요약(재생성) - 관리자만 버튼 노출/사용 권장
-  const regenerateSummary = useCallback(async () => {
-    await requestSummary({ newsId, force: true }); // 캐시 무시 재생성
-  }, [newsId, requestSummary]);
-
-// 요약 복사 summaryData?.summary 사용
-  const copySummary = useCallback(async () => {
-    const text = summaryData?.summary || "";
-    if (!text) return;
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success("요약이 복사되었습니다.");
-    } catch {
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
-      toast.success("요약이 복사되었습니다.");
-    }
-  }, [summaryData?.summary]);
-
   useEffect(() => {
-    const loadNewsData = async () => {
+    const fetchRelatedNews = async () => {
+      if (!articleId) return;
       try {
-        setLoading(true);
-        setError(null);
-
-        const response = await fetch(`/api/news-detail?id=${articleId}`);
-        if (!response.ok) throw new Error(`뉴스를 불러올 수 없습니다. (${response.status})`);
-
-        const data = await response.json();
-        if (!data || !data.title) throw new Error("뉴스 데이터가 올바르지 않습니다.");
-
-        const rawCategory = data.category || "일반";
-        const convertedCategory = backendToFrontendCategory[rawCategory] || rawCategory;
-
-        const transformedData = {
-          ...data,
-          category: convertedCategory,
-          reporterName: data.reporterName || data.reporter || "알 수 없음",
-          source: data.source || data.press || "알 수 없음",
-          image: data.image || data.imageUrl || "/placeholder.jpg",
-          views: data.views || data.viewCount || 0,
-          publishedAt: data.publishedAt,
-          content: data.content || "내용이 없습니다.",
-          tags: data.tags || [convertedCategory],
-        };
-
-        setNewsData(transformedData);
-
-        // 조회 기록
-        try {
-          await newsService.recordNewsView(articleId);
-        } catch (viewErr) {
-          // 조회 기록 실패는 무시
+        const response = await fetch(`/api/news/related/${articleId}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-      } catch (err) {
-        setError(err.message || "뉴스를 불러올 수 없습니다.");
-        setNewsData(null);
-      } finally {
-        setLoading(false);
+        const data = await response.json();
+        setRelatedNews(data);
+      } catch (error) {
+        console.error("Failed to fetch related news:", error);
+        // Optionally, set an error state or show a toast notification
       }
     };
 
-    if (articleId) loadNewsData();
+    fetchRelatedNews();
+  }, [articleId]);
+
+  const { data: summaryData, loading: summaryLoading, error: summaryError, requestSummary, reset: resetSummary } = useSummary();
+  const [isSummaryModalOpen, setSummaryModalOpen] = useState(false);
+
+  const openSummary = useCallback(async () => {
+    setSummaryModalOpen(true);
+    await requestSummary({ newsId: articleId });
+  }, [articleId, requestSummary]);
+
+  const regenerateSummary = useCallback(async () => {
+    await requestSummary({ newsId: articleId, force: true });
+  }, [articleId, requestSummary]);
+
+  const backendToFrontendCategory = {
+    POLITICS: "정치", ECONOMY: "경제", SOCIETY: "사회", LIFE: "생활", INTERNATIONAL: "세계", IT_SCIENCE: "IT/과학", VEHICLE : '자동차/교통', TRAVEL_FOOD : '여행/음식', ART : '예술'
+  };
+
+  useEffect(() => {
+    const loadNewsData = async () => {
+      setLoading(true);
+      setError(null);
+
+      if (!articleId) {
+        setError({ status: 400, message: "기사 ID가 없습니다." });
+        setLoading(false);
+        return;
+      }
+
+      const result = await newsService.getNewsById(articleId);
+
+      if (result.error) {
+        setError(result.error);
+        setNewsData(null);
+      } else {
+        const data = result.data;
+        const rawCategory = data.categoryName || "일반"; // Changed from data.category to data.categoryName
+        const convertedCategory = backendToFrontendCategory[rawCategory] || rawCategory;
+
+        const transformedData = {
+          category: convertedCategory,
+          date: data.publishedAt ? new Date(data.publishedAt).toLocaleString("ko-KR") : "-",
+          title: data.title,
+          reporter: { name: data.reporterName || data.author || "크롤링 시스템" }, // Changed from data.reporter to data.reporterName
+          content: data.content || "상세 내용은 원본 링크를 확인해주세요.",
+          source: data.press || data.source || "크롤링 뉴스",
+          tags: data.tags || [convertedCategory],
+          newsId: data.newsId || data.id,
+          imageUrl: data.imageUrl, // Changed from data.image to data.imageUrl
+        };
+        setNewsData(transformedData);
+      }
+
+      setLoading(false);
+    };
+
+    if (articleId) {
+      loadNewsData();
+    }
 
     const handleScroll = () => {
-      const totalHeight =
-          document.documentElement.scrollHeight - document.documentElement.clientHeight;
-      const scrollPosition = window.scrollY;
-      const progress = (scrollPosition / totalHeight) * 100;
+      const totalHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const progress = (window.scrollY / totalHeight) * 100;
       setReadingProgress(progress);
     };
 
@@ -442,10 +621,24 @@ export default function NewsPage() {
   if (loading) {
     return (
         <>
-          <Header />
-          <div className="container mx-auto max-w-screen-xl p-8">
-            <div className="flex justify-center items-center h-64">
-              <p className="text-gray-600">뉴스 로딩 중...</p>
+          <div className="flex justify-center items-center h-64"><p></p></div>
+        </>
+    );
+  }
+
+  if (error?.status === 403) {
+    return (
+        <>
+          <div className="min-h-screen flex items-center justify-center p-4">
+            <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl p-8 text-center">
+              <div className="mx-auto mb-6 w-20 h-20 flex items-center justify-center bg-red-100 rounded-full">
+                <ShieldAlert className="w-12 h-12 text-red-500" />
+              </div>
+              <h1 className="text-3xl font-bold mb-3">접근이 제한된 기사입니다</h1>
+              <p className="text-gray-600 text-lg mb-8">누적된 신고 또는 기타 사유로 인해 비공개 처리되었습니다.</p>
+              <Link href="/" className="inline-block px-8 py-3 bg-gray-800 text-white font-semibold rounded-lg shadow-md hover:bg-gray-900">
+                메인 페이지로 돌아가기
+              </Link>
             </div>
           </div>
         </>
@@ -455,40 +648,13 @@ export default function NewsPage() {
   if (error || !newsData) {
     return (
         <>
-          <Header />
-          <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              <div className="bg-white rounded-2xl shadow-lg p-6">
-                <div className="text-center">
-                  <div className="mb-6">
-                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-                      </svg>
-                    </div>
-                    <h1 className="text-2xl font-bold text-gray-800 mb-2">뉴스를 불러올 수 없습니다</h1>
-                    <p className="text-gray-600 mb-6">{error}</p>
-                  </div>
-                  <div className="space-y-4">
-                    <button
-                        onClick={() => window.location.reload()}
-                        className="w-full px-6 py-3 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 transition-all duration-300 font-semibold"
-                    >
-                      다시 시도하기
-                    </button>
-                    <Link
-                        href="/"
-                        className="block w-full px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-300 font-semibold"
-                    >
-                      메인으로 돌아가기
-                    </Link>
-                  </div>
-                  <div className="mt-6 text-sm text-gray-500">
-                    <p>문제가 지속되면 잠시 후 다시 시도해주세요.</p>
-                  </div>
-                </div>
-              </div>
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="bg-white rounded-2xl shadow-lg p-6 text-center">
+              <h1 className="text-2xl font-bold mb-4">뉴스를 찾을 수 없습니다</h1>
+              <p className="text-gray-600 mb-6">{error?.message}</p>
+              <Link href="/" className="px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700">
+                메인으로 돌아가기
+              </Link>
             </div>
           </div>
         </>
@@ -497,243 +663,40 @@ export default function NewsPage() {
 
   return (
       <>
-        <Header />
         <Toaster richColors position="bottom-right" />
 
-        {/* 상단 읽기 진행바 */}
-        <div
-            className="fixed top-16 left-0 h-2 z-[60] transition-all duration-100 ease-out shadow-sm"
-            style={{
-              width: `${readingProgress}%`,
-              background:
-                  "linear-gradient(135deg, rgba(102, 126, 234, 1) 0%, rgba(118, 75, 162, 1) 50%, rgba(245, 87, 108, 1) 100%)",
-            }}
-        />
+        <div className="fixed top-16 left-0 h-2 z-[60]" style={{
+          width: `${readingProgress}%`,
+          background: "linear-gradient(135deg, rgba(102, 126, 234, 1) 0%, rgba(118, 75, 162, 1) 50%, rgba(245, 87, 108, 1) 100%)",
+        }} />
 
         <div className="container mx-auto max-w-screen-xl p-4 lg:p-8 mt-0">
           <div className="grid grid-cols-12 gap-8">
             <main className="col-span-12 lg:col-span-8 bg-white p-6 sm:p-8 rounded-2xl shadow-lg">
-              {/* 헤더 영역 */}
-              <header className="pb-6">
-                <div className="flex items-center space-x-2 mb-4">
-                <span className="text-lg font-bold text-gray-700">
-                  {newsData.source || "알 수 없음"}
-                </span>
-                  <span className="text-gray-400">•</span>
-                  <span className="bg-indigo-100 text-indigo-700 text-sm font-bold px-2 py-0.5 rounded-full">
-                  {newsData.category || "일반"}
-                </span>
-                </div>
-                <h1 className="text-3xl md:text-4xl font-bold leading-tight mb-4">
-                  {newsData.title || "제목 없음"}
-                </h1>
-                <div className="flex justify-between items-center text-gray-600 text-sm">
-                  <p className="flex items-center">
-                    <User className="w-4 h-4 mr-1.5" />
-                    {newsData.reporterName || "알 수 없음"} 기자
-                  </p>
-                  <div className="flex items-center space-x-4">
-                  <span className="flex items-center text-sm mr-2 text-black">
-                    <Clock className="h-4 w-4 mr-1" />
-                    {newsData.publishedAt
-                        ? new Date(newsData.publishedAt).toLocaleDateString("ko-KR", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
-                        : "날짜 없음"}
-                  </span>
-                  </div>
-                </div>
-              </header>
+              <NewsHeader newsData={newsData} />
+              <NewsActions
+                  newsData={newsData}
+                  onSummaryOpen={openSummary}
+                  onShareOpen={() => setShareModalOpen(true)}
+                  isFontSizeSelectorOpen={isFontSizeSelectorOpen}
+                  onFontSizeSelectorToggle={() => setFontSizeSelectorOpen(prev => !prev)}
+                  fontSize={fontSize}
+                  onFontSizeChange={setFontSize}
+              />
+              <NewsContent newsData={newsData} fontSize={fontSize} />
 
-              {/* 상단 버튼들 */}
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <button
-                      onClick={() => {
-                        addScrap(newsData);
-                        toast.success("기사가 스크랩되었습니다.");
-                      }}
-                      className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg transition-colors text-sm"
-                  >
-                    <Bookmark size={18} />
-                    <span>스크랩</span>
-                  </button>
-
-                  {/* 요약 버튼 (모달 열고 요약 호출) */}
-                  <AiSummaryButton onClick={openSummary} />
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <NaverFontButtonV2
-                        onClick={() => setFontSizeSelectorOpen((prev) => !prev)}
-                    />
-                    {isFontSizeSelectorOpen && (
-                        <FontSizeSelector
-                            currentValue={fontSize}
-                            onSelect={setFontSize}
-                            onClose={() => setFontSizeSelectorOpen(false)}
-                        />
-                    )}
-                  </div>
-
-                  <button
-                      onClick={() => setShareModalOpen(true)}
-                      className="p-2 hover:bg-gray-100 rounded-full hover:shadow-md transition-all duration-200"
-                  >
-                    <Share className="w-5 h-5 text-gray-600" />
-                  </button>
-                  <button
-                      onClick={() => toast.info("기사가 신고되었습니다.")}
-                      className="p-2 hover:bg-gray-100 rounded-full transition-all duration-200"
-                  >
-                    <Siren className="w-6 h-6 text-red-500" />
-                  </button>
-                </div>
-              </div>
-
-              {/* 이미지 */}
-              {newsData.image && (
-                  <div className="my-6">
-                    <img
-                        src={newsData.image}
-                        alt={newsData.title || "뉴스 이미지"}
-                        className="w-full max-h-[400px] object-cover rounded-xl mx-auto"
-                        onError={(e) => {
-                          e.currentTarget.src = "/placeholder.jpg";
-                        }}
-                    />
-                  </div>
-              )}
-
-              {/* 본문 */}
-              <article
-                  className="prose prose-lg max-w-none text-lg leading-relaxed text-gray-800"
-                  style={{ fontSize: `${fontSize}px` }}
-              >
-                <div
-                    dangerouslySetInnerHTML={{
-                      __html: newsData.content || "내용이 없습니다.",
-                    }}
-                />
-              </article>
-
-              {/* 태그 */}
-              {newsData.tags && newsData.tags.length > 0 && (
-                  <div className="mt-8 pt-6 border-t border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-3">
-                      관련 키워드
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {newsData.tags.map((tag, index) => (
-                          <span
-                              key={index}
-                              className="bg-gray-100 text-gray-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded-full"
-                          >
-                      #{tag}
-                    </span>
-                      ))}
-                    </div>
-                  </div>
-              )}
-
-              {/* 관련/댓글 (기존 유지) */}
               <section className="mt-12 pt-8 border-t">
                 <h2 className="text-2xl font-bold mb-6">함께 보면 좋은 뉴스</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {relatedNews.map((news) => (
-                      <Link href={`/news/${news.id}`} key={news.id} className="block group">
-                        <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                          <p className="text-indigo-600 font-semibold text-sm mb-1">{news.category}</p>
-                          <h4 className="font-bold group-hover:text-indigo-700">{news.title}</h4>
-                        </div>
-                      </Link>
+                  {relatedNews.map(news => (
+                      <RelatedNewsCard key={news.newsId} news={news} />
                   ))}
                 </div>
               </section>
 
-              <section className="mt-12 pt-8 border-t">
-                <h2 className="text-2xl font-bold mb-6">
-                  댓글 <span className="text-indigo-600">{comments.length}</span>
-                </h2>
-                <div className="space-y-6">
-                  <div className="flex items-start gap-4">
-                    <img
-                        src="https://placehold.co/40x40/E2E8F0/4A5568?text=나"
-                        alt="내 프로필"
-                        className="w-10 h-10 rounded-full"
-                    />
-                    <div className="flex-1">
-                    <textarea
-                        className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-                        rows={3}
-                        placeholder="의견을 나눠보세요..."
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && !e.shiftKey) {
-                            e.preventDefault();
-                            if (!newComment.trim()) {
-                              toast.error("댓글 내용을 입력해주세요.");
-                              return;
-                            }
-                            const comment = {
-                              id: Date.now(),
-                              author: "나",
-                              avatar: "https://placehold.co/40x40/E2E8F0/4A5568?text=나",
-                              text: newComment,
-                              time: "방금 전",
-                            };
-                            setComments([comment, ...comments]);
-                            setNewComment("");
-                            toast.success("댓글이 등록되었습니다.");
-                          }
-                        }}
-                    />
-                      <button
-                          onClick={() => {
-                            if (!newComment.trim()) {
-                              toast.error("댓글 내용을 입력해주세요.");
-                              return;
-                            }
-                            const comment = {
-                              id: Date.now(),
-                              author: "나",
-                              avatar: "https://placehold.co/40x40/E2E8F0/4A5568?text=나",
-                              text: newComment,
-                              time: "방금 전",
-                            };
-                            setComments([comment, ...comments]);
-                            setNewComment("");
-                            toast.success("댓글이 등록되었습니다.");
-                          }}
-                          className="mt-2 bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors float-right"
-                      >
-                        등록
-                      </button>
-                    </div>
-                  </div>
-                  <div className="space-y-6">
-                    {comments.map((comment) => (
-                        <div key={comment.id} className="flex items-start gap-4">
-                          <img src={comment.avatar} alt={`${comment.author} 프로필`} className="w-10 h-10 rounded-full" />
-                          <div className="flex-1 bg-gray-100 p-4 rounded-lg">
-                            <p className="font-semibold">{comment.author}</p>
-                            <p className="text-gray-700 mt-1">{comment.text}</p>
-                            <p className="text-xs text-gray-500 mt-2">{comment.time}</p>
-                          </div>
-                        </div>
-                    ))}
-                  </div>
-                </div>
-              </section>
+              <CommentSection newsId={articleId} />
             </main>
 
-            {/* 우측 사이드바 */}
             <aside className="col-span-12 lg:col-span-4 space-y-8">
               <div className="bg-white p-6 rounded-2xl shadow-lg border">
                 <h3 className="text-xl font-bold border-b pb-3 mb-4">헤드라인 뉴스</h3>
@@ -758,20 +721,20 @@ export default function NewsPage() {
           </div>
         </div>
 
-          {/* 요약 모달: 요약 텍스트만 노출 + 복사 버튼 */}
-          {isSummaryModalOpen && (
-              <AiSummaryModal
-                  data={summaryData}          // { summary, cached, stale, ... }
-                  loading={summaryLoading}
-                  error={summaryError}
-                  onClose={() => {
-                      setSummaryModalOpen(false);
-                      resetSummary();           // 닫을 때 상태 초기화(선택)
-                  }}
-                  onRegenerate={regenerateSummary} // "다시 생성" 버튼 동작
-                  // contentOnly   // ← 헤더/버튼 없이 텍스트만 보여주고 싶으면 이 줄을 활성화
-              />
-          )}
+        {/* 요약 모달: 요약 텍스트만 노출 + 복사 버튼 */}
+        {isSummaryModalOpen && (
+            <AiSummaryModal
+                data={summaryData}          // { summary, cached, stale, ... }
+                loading={summaryLoading}
+                error={summaryError}
+                onClose={() => {
+                  setSummaryModalOpen(false);
+                  resetSummary();           // 닫을 때 상태 초기화(선택)
+                }}
+                onRegenerate={regenerateSummary} // "다시 생성" 버튼 동작
+                // contentOnly   // ← 헤더/버튼 없이 텍스트만 보여주고 싶으면 이 줄을 활성화
+            />
+        )}
 
         {/* 공유 모달(기존 유지) */}
         {isShareModalOpen && (
