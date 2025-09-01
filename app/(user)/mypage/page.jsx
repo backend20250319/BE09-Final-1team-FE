@@ -1,7 +1,7 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Header from "@/components/header";
+
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
 import { isAuthenticated } from "@/lib/auth";
@@ -40,17 +40,18 @@ function MyPageContent() {
     const tab = searchParams.get("tab");
     if (
         tab &&
-        ["profile", "scraps", "collections", "history", "settings"].includes(tab) // "collections" 추가
+        ["profile", "scraps", "collections", "history", "settings"].includes(tab)
     ) {
       setActiveTab(tab);
+    } else if (tab) { // If an invalid or unwanted tab parameter exists, remove it
+      router.replace("/mypage", undefined, { shallow: true });
     }
-  }, [searchParams]);
+  }, [searchParams, router]); // Added router to dependency array
 
   // 인증 체크 중이면 로딩 표시
   if (isAuthChecking) {
     return (
         <>
-          <Header />
           <div className="min-h-screen bg-gray-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
               <div className="animate-pulse">
@@ -68,7 +69,6 @@ function MyPageContent() {
 
   return (
       <>
-        <Header />
         <MypageProvider>
           <div className="min-h-screen bg-gray-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -129,7 +129,6 @@ export default function MyPage() {
       <Suspense
           fallback={
             <>
-              <Header />
               <div className="min-h-screen bg-gray-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                   <div className="animate-pulse">

@@ -28,7 +28,7 @@ import {
   Share2,
   RefreshCw
 } from "lucide-react"
-import Header from "@/components/header"
+
 import { TextWithTooltips } from "@/components/tooltip"
 import Link from "next/link"
 import { getUserRole, getUserInfo } from "@/lib/auth"
@@ -123,7 +123,6 @@ export default function NewsletterDashboard() {
   if (!userRole) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
-        <Header />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-12">
             <AlertCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
@@ -140,7 +139,7 @@ export default function NewsletterDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
-      <Header />
+      
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}

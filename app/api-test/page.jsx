@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { getApiUrl } from "@/lib/config"
 import { diagnoseCorsIssue, checkBackendHealth, checkNetworkConnectivity } from "@/lib/api-utils"
-import Header from "@/components/header"
+
 
 export default function ApiTestPage() {
   const [testResults, setTestResults] = useState({})
@@ -122,7 +122,7 @@ export default function ApiTestPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      <Header />
+      
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-4">백엔드 API 테스트</h1>
