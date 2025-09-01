@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Bell, Search, User, Menu, Bookmark, Share2, Clock, Eye, TrendingUp, Zap, Shield, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
 import Link from "next/link"
 import { Label } from "@/components/ui/label"
-import Header from "@/components/header"
+
 import { TextWithTooltips } from "@/components/tooltip"
 import { getUserRole } from "@/lib/auth"
 import dynamic from "next/dynamic"
@@ -161,7 +161,7 @@ export default function MainPage({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      <Header />
+      
       
       <div className="max-w-7xl mx-auto px-4 py-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

@@ -10,10 +10,18 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Bookmark, Share2, Calendar, FolderPlus } from "lucide-react"; // FolderPlus 아이콘 추가
+import { Bookmark, Share2, Calendar, FolderPlus } from "lucide-react";
 import { useScrap } from "@/contexts/ScrapContext";
 import Link from "next/link";
-import AddToCollectionModal from "./AddToCollectionModal"; // 모달 컴포넌트 import
+import AddToCollectionModal from "./AddToCollectionModal";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 const ScrapSkeleton = () => (
     <div className="space-y-4">
@@ -32,7 +40,7 @@ const ScrapSkeleton = () => (
     </div>
 );
 
-const categories = ["정치", "경제", "사회", "생활", "세계", "IT/과학", "자동차/교통", "여행/음식", "예술"];
+const categories = ["전체","정치", "경제", "사회", "생활", "세계", "IT/과학", "자동차/교통", "여행/음식", "예술"];
 
 export default function ScrapsTab() {
   const {
@@ -47,17 +55,14 @@ export default function ScrapsTab() {
     setCurrentPage
   } = useScrap();
 
-  // 모달 상태 관리를 위한 state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedNews, setSelectedNews] = useState(null);
 
-  // 모달을 여는 함수
   const handleOpenModal = (news) => {
     setSelectedNews(news);
     setIsModalOpen(true);
   };
 
-  // 모달을 닫는 함수
   const handleCloseModal = () => {
     setSelectedNews(null);
     setIsModalOpen(false);
@@ -92,9 +97,13 @@ export default function ScrapsTab() {
       );
     }
 
+    const uniqueScraps = scraps.filter((news, index, self) =>
+        index === self.findIndex((n) => n.newsId === news.newsId)
+    );
+
     return (
         <div className="space-y-4">
-          {scraps.map((news) => (
+          {uniqueScraps.map((news) => (
               <div
                   key={news.newsId}
                   className="border rounded-lg p-4 hover:shadow-md transition-shadow duration-200"
@@ -123,14 +132,14 @@ export default function ScrapsTab() {
                 </div>
 
                 <div className="flex items-center justify-end space-x-2">
-                   <Button
+                  <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleOpenModal(news)}
-                    >
-                      <FolderPlus className="h-4 w-4 mr-2" />
-                      컬렉션에 추가
-                    </Button>
+                  >
+                    <FolderPlus className="h-4 w-4 mr-2" />
+                    컬렉션에 추가
+                  </Button>
                   <Link href={`/news/${news.newsId}`} passHref legacyBehavior>
                     <Button variant="outline" size="sm" as="a">
                       기사 읽기
@@ -147,65 +156,84 @@ export default function ScrapsTab() {
                 </div>
               </div>
           ))}
-          {/* 페이지네이션 컨트롤 */}
-          <div className="flex justify-center items-center space-x-2 mt-4">
-            <Button
-                onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
-                disabled={currentPage === 0}
-            >
-              이전
-            </Button>
-            <span>{currentPage + 1} / {totalPages}</span>
-            <Button
-                onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
-                disabled={currentPage >= totalPages - 1}
-            >
-              다음
-            </Button>
-          </div>
+
+          {totalPages > 1 && (
+              <div className="mt-8 flex justify-center">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                          href="#"
+                          onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.max(0, p - 1)); }}
+                          aria-disabled={currentPage === 0}
+                          className={currentPage === 0 ? "pointer-events-none opacity-50" : ""}
+                      />
+                    </PaginationItem>
+                    {[...Array(totalPages).keys()].map(pageNumber => (
+                        <PaginationItem key={pageNumber}>
+                          <PaginationLink
+                              href="#"
+                              onClick={(e) => { e.preventDefault(); setCurrentPage(pageNumber); }}
+                              isActive={currentPage === pageNumber}
+                          >
+                            {pageNumber + 1}
+                          </PaginationLink>
+                        </PaginationItem>
+                    ))}
+                    <PaginationItem>
+                      <PaginationNext
+                          href="#"
+                          onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.min(totalPages - 1, p + 1)); }}
+                          aria-disabled={currentPage >= totalPages - 1}
+                          className={currentPage >= totalPages - 1 ? "pointer-events-none opacity-50" : ""}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+          )}
         </div>
     );
   };
 
   return (
-    <>
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Bookmark className="h-5 w-5 mr-2" />
-            스크랩한 뉴스
-          </CardTitle>
-          <CardDescription>
-            관심 있는 뉴스를 저장하고 나중에 다시 읽어보세요.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="lg:w-full overflow-x-auto flex-wrap flex items-center justify-between space-x-1 pb-4">
-            {categories.map((category) => (
-                <Button
-                    key={category}
-                    variant={selectedCategory === category ? "default" : "outline"}
-                    size="default"
-                    onClick={() => handleCategoryChange(category)}
-                    className="whitespace-nowrap hover-lift text-base px-4 py-2"
-                >
-                  {category}
-                </Button>
-            ))}
-          </div>
-          {renderContent()}
-        </CardContent>
-      </Card>
+      <>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Bookmark className="h-5 w-5 mr-2" />
+              스크랩한 뉴스
+            </CardTitle>
+            <CardDescription>
+              관심 있는 뉴스를 저장하고 나중에 다시 읽어보세요.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="lg:w-full overflow-x-auto flex-wrap flex items-center justify-between space-x-1 pb-4">
+              {categories.map((category) => (
+                  <Button
+                      key={category}
+                      variant={selectedCategory === category ? "default" : "outline"}
+                      size="default"
+                      onClick={() => handleCategoryChange(category)}
+                      className="whitespace-nowrap hover-lift text-base px-4 py-2"
+                  >
+                    {category}
+                  </Button>
+              ))}
+            </div>
+            {renderContent()}
+          </CardContent>
+        </Card>
 
-      {/* 모달 렌더링 */}
-      {selectedNews && (
-        <AddToCollectionModal
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-          newsId={selectedNews.newsId}
-          newsTitle={selectedNews.title}
-        />
-      )}
-    </>
+        {selectedNews && (
+            <AddToCollectionModal
+                isOpen={isModalOpen}
+                onClose={handleCloseModal}
+                newsId={selectedNews.newsId}
+                newsTitle={selectedNews.title}
+            />
+        )}
+      </>
   );
 }
