@@ -23,7 +23,7 @@ import {
   ExternalLink
 } from "lucide-react"
 import Link from "next/link"
-import Header from "@/components/header"
+
 
 function SearchPageContent() {
   const searchParams = useSearchParams()
@@ -207,7 +207,6 @@ function SearchPageContent() {
   if (!query) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-        <Header />
         <div className="max-w-4xl mx-auto px-4 py-8">
           <div className="text-center">
             <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -221,7 +220,6 @@ function SearchPageContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      <Header />
       <div className="max-w-6xl mx-auto px-4 py-8">
       {/* 검색 헤더 */}
       <div className="mb-8">

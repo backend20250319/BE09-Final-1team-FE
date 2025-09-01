@@ -18,7 +18,7 @@ import { TextWithTooltips } from "@/components/tooltip"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import { getUserRole, getUserInfo } from "@/lib/auth"
-import Header from "@/components/header"
+
 import { useNewsletters, useUserSubscriptions, useSubscribeNewsletter, useUnsubscribeNewsletter, useCategoryArticles, useTrendingKeywords, useCategoryHeadlines } from "@/hooks/useNewsletter"
 import { useQuery } from '@tanstack/react-query'
 import KakaoShare from '@/components/KakaoShare'
@@ -695,7 +695,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
 
   return (
     <>
-      <Header />
+      
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
