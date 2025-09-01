@@ -42,3 +42,8 @@ next-env.d.ts
 
 ### history directory ###
 .history/
+
+
+# macOS
+.DS_Store
+**/.DS_Sore

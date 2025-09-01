@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { authenticatedFetch } from "@/lib/auth";
 
 /**
  * 요약 훅 (항상 POST /api/news/summary)
@@ -18,7 +19,7 @@ export default function useSummary() {
         const {
             newsId,
             text,
-            type = ".Default",
+            type,
             lines = 3,
             prompt = null,
             force = false,
@@ -36,26 +37,27 @@ export default function useSummary() {
         setLoading(true);
         setError("");
 
-        const body =
-            newsId != null
-                ? { newsId, type, lines, prompt, force }
-                : { text: text ?? "", type, lines, prompt };
+        const body = newsId != null
+          ? { ...(type ? { type } : {}), lines, prompt, force }
+          : { text: text ?? "", ...(type ? { type } : {}), lines, prompt };
 
-        const base = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/+$/, "") || "";
-        const url = `${base}/api/news/summary`;
-
+        const base = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/+$/,""); // 빈 값 허용하지 말기
+        const url = newsId != null
+          ? `${base}/api/news/${encodeURIComponent(newsId)}/summary`
+              : `${base}/api/news/summary`;
         try {
-            const res = await fetch(url, {
+            // useSummary.jsx 요청부만 교체
+            const res = await fetch(`${base}/api/news/${encodeURIComponent(newsId)}/summary`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(body),
+                headers: { "Content-Type": "application/json", "Accept":"application/json" },
+                body: JSON.stringify({ type: type || "DEFAULT", lines, ...(prompt?{prompt}:{}), force }),
                 signal: controller.signal,
             });
 
+            if (!res || typeof res.json !== "function") {
+                  throw new Error("요약 요청에 실패했습니다. (인증 필요 또는 서버 응답 형식 오류)");
+                }
             const json = await res.json().catch(() => ({}));
-            if (!res.ok) {
-                throw new Error(json?.message || json?.error || `요약 실패 (HTTP ${res.status})`);
-            }
 
             setData(json);
             return json;
