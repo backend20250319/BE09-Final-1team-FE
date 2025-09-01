@@ -7,19 +7,19 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { 
-  User, 
-  Bookmark, 
-  Mail, 
-  Eye, 
-  Clock, 
-  Star, 
+import {
+  User,
+  Bookmark,
+  Mail,
+  Eye,
+  Clock,
+  Star,
   TrendingUp,
   Calendar,
   Bell,
   Settings
 } from "lucide-react"
-import Header from "@/components/header"
+
 import Link from "next/link"
 
 export default function UserDashboard() {
@@ -34,59 +34,57 @@ export default function UserDashboard() {
   }
 
   const recentArticles = [
-    { 
-      id: 1, 
-      title: "AI 기술의 미래 전망", 
-      category: "IT/과학", 
-      readTime: "5분", 
+    {
+      id: 1,
+      title: "AI 기술의 미래 전망",
+      category: "IT/과학",
+      readTime: "5분",
       date: "2024-01-15",
-      bookmarked: true 
+      bookmarked: true
     },
-    { 
-      id: 2, 
-      title: "경제 정책 변화 분석", 
-      category: "경제", 
-      readTime: "8분", 
+    {
+      id: 2,
+      title: "경제 정책 변화 분석",
+      category: "경제",
+      readTime: "8분",
       date: "2024-01-14",
-      bookmarked: false 
+      bookmarked: false
     },
-    { 
-      id: 3, 
-      title: "환경 보호 새로운 방안", 
-      category: "사회", 
-      readTime: "6분", 
+    {
+      id: 3,
+      title: "환경 보호 새로운 방안",
+      category: "사회",
+      readTime: "6분",
       date: "2024-01-13",
-      bookmarked: true 
+      bookmarked: true
     },
   ]
 
   const newsletters = [
-    { 
-      id: 1, 
-      name: "주간 IT 뉴스", 
-      status: "active", 
+    {
+      id: 1,
+      name: "주간 IT 뉴스",
+      status: "active",
       lastSent: "2024-01-15",
       nextSend: "2024-01-22"
     },
-    { 
-      id: 2, 
-      name: "일간 경제 브리핑", 
-      status: "active", 
+    {
+      id: 2,
+      name: "일간 경제 브리핑",
+      status: "active",
       lastSent: "2024-01-15",
       nextSend: "2024-01-16"
     },
-    { 
-      id: 3, 
-      name: "월간 환경 리포트", 
-      status: "inactive", 
+    {
+      id: 3,
+      name: "월간 환경 리포트",
+      status: "inactive",
       lastSent: "2024-01-01",
       nextSend: "2024-02-01"
     },
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4">
@@ -182,21 +180,21 @@ export default function UserDashboard() {
                   </TableHeader>
                   <TableBody>
                     {recentArticles.map((article) => (
-                      <TableRow key={article.id}>
-                        <TableCell className="font-medium">{article.title}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{article.category}</Badge>
-                        </TableCell>
-                        <TableCell>{article.readTime}</TableCell>
-                        <TableCell>{article.date}</TableCell>
-                        <TableCell>
-                          {article.bookmarked ? (
-                            <Bookmark className="h-4 w-4 text-blue-500 fill-current" />
-                          ) : (
-                            <Bookmark className="h-4 w-4 text-gray-300" />
-                          )}
-                        </TableCell>
-                      </TableRow>
+                        <TableRow key={article.id}>
+                          <TableCell className="font-medium">{article.title}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{article.category}</Badge>
+                          </TableCell>
+                          <TableCell>{article.readTime}</TableCell>
+                          <TableCell>{article.date}</TableCell>
+                          <TableCell>
+                            {article.bookmarked ? (
+                                <Bookmark className="h-4 w-4 text-blue-500 fill-current" />
+                            ) : (
+                                <Bookmark className="h-4 w-4 text-gray-300" />
+                            )}
+                          </TableCell>
+                        </TableRow>
                     ))}
                   </TableBody>
                 </Table>
@@ -229,21 +227,21 @@ export default function UserDashboard() {
                   </TableHeader>
                   <TableBody>
                     {recentArticles.map((article) => (
-                      <TableRow key={article.id}>
-                        <TableCell className="font-medium">{article.title}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{article.category}</Badge>
-                        </TableCell>
-                        <TableCell>{article.readTime}</TableCell>
-                        <TableCell>{article.date}</TableCell>
-                        <TableCell>
-                          {article.bookmarked ? (
-                            <Bookmark className="h-4 w-4 text-blue-500 fill-current" />
-                          ) : (
-                            <Bookmark className="h-4 w-4 text-gray-300" />
-                          )}
-                        </TableCell>
-                      </TableRow>
+                        <TableRow key={article.id}>
+                          <TableCell className="font-medium">{article.title}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{article.category}</Badge>
+                          </TableCell>
+                          <TableCell>{article.readTime}</TableCell>
+                          <TableCell>{article.date}</TableCell>
+                          <TableCell>
+                            {article.bookmarked ? (
+                                <Bookmark className="h-4 w-4 text-blue-500 fill-current" />
+                            ) : (
+                                <Bookmark className="h-4 w-4 text-gray-300" />
+                            )}
+                          </TableCell>
+                        </TableRow>
                     ))}
                   </TableBody>
                 </Table>
@@ -279,26 +277,26 @@ export default function UserDashboard() {
                   </TableHeader>
                   <TableBody>
                     {newsletters.map((newsletter) => (
-                      <TableRow key={newsletter.id}>
-                        <TableCell className="font-medium">{newsletter.name}</TableCell>
-                        <TableCell>
-                          <Badge variant={newsletter.status === "active" ? "default" : "secondary"}>
-                            {newsletter.status === "active" ? "활성" : "비활성"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{newsletter.lastSent}</TableCell>
-                        <TableCell>{newsletter.nextSend}</TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button variant="ghost" size="sm">
-                              <Settings className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm">
-                              <Bell className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
+                        <TableRow key={newsletter.id}>
+                          <TableCell className="font-medium">{newsletter.name}</TableCell>
+                          <TableCell>
+                            <Badge variant={newsletter.status === "active" ? "default" : "secondary"}>
+                              {newsletter.status === "active" ? "활성" : "비활성"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{newsletter.lastSent}</TableCell>
+                          <TableCell>{newsletter.nextSend}</TableCell>
+                          <TableCell>
+                            <div className="flex space-x-2">
+                              <Button variant="ghost" size="sm">
+                                <Settings className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm">
+                                <Bell className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
                     ))}
                   </TableBody>
                 </Table>
@@ -327,8 +325,8 @@ export default function UserDashboard() {
                     </div>
                   </div>
                   <Link href="/mypage">
-                  <Button variant="outline" className="w-full">프로필 수정</Button>
-                  </Link> 
+                    <Button variant="outline" className="w-full">프로필 수정</Button>
+                  </Link>
                 </CardContent>
               </Card>
 
@@ -355,6 +353,5 @@ export default function UserDashboard() {
           </TabsContent>
         </Tabs>
       </div>
-    </div>
   )
-} 
+}

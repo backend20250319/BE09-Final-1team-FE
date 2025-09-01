@@ -1,12 +1,12 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import Header from "@/components/header";
+
 
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      <Header />
+      
       
       <div className="max-w-4xl mx-auto px-4 py-10">
         <Card className="glass">
