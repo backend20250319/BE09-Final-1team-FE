@@ -16,10 +16,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
 // 서비스 및 커스텀 훅
-import Header from "@/components/header";
+
 import { newsService } from "@/lib/newsService";
 import { useScrap } from "@/contexts/ScrapContext";
-import useSummary from '../../../../hooks/useSummary'; // AI 요약봇 훅 경로
+import useSummary from '../../../../hooks/useSummary';
+import RelatedNewsCard from "@/components/RelatedNewsCard"; // Added import
 
 
 const NewsHeader = ({ newsData }) => {
@@ -500,7 +501,6 @@ const ShareModal = ({ isOpen, onClose, newsData }) => {
               <button onClick={copyUrl} className="bg-indigo-500 text-white px-3 py-1 rounded text-sm font-semibold hover:bg-indigo-600">복사</button>
             </div>
             <div className="flex justify-center gap-4">
-              {/* 소셜 미디어 아이콘 이미지 경로는 public 폴더 기준으로 설정해주세요. */}
               <button onClick={copyUrl} className="w-12 h-12 rounded-full flex items-center justify-center bg-[#FEE500] hover:opacity-80"><img src="/images/Kakaotalk.png" alt="카카오톡" className="w-8 h-8" /></button>
               <button onClick={shareOnFacebook} className="w-12 h-12 rounded-full flex items-center justify-center bg-[#1877F2] hover:opacity-80"><img src="/images/Facebook.png" alt="페이스북" className="w-8 h-8" /></button>
               <button onClick={shareOnTwitter} className="w-12 h-12 rounded-full flex items-center justify-center bg-gray-200 hover:opacity-80"><img src="/images/Twitter.png" alt="트위터" className="w-8 h-8" /></button>
@@ -556,12 +556,29 @@ export default function NewsPage() {
   const [isShareModalOpen, setShareModalOpen] = useState(false);
   const [readingProgress, setReadingProgress] = useState(0);
 
-  // 사이드바 뉴스 상태
   const [relatedNews, setRelatedNews] = useState([]);
   const [headlineNews, setHeadlineNews] = useState([]);
   const [rankingNews, setRankingNews] = useState([]);
 
-  // AI 요약봇 훅 사용
+  useEffect(() => {
+    const fetchRelatedNews = async () => {
+      if (!articleId) return;
+      try {
+        const response = await fetch(`/api/news/related/${articleId}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setRelatedNews(data);
+      } catch (error) {
+        console.error("Failed to fetch related news:", error);
+        // Optionally, set an error state or show a toast notification
+      }
+    };
+
+    fetchRelatedNews();
+  }, [articleId]);
+
   const { data: summaryData, loading: summaryLoading, error: summaryError, requestSummary, reset: resetSummary } = useSummary();
   const [isSummaryModalOpen, setSummaryModalOpen] = useState(false);
 
@@ -580,37 +597,40 @@ export default function NewsPage() {
 
   useEffect(() => {
     const loadNewsData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await newsService.getNewsById(articleId);
-        if (!data) throw new Error("뉴스를 찾을 수 없습니다.");
+      setLoading(true);
+      setError(null);
 
-        const rawCategory = data.category || "일반";
+      if (!articleId) {
+        setError({ status: 400, message: "기사 ID가 없습니다." });
+        setLoading(false);
+        return;
+      }
+
+      const result = await newsService.getNewsById(articleId);
+
+      if (result.error) {
+        setError(result.error);
+        setNewsData(null);
+      } else {
+        const data = result.data;
+        const rawCategory = data.categoryName || "일반"; // Changed from data.category to data.categoryName
         const convertedCategory = backendToFrontendCategory[rawCategory] || rawCategory;
 
         const transformedData = {
           category: convertedCategory,
           date: data.publishedAt ? new Date(data.publishedAt).toLocaleString("ko-KR") : "-",
           title: data.title,
-          reporter: { name: data.reporter || data.author || "크롤링 시스템" },
+          reporter: { name: data.reporterName || data.author || "크롤링 시스템" }, // Changed from data.reporter to data.reporterName
           content: data.content || "상세 내용은 원본 링크를 확인해주세요.",
           source: data.press || data.source || "크롤링 뉴스",
           tags: data.tags || [convertedCategory],
           newsId: data.newsId || data.id,
-          imageUrl: data.image,
+          imageUrl: data.imageUrl, // Changed from data.image to data.imageUrl
         };
         setNewsData(transformedData);
-
-        // 조회수 기록
-        await newsService.recordNewsView(articleId);
-
-      } catch (err) {
-        setError(err);
-        setNewsData(null);
-      } finally {
-        setLoading(false);
       }
+
+      setLoading(false);
     };
 
     if (articleId) {
@@ -630,8 +650,7 @@ export default function NewsPage() {
   if (loading) {
     return (
         <>
-          <Header />
-          <div className="flex justify-center items-center h-64"><p>뉴스 로딩 중...</p></div>
+          <div className="flex justify-center items-center h-64"><p></p></div>
         </>
     );
   }
@@ -639,7 +658,6 @@ export default function NewsPage() {
   if (error?.status === 403) {
     return (
         <>
-          <Header />
           <div className="min-h-screen flex items-center justify-center p-4">
             <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl p-8 text-center">
               <div className="mx-auto mb-6 w-20 h-20 flex items-center justify-center bg-red-100 rounded-full">
@@ -659,7 +677,6 @@ export default function NewsPage() {
   if (error || !newsData) {
     return (
         <>
-          <Header />
           <div className="min-h-screen flex items-center justify-center">
             <div className="bg-white rounded-2xl shadow-lg p-6 text-center">
               <h1 className="text-2xl font-bold mb-4">뉴스를 찾을 수 없습니다</h1>
@@ -675,7 +692,6 @@ export default function NewsPage() {
 
   return (
       <>
-        <Header />
         <Toaster richColors position="bottom-right" />
 
         <div className="fixed top-16 left-0 h-2 z-[60]" style={{
@@ -702,11 +718,7 @@ export default function NewsPage() {
                 <h2 className="text-2xl font-bold mb-6">함께 보면 좋은 뉴스</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {relatedNews.map(news => (
-                      <Link href={`/news/${news.id}`} key={news.id} className="block group">
-                        <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                          <p className="font-bold group-hover:text-indigo-700">{news.title}</p>
-                        </div>
-                      </Link>
+                      <RelatedNewsCard key={news.newsId} news={news} />
                   ))}
                 </div>
               </section>
