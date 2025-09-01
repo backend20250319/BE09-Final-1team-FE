@@ -32,6 +32,7 @@ import {
   NewsletterSubscriptionResponseSchema,
   AdditionalInfoRequestSchema,
 } from "@/lib/schemas";
+import { getDeviceId } from "@/lib/auth";
 
 export default function SignupForm({ mode = "signup", onSignupSuccess }) {
   const router = useRouter();
@@ -138,6 +139,14 @@ export default function SignupForm({ mode = "signup", onSignupSuccess }) {
       let requestBody;
       let apiEndpoint;
 
+      // deviceId 가져오기 (공통)
+      const deviceId = getDeviceId();
+      if (!deviceId) {
+        setError("디바이스 ID 생성에 실패했습니다.");
+        setIsLoading(false);
+        return;
+      }
+
       if (mode === "signup") {
         // --- 기존 회원가입 로직 ---
         apiEndpoint = "/api/users/signup";
@@ -148,6 +157,7 @@ export default function SignupForm({ mode = "signup", onSignupSuccess }) {
           birthYear: parseInt(birthYear, 10),
           gender,
           hobbies: selectedInterests,
+          deviceId, // deviceId 추가
         };
 
         // zod 스키마로 요청 데이터 검증
@@ -170,6 +180,7 @@ export default function SignupForm({ mode = "signup", onSignupSuccess }) {
           birthYear: parseInt(birthYear, 10),
           gender,
           hobbies: selectedInterests,
+          deviceId, // deviceId 추가
         };
 
         // 새로운 Zod 스키마로 검증
