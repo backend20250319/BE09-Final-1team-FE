@@ -268,8 +268,6 @@ export function TextWithTooltips({ text }) {
   // const { renderTextWithTooltips } = require('@/lib/textProcessor')
   const segments = renderTextWithTooltips(text);
 
-  console.log('🔍 파싱된 segments:', segments);
-
   // segments가 배열이 아닌 경우 처리
   if (!Array.isArray(segments)) {
     console.warn('🔍 segments가 배열이 아님:', segments);

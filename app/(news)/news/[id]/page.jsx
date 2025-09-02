@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import * as cheerio from 'cheerio';
 
 // UI & 아이콘 라이브러리
 import { Toaster, toast } from 'sonner';
@@ -359,7 +360,7 @@ const NewsActions = ({
           <span>요약봇</span>
         </button>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 mb-4">
         <div className="relative">
           <FontSizeButton onClick={onFontSizeSelectorToggle} />
           {isFontSizeSelectorOpen && (
@@ -393,10 +394,180 @@ const NewsActions = ({
   );
 };
 
+// // 1. 텍스트/엔티티 디코딩 전용 함수
+// const decodeTextAndEntities = (text) => {
+//   if (!text) return '';
+//   return text
+//     .replace(/\\n/g, '\n')
+//     .replace(/\\"/g, '"')
+//     .replace(/\\'/g, "'")
+//     .replace(/&lt;/g, '<')
+//     .replace(/&gt;/g, '>')
+//     .replace(/&amp;/g, '&')
+//     .replace(/&quot;/g, '"')
+//     .replace(/&#39;/g, "'")
+//     .replace(/&nbsp;/g, ' ');
+// };
+
+// // 2. HTML 구조 클리닝 전용 함수
+// const cleanHtmlWithCheerio = (htmlString) => {
+//   if (!htmlString) return '';
+//   // HTML 문자열을 cheerio 객체로 로드
+//   const $ = cheerio.load(htmlString);
+
+//   // 이미지 태그 처리
+//   $('img').each((i, el) => {
+//     const img = $(el);
+
+//     // data-src를 src로 교체
+//     const dataSrc = img.attr('data-src');
+//     if (dataSrc) {
+//       img.attr('src', dataSrc);
+//       img.removeAttr('data-src');
+//     }
+
+//     // 불필요한 클래스 제거
+//     img.removeClass('_LAZY_LOADING _LAZY_LOADING_INIT_HIDE');
+
+//     // alt 속성 제거 (cheerio가 정확하게 처리)
+//     img.removeAttr('alt');
+
+//     // 숨김 스타일 제거
+//     img.css('display', '');
+//   });
+
+//   // 불필요한 부모 div의 클래스 제거
+//   $('._LAZY_LOADING_WRAP, ._LAZY_LOADING_ERROR_HIDE').each((i, el) => {
+//     $(el).removeClass('_LAZY_LOADING_WRAP _LAZY_LOADING_ERROR_HIDE');
+//   });
+
+//   return $.html();
+// };
+
+const processNewsContent = (content) => {
+  if (!content) return null;
+
+  // 1. (최종 수정) 사용자님의 제안대로, 'alt="' 부터 다음 속성(style=, class=) 또는
+  //    태그의 끝(>)이 시작되기 직전까지를 하나의 덩어리로 보고 통째로 제거합니다.
+  let preProcessedHtml = content.replace(/\s+alt=".*?(?=\s+(?:style)=)/g, '');
+
+  console.log('preProcessedHtml', preProcessedHtml);
+  // 2. 기본적인 이스케이프 문자 처리
+  preProcessedHtml = preProcessedHtml.replace(/\\n/g, '\n').replace(/\\'/g, "'");
+
+  // 3. 이제 문법적으로 완벽하게 깨끗해진 HTML을 Cheerio로 로드합니다.
+  const $ = cheerio.load(preProcessedHtml);
+
+  // 4. 나머지 모든 HTML 처리 (cheerio가 안전하게 처리)
+  $('img').each((i, el) => {
+    const img = $(el);
+    const dataSrc = img.attr('data-src');
+    if (dataSrc) {
+      img.attr('src', dataSrc);
+      img.removeAttr('data-src');
+    }
+    img.removeClass('_LAZY_LOADING _LAZY_LOADING_INIT_HIDE');
+    img.css('display', '');
+  });
+
+  $('._LAZY_LOADING_WRAP, ._LAZY_LOADING_ERROR_HIDE').each((i, el) => {
+    $(el).removeClass('_LAZY_LOADING_WRAP _LAZY_LOADING_ERROR_HIDE');
+  });
+
+  // 5. 최종 HTML을 문자열로 가져와 줄바꿈 처리
+  let finalHtml = $.html();
+  finalHtml = finalHtml.replace(/\n{2,}/g, '<br><br>');
+
+  return finalHtml;
+};
+
 const NewsContent = ({ newsData, fontSize }) => {
+  const contentRef = useRef(null);
+  const decodedContent = processNewsContent(newsData.content);
+
+  // 툴팁 기능을 위한 useEffect
+  useEffect(() => {
+    if (contentRef.current) {
+      const tooltipWords = contentRef.current.querySelectorAll('.tooltip-word');
+
+      tooltipWords.forEach((span) => {
+        const term = span.getAttribute('data-term');
+        const definitions = span.getAttribute('data-definitions');
+
+        // 기존 span을 TermTooltip으로 교체
+        const tooltipElement = document.createElement('span');
+        tooltipElement.className = 'tooltip-word-replaced';
+        tooltipElement.innerHTML = span.innerHTML;
+
+        // React 컴포넌트로 교체하는 것은 복잡하므로,
+        // 기존 툴팁 스타일과 이벤트를 그대로 사용
+        span.style.cursor = 'help';
+        span.style.borderBottom = '1px dashed #60a5fa';
+        span.style.color = '#2563eb';
+
+        // 툴팁 이벤트 추가
+        span.addEventListener('mouseenter', (e) => {
+          // 툴팁 표시 로직
+          console.log('Tooltip hover:', term, definitions);
+          // 여기에 툴팁 UI 표시
+        });
+
+        span.addEventListener('mouseleave', () => {
+          // 툴팁 숨김 로직
+        });
+      });
+    }
+  }, [decodedContent]);
+
   return (
     <>
-      {newsData.imageUrl && (
+      <style jsx>{`
+        .news-content {
+          line-height: 1.8;
+        }
+
+        .news-content .img_desc {
+          font-size: 0.875rem;
+          color: #6b7280;
+          font-style: italic;
+          margin-top: 0.5rem;
+          margin-bottom: 1rem;
+          display: block;
+          text-align: center;
+        }
+
+        .news-content br {
+          margin-bottom: 0.5rem;
+        }
+
+        .news-content p {
+          margin-bottom: 1rem;
+        }
+      `}</style>
+
+      <style jsx global>{`
+        /* 외부 HTML에 적용할 스타일은 global 안에 넣기 */
+        #dic_area img[id^='img'] {
+          width: 100%;
+          max-height: 400px;
+          object-fit: cover;
+          border-radius: 0.75rem;
+          margin: 0 auto;
+          display: block;
+        }
+
+        #dic_area em {
+          display: block; /* text-align을 적용하기 위해 블록 요소로 변경 */
+          text-align: center; /* 가운데 정렬 */
+          font-size: 0.875rem; /* 기본보다 작게 (14px) */
+          color: #6b7280; /* 회색 */
+          font-weight: normal; /* bold 효과 제거 */
+          margin-top: 0.5rem; /* 이미지와의 간격 */
+          margin-bottom: 1rem; /* 아래 내용과의 간격 */
+        }
+      `}</style>
+
+      {/* {newsData.imageUrl && (
         <div className="my-6">
           <img
             src={newsData.imageUrl}
@@ -404,12 +575,23 @@ const NewsContent = ({ newsData, fontSize }) => {
             className="w-full max-h-[400px] object-cover rounded-xl mx-auto"
           />
         </div>
-      )}
+      )} */}
       <article
         className="prose prose-lg max-w-none text-lg leading-relaxed text-gray-800"
         style={{ fontSize: `${fontSize}px` }}
       >
-        <TextWithTooltips text={newsData.processedContent || newsData.content} />
+        {/* HTML 태그가 포함된 경우 dangerouslySetInnerHTML 사용 */}
+        {decodedContent ? (
+          <div
+            ref={contentRef}
+            className="news-content"
+            dangerouslySetInnerHTML={{
+              __html: decodedContent,
+            }}
+          />
+        ) : (
+          <TextWithTooltips text={decodedContent || newsData.content} />
+        )}
       </article>
       {newsData.tags && newsData.tags.length > 0 && (
         <div className="mt-8 pt-6 border-t border-gray-200">
