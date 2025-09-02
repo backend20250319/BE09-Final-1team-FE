@@ -45,8 +45,12 @@ export default function SignupForm({ mode = "signup", onSignupSuccess }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  const [birthYear, setBirthYear] = useState("");
+  const [passwordCriteria, setPasswordCriteria] = useState({
+    length: false,
+    letter: false,
+    number: false,
+    special: false,
+  });  const [birthYear, setBirthYear] = useState("");
   const [gender, setGender] = useState(""); // "MALE" | "FEMALE"
   const [selectedInterests, setSelectedInterests] = useState([]);
   const [newsletter, setNewsletter] = useState(false);
@@ -56,9 +60,29 @@ export default function SignupForm({ mode = "signup", onSignupSuccess }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  
+
   // 관심사 데이터 (커스텀 훅 사용)
-  const { interests, isLoading: isLoadingInterests, error: interestsError } = useInterests();
+  const {
+    interests,
+    isLoading: isLoadingInterests,
+    error: interestsError,
+  } = useInterests();
+
+  // 비밀번호 유효성 검사 로직
+  const validatePassword = (pw) => {
+    setPasswordCriteria({
+      length: pw.length >= 10,
+      letter: /[a-zA-Z]/.test(pw),
+      number: /\d/.test(pw),
+      special: /[@$!%*?&]/.test(pw),
+    });
+  };
+
+  const handlePasswordChange = (e) => {
+    const newPassword = e.target.value;
+    setPassword(newPassword);
+    validatePassword(newPassword);
+  };
 
   // --- 핸들러 ---
   const toggleInterest = (id) => {
@@ -91,10 +115,13 @@ export default function SignupForm({ mode = "signup", onSignupSuccess }) {
       return;
     }
     // 일반 회원가입일 때만 비밀번호 검증
-    if (mode === "signup" && password.length < 8) {
-      setError("비밀번호는 최소 8자 이상이어야 합니다.");
-      setIsLoading(false);
-      return;
+    if (mode === "signup") {
+      const allCriteriaMet = Object.values(passwordCriteria).every(Boolean);
+      if (!allCriteriaMet) {
+        setError("비밀번호 조건을 모두 만족해야 합니다.");
+        setIsLoading(false);
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -329,14 +356,55 @@ export default function SignupForm({ mode = "signup", onSignupSuccess }) {
                   <Input
                     id="signup-password"
                     type="password"
-                    placeholder="8자 이상 입력하세요"
+                    placeholder="영문자, 숫자, 특수문자 포함 10자 이상"
                     className="pl-10"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={handlePasswordChange}
                     required
                     disabled={isLoading}
                   />
                 </div>
+                {/* 실시간 비밀번호 조건 안내 UI */}
+                {password.length > 0 && (
+                  <ul className="text-xs space-y-1 mt-2 p-2 rounded-md bg-gray-50 text-gray-600">
+                    <li
+                      className={
+                        passwordCriteria.length
+                          ? "text-green-600"
+                          : "text-red-500"
+                      }
+                    >
+                      {passwordCriteria.length ? "✓" : "✗"} 10자 이상
+                    </li>
+                    <li
+                      className={
+                        passwordCriteria.letter
+                          ? "text-green-600"
+                          : "text-red-500"
+                      }
+                    >
+                      {passwordCriteria.letter ? "✓" : "✗"} 영문자 포함
+                    </li>
+                    <li
+                      className={
+                        passwordCriteria.number
+                          ? "text-green-600"
+                          : "text-red-500"
+                      }
+                    >
+                      {passwordCriteria.number ? "✓" : "✗"} 숫자 포함
+                    </li>
+                    <li
+                      className={
+                        passwordCriteria.special
+                          ? "text-green-600"
+                          : "text-red-500"
+                      }
+                    >
+                      {passwordCriteria.special ? "✓" : "✗"} 특수문자(@$!%*?&) 포함
+                    </li>
+                  </ul>
+                )}
               </div>
             </>
           )}
@@ -417,7 +485,9 @@ export default function SignupForm({ mode = "signup", onSignupSuccess }) {
                     return (
                       <div
                         key={interest.id}
-                        onClick={() => !isDisabled && toggleInterest(interest.id)}
+                        onClick={() =>
+                          !isDisabled && toggleInterest(interest.id)
+                        }
                         className={`p-3 rounded-lg border text-center transition-all ${
                           isSelected
                             ? "border-blue-500 bg-blue-50 ring-2 ring-blue-300"
