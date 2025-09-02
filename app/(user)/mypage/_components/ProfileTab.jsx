@@ -25,6 +25,12 @@ export default function ProfileTab() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordCriteria, setPasswordCriteria] = useState({
+    length: false,
+    letter: false,
+    number: false,
+    special: false,
+  });
 
   // 관심사 데이터 (커스텀 훅 사용)
   const {
@@ -78,6 +84,22 @@ export default function ProfileTab() {
   }, []); // 컴포넌트 마운트 시 한 번만 실행
 
   // --- 핸들러 ---
+  // 비밀번호 유효성 검사 로직
+  const validatePassword = (pw) => {
+    setPasswordCriteria({
+      length: pw.length >= 10,
+      letter: /[a-zA-Z]/.test(pw),
+      number: /\d/.test(pw),
+      special: /[@$!%*?&]/.test(pw),
+    });
+  };
+
+  const handlePasswordChange = (e) => {
+    const newPw = e.target.value;
+    setNewPassword(newPw);
+    validatePassword(newPw);
+  };
+
   const toggleInterest = (interestId) => {
     setSelectedInterests((prev) => {
       if (prev.includes(interestId)) {
@@ -103,8 +125,10 @@ export default function ProfileTab() {
         if (newPassword !== confirmPassword) {
           throw new Error("새 비밀번호와 확인 비밀번호가 일치하지 않습니다.");
         }
-        if (newPassword.length < 8) {
-          throw new Error("새 비밀번호는 최소 8자 이상이어야 합니다.");
+        // 강화된 비밀번호 검증
+        const allCriteriaMet = Object.values(passwordCriteria).every(Boolean);
+        if (!allCriteriaMet) {
+          throw new Error("비밀번호 조건을 모두 만족해야 합니다.");
         }
       }
 
@@ -272,9 +296,42 @@ export default function ProfileTab() {
               id="new-password"
               type="password"
               value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="새 비밀번호 (8자 이상)"
+              onChange={handlePasswordChange}
+              placeholder="영문자, 숫자, 특수문자 포함 10자 이상"
             />
+            {/* 실시간 비밀번호 조건 안내 UI */}
+            {newPassword.length > 0 && (
+              <ul className="text-xs space-y-1 mt-2 p-2 rounded-md bg-gray-50 text-gray-600">
+                <li
+                  className={
+                    passwordCriteria.length ? "text-green-600" : "text-red-500"
+                  }
+                >
+                  {passwordCriteria.length ? "✓" : "✗"} 10자 이상
+                </li>
+                <li
+                  className={
+                    passwordCriteria.letter ? "text-green-600" : "text-red-500"
+                  }
+                >
+                  {passwordCriteria.letter ? "✓" : "✗"} 영문자 포함
+                </li>
+                <li
+                  className={
+                    passwordCriteria.number ? "text-green-600" : "text-red-500"
+                  }
+                >
+                  {passwordCriteria.number ? "✓" : "✗"} 숫자 포함
+                </li>
+                <li
+                  className={
+                    passwordCriteria.special ? "text-green-600" : "text-red-500"
+                  }
+                >
+                  {passwordCriteria.special ? "✓" : "✗"} 특수문자(@$!%*?&) 포함
+                </li>
+              </ul>
+            )}
           </div>
           <div>
             <Label htmlFor="confirm-password">비밀번호 확인</Label>
