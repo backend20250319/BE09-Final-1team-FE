@@ -40,6 +40,12 @@ export default function LoginForm() {
 
       if (result.success) {
         console.log("로그인 성공, 역할:", result.role);
+
+        // 헤더 상태 업데이트를 위한 이벤트 발생
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("authStateChanged"));
+        }
+
         if (result.role === "admin") {
           router.push("/admin");
         } else {

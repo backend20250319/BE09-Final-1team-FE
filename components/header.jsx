@@ -19,16 +19,48 @@ import {
   Shield,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { getUserRole, logout } from "@/lib/auth";
+import { getUserRole, getUserInfo, logout } from "@/lib/auth";
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userRole, setUserRole] = useState(null);
+  const [userInfo, setUserInfo] = useState(null);
   const pathname = usePathname();
 
   useEffect(() => {
-    setUserRole(getUserRole());
+    // 초기 로드 시 사용자 상태 확인
+    const updateUserStatus = () => {
+      const currentUserInfo = getUserInfo();
+      const currentUserRole = getUserRole();
+      setUserInfo(currentUserInfo);
+      setUserRole(currentUserRole);
+    };
+
+    updateUserStatus();
+
+    // 커스텀 이벤트 감지 (로그인/로그아웃 시)
+    const handleAuthChange = () => {
+      updateUserStatus();
+    };
+
+    window.addEventListener("authStateChanged", handleAuthChange);
+
+    return () => {
+      window.removeEventListener("authStateChanged", handleAuthChange);
+    };
   }, []);
+
+  // 로그아웃 핸들러
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("로그아웃 오류:", error);
+      // 에러가 발생해도 사용자 정보는 즉시 클리어
+      setUserInfo(null);
+      setUserRole(null);
+    }
+  };
 
   const navigation = [
     { name: "홈", href: "/" },
@@ -81,10 +113,7 @@ export default function Header() {
           <div className="flex items-center space-x-4">
             {/* Search */}
             <div className="relative hidden md:block">
-              <SearchAutocomplete 
-                placeholder="뉴스 검색..."
-                className="w-64"
-              />
+              <SearchAutocomplete placeholder="뉴스 검색..." className="w-64" />
             </div>
 
             {/* Action Buttons */}
@@ -102,6 +131,13 @@ export default function Header() {
 
               {userRole ? (
                 <div className="flex items-center space-x-2">
+                  {/* 사용자 이름 표시 (선택사항) */}
+                  {userInfo?.name && (
+                    <span className="hidden lg:block text-white/90 text-sm font-medium">
+                      {userInfo.name}님
+                    </span>
+                  )}
+
                   {userRole === "admin" && (
                     <Link href="/admin">
                       <Button
@@ -118,7 +154,7 @@ export default function Header() {
                     variant="ghost"
                     size="icon"
                     className="text-white hover:bg-white/20 hover-glow"
-                    onClick={logout}
+                    onClick={handleLogout}
                     title="로그아웃"
                   >
                     <LogOut className="h-5 w-5" />
@@ -155,7 +191,7 @@ export default function Header() {
             <div className="space-y-2">
               {/* Mobile Search */}
               <div className="relative mb-4">
-                <SearchAutocomplete 
+                <SearchAutocomplete
                   placeholder="뉴스 검색..."
                   className="w-full"
                 />

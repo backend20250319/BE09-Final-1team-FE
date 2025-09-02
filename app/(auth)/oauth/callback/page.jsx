@@ -1,66 +1,45 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { setTokens, setUserInfo, decodeJWT } from "@/lib/auth";
+import { useRouter } from "next/navigation";
+// ✅ API 호출 및 사용자 정보 저장을 위한 함수만 import 합니다.
+import { authenticatedFetch, setUserInfo } from "@/lib/auth";
 
 /**
  * OAuth2 로그인 성공 후 리디렉션되는 콜백 페이지입니다.
- * URL 쿼리 파라미터로 받은 Access Token과 Refresh Token을 안전하게 저장하고,
- * 사용자 정보를 추출하여 저장한 후 메인 페이지로 이동시킵니다.
+ * 백엔드로부터 받은 HttpOnly 인증 쿠키를 사용하여 사용자 정보를 요청하고,
+ * 성공 시 메인 페이지로 이동시킵니다.
  */
 export default function OAuthCallbackPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [status, setStatus] = useState("processing"); // 'processing' | 'success' | 'error'
-  const [message, setMessage] = useState("로그인 처리 중입니다...");
+  const [message, setMessage] = useState("로그인 정보를 확인 중입니다...");
 
   useEffect(() => {
-    const handleOAuthCallback = async () => {
+    const fetchAndSetUserInfo = async () => {
       try {
-        // URL 쿼리에서 accessToken과 refreshToken을 추출합니다.
-        const accessToken = searchParams.get("accessToken");
-        const refreshToken = searchParams.get("refreshToken");
+        setMessage("사용자 정보를 요청하고 있습니다...");
 
-        if (!accessToken || !refreshToken) {
-          throw new Error("인증 토큰이 누락되었습니다.");
+        // ✅ 1. 백엔드에 내 정보를 요청합니다.
+        // 브라우저가 자동으로 HttpOnly 인증 쿠키를 포함하여 전송합니다.
+        const response = await authenticatedFetch("/api/users/mypage"); // 내 정보 조회 API
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "사용자 정보를 가져오는 데 실패했습니다.");
         }
 
-        setMessage("토큰을 저장하고 있습니다...");
+        const userInfo = result.data;
 
-        // auth.js의 setTokens 함수를 사용하여 토큰을 안전하게 저장
-        // (localStorage + 쿠키, 환경별 보안 설정 자동 적용)
-        setTokens(accessToken, refreshToken);
-
-        // JWT 토큰에서 사용자 정보 추출
-        const userPayload = decodeJWT(accessToken);
-        if (userPayload) {
-          setMessage("사용자 정보를 저장하고 있습니다...");
-
-          // 토큰에서 추출한 정보로 사용자 정보 구성
-          const userInfo = {
-            id: userPayload.sub || userPayload.userId,
-            email: userPayload.email,
-            name: userPayload.name || userPayload.username,
-            role: userPayload.role || userPayload.authorities?.[0] || "user",
-            exp: userPayload.exp,
-            iat: userPayload.iat,
-          };
-
-          // auth.js의 setUserInfo 함수를 사용하여 사용자 정보 저장
-          setUserInfo(userInfo);
-
-          console.log("🔐 OAuth 로그인 성공:", {
-            userId: userInfo.id,
-            email: userInfo.email,
-            role: userInfo.role,
-          });
-        }
+        // ✅ 2. 서버로부터 받은 사용자 정보를 localStorage에 저장합니다.
+        // 이 정보는 UI 렌더링 및 클라이언트 사이드 권한 확인에 사용됩니다.
+        setUserInfo(userInfo);
+        console.log("🔐 OAuth 로그인 성공 및 사용자 정보 저장 완료:", userInfo);
 
         setStatus("success");
         setMessage("로그인에 성공했습니다!");
 
-        // 성공 후 약간의 지연을 두고 메인 페이지로 이동
+        // 성공 후 메인 페이지로 이동
         setTimeout(() => {
           router.push("/");
         }, 1000);
@@ -71,18 +50,17 @@ export default function OAuthCallbackPage() {
           error.message || "로그인에 실패했습니다. 다시 시도해주세요."
         );
 
-        // 에러 발생 시 3초 후 로그인 페이지로 리디렉션
+        // 에러 발생 시 로그인 페이지로 리디렉션
         setTimeout(() => {
           router.push("/auth");
         }, 3000);
       }
     };
 
-    handleOAuthCallback();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchAndSetUserInfo();
   }, []); // 컴포넌트가 처음 마운트될 때 한 번만 실행합니다.
 
-  // 상태에 따른 메시지와 스타일 반환
+  // ... (UI를 렌더링하는 나머지 코드는 기존과 동일합니다)
   const getStatusDisplay = () => {
     switch (status) {
       case "processing":
@@ -129,18 +107,6 @@ export default function OAuthCallbackPage() {
           <div className="mt-4">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
           </div>
-        )}
-
-        {status === "error" && (
-          <p className="text-sm text-gray-500 mt-2">
-            잠시 후 로그인 페이지로 이동합니다...
-          </p>
-        )}
-
-        {status === "success" && (
-          <p className="text-sm text-gray-500 mt-2">
-            메인 페이지로 이동합니다...
-          </p>
         )}
       </div>
     </div>
