@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Info } from 'lucide-react';
+import { renderTextWithTooltips } from '@/lib/textProcessor';
 
 export default function TermTooltip({ term, definition, definitions, children, source, apiCall }) {
   console.log('🔍 TermTooltip 렌더링:', {
@@ -264,10 +265,16 @@ export default function TermTooltip({ term, definition, definitions, children, s
 export function TextWithTooltips({ text }) {
   console.log('🔍 TextWithTooltips 호출됨, text:', text);
 
-  const { renderTextWithTooltips } = require('@/lib/textProcessor');
+  // const { renderTextWithTooltips } = require('@/lib/textProcessor')
   const segments = renderTextWithTooltips(text);
 
   console.log('🔍 파싱된 segments:', segments);
+
+  // segments가 배열이 아닌 경우 처리
+  if (!Array.isArray(segments)) {
+    console.warn('🔍 segments가 배열이 아님:', segments);
+    return <span className="inline">{text}</span>;
+  }
 
   return (
     <span className="inline">
@@ -280,7 +287,7 @@ export function TextWithTooltips({ text }) {
               {segment}
             </span>
           );
-        } else if (segment.type === 'tooltip') {
+        } else if (segment && segment.type === 'tooltip') {
           console.log('🔍 툴팁 렌더링:', segment);
           return (
             <TermTooltip
