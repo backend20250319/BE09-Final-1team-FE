@@ -14,7 +14,7 @@ export default function useSummary() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const ctrlRef = useRef(null);
-
+ 
     const requestSummary = useCallback(async (opts = {}) => {
         const {
             newsId,
