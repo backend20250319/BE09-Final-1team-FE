@@ -27,6 +27,12 @@ function ResetPasswordContent() {
   // --- 상태값 관리 영역 ---
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordCriteria, setPasswordCriteria] = useState({
+    length: false,
+    letter: false,
+    number: false,
+    special: false,
+  });
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -49,15 +55,22 @@ function ResetPasswordContent() {
   }, [searchParams]);
 
   // --- 비밀번호 유효성 검사 ---
-  const validatePassword = (password) => {
-    if (password.length < 8) {
-      return "비밀번호는 최소 8자 이상이어야 합니다.";
-    }
-    if (!/(?=.*[a-z])(?=.*\d)/.test(password)) {
-      return "비밀번호는 영문자, 숫자를 포함해야 합니다.";
-    }
-    return null;
+  const validatePassword = (pw) => {
+    setPasswordCriteria({
+      length: pw.length >= 10,
+      letter: /[a-zA-Z]/.test(pw),
+      number: /\d/.test(pw),
+      special: /[@$!%*?&]/.test(pw),
+    });
   };
+
+  const handlePasswordChange = (e) => {
+    const newPw = e.target.value;
+    setNewPassword(newPw);
+    validatePassword(newPw);
+  };
+
+  // 기존 validatePassword 함수는 제거하고 위의 로직으로 대체
 
   // --- 폼 제출 핸들러 (백엔드 API 연동) ---
   const handleSubmit = async (e) => {
@@ -73,9 +86,9 @@ function ResetPasswordContent() {
     }
 
     // 비밀번호 유효성 검사
-    const passwordError = validatePassword(newPassword);
-    if (passwordError) {
-      setError(passwordError);
+    const allCriteriaMet = Object.values(passwordCriteria).every(Boolean);
+    if (!allCriteriaMet) {
+      setError("비밀번호 조건을 모두 만족해야 합니다.");
       setIsLoading(false);
       return;
     }
@@ -170,10 +183,10 @@ function ResetPasswordContent() {
                     <Input
                       id="new-password"
                       type={showNewPassword ? "text" : "password"}
-                      placeholder="새 비밀번호를 입력하세요"
+                      placeholder="영문자, 숫자, 특수문자 포함 10자 이상"
                       className="pl-10 pr-10"
                       value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
+                      onChange={handlePasswordChange}
                       required
                       disabled={isLoading}
                     />
@@ -191,6 +204,48 @@ function ResetPasswordContent() {
                       )}
                     </Button>
                   </div>
+                  {/* 실시간 비밀번호 조건 안내 UI */}
+                  {newPassword.length > 0 && (
+                    <ul className="text-xs space-y-1 mt-2 p-2 rounded-md bg-gray-50 text-gray-600">
+                      <li
+                        className={
+                          passwordCriteria.length
+                            ? "text-green-600"
+                            : "text-red-500"
+                        }
+                      >
+                        {passwordCriteria.length ? "✓" : "✗"} 10자 이상
+                      </li>
+                      <li
+                        className={
+                          passwordCriteria.letter
+                            ? "text-green-600"
+                            : "text-red-500"
+                        }
+                      >
+                        {passwordCriteria.letter ? "✓" : "✗"} 영문자 포함
+                      </li>
+                      <li
+                        className={
+                          passwordCriteria.number
+                            ? "text-green-600"
+                            : "text-red-500"
+                        }
+                      >
+                        {passwordCriteria.number ? "✓" : "✗"} 숫자 포함
+                      </li>
+                      <li
+                        className={
+                          passwordCriteria.special
+                            ? "text-green-600"
+                            : "text-red-500"
+                        }
+                      >
+                        {passwordCriteria.special ? "✓" : "✗"} 특수문자(@$!%*?&)
+                        포함
+                      </li>
+                    </ul>
+                  )}
                 </div>
 
                 {/* 비밀번호 확인 입력 */}
@@ -230,9 +285,10 @@ function ResetPasswordContent() {
                 <div className="text-sm text-gray-600 space-y-1">
                   <p className="font-medium">비밀번호 요구사항:</p>
                   <ul className="list-disc list-inside space-y-1 text-xs">
-                    <li>최소 8자 이상</li>
-                    <li>영문자, 숫자 포함</li>
-                    <li>특수문자 포함 권장</li>
+                    <li>최소 10자 이상</li>
+                    <li>영문자 포함 (대소문자 구분 없음)</li>
+                    <li>숫자 포함</li>
+                    <li>특수문자(@$!%*?&) 포함</li>
                   </ul>
                 </div>
 
@@ -292,19 +348,21 @@ function ResetPasswordContent() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center px-4">
-        <div className="w-full max-w-md space-y-8">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-3/4 mb-4"></div>
-            <div className="h-64 bg-gray-200 rounded mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded mb-2"></div>
-            <div className="h-4 bg-gray-200 rounded mb-2"></div>
-            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center px-4">
+          <div className="w-full max-w-md space-y-8">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded w-3/4 mb-4"></div>
+              <div className="h-64 bg-gray-200 rounded mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            </div>
           </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <ResetPasswordContent />
     </Suspense>
   );
