@@ -16,18 +16,25 @@ import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Heart, Shield, AlertCircle, Mail } from "lucide-react";
 import { authenticatedFetch } from "@/lib/auth";
+import { useInterests } from "@/hooks/useInterests";
 
 export default function ProfileTab() {
   // --- 상태 관리 ---
-  const [interests, setInterests] = useState([]); // 전체 관심사 목록
   const [selectedInterests, setSelectedInterests] = useState([]); // 사용자가 선택한 관심사
   const [newsletterEnabled, setNewsletterEnabled] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  // 관심사 데이터 (커스텀 훅 사용)
+  const {
+    interests,
+    isLoading: isLoadingInterests,
+    error: interestsError,
+  } = useInterests();
+
   // --- UI 상태 관리 ---
-  const [isLoading, setIsLoading] = useState(true); // 초기 데이터 로딩
+  const [isLoading, setIsLoading] = useState(true); // 사용자 데이터 로딩
   const [isUpdating, setIsUpdating] = useState(false); // 업데이트 진행
   const [error, setError] = useState("");
   const [updateError, setUpdateError] = useState("");
@@ -35,21 +42,15 @@ export default function ProfileTab() {
 
   // --- 데이터 로딩 ---
   useEffect(() => {
-    // 페이지가 로드될 때 모든 데이터를 한 번에 가져옵니다.
-    const loadInitialData = async () => {
+    // 사용자 정보만 가져옵니다 (관심사 목록은 useInterests 훅에서 처리)
+    const loadUserData = async () => {
       setIsLoading(true);
       setError("");
       try {
         // 실제 백엔드 API 사용
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
-        // 1. 전체 관심사 목록 가져오기
-        const interestsResponse = await authenticatedFetch(`${apiUrl}/api/users/categories`);
-        if (!interestsResponse.ok) throw new Error("관심사 목록 로딩 실패");
-        const interestsData = await interestsResponse.json();
-        setInterests(interestsData.data);
-
-        // 2. 사용자 정보 가져오기
+        // 사용자 정보 가져오기
         const userResponse = await authenticatedFetch(
           `${apiUrl}/api/users/mypage`
         );
@@ -57,7 +58,7 @@ export default function ProfileTab() {
           throw new Error("사용자 정보 로딩 실패");
         const userData = await userResponse.json();
 
-        // 3. 받아온 데이터로 상태 설정
+        // 받아온 데이터로 상태 설정
         if (userData.success) {
           // 사용자의 취미 목록(hobbies)을 selectedInterests 상태에 직접 설정
           setSelectedInterests(userData.data.hobbies || []);
@@ -66,14 +67,14 @@ export default function ProfileTab() {
           throw new Error(userData.message || "사용자 정보 로딩 실패");
         }
       } catch (err) {
-        console.error("데이터 로드 오류:", err);
+        console.error("사용자 데이터 로드 오류:", err);
         setError(err.message);
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadInitialData();
+    loadUserData();
   }, []); // 컴포넌트 마운트 시 한 번만 실행
 
   // --- 핸들러 ---
@@ -120,11 +121,10 @@ export default function ProfileTab() {
       }
 
       const response = await authenticatedFetch("/api/users/myupdate", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(requestBody),
-        }
-      );
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+      });
 
       const data = await response.json();
 
@@ -165,7 +165,7 @@ export default function ProfileTab() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* 초기 데이터 로딩 에러만 표시 */}
+          {/* 초기 사용자 데이터 로딩 에러만 표시 */}
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
@@ -173,9 +173,21 @@ export default function ProfileTab() {
             </Alert>
           )}
 
-          {isLoading ? (
+          {/* 관심사 목록 에러 표시 */}
+          {interestsError && (
+            <Alert className="mb-4 border-orange-200 bg-orange-50">
+              <AlertCircle className="h-4 w-4 text-orange-600" />
+              <AlertDescription className="text-orange-800">
+                ⚠️ 관심사 목록 로딩 실패: 기본 목록을 사용합니다
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {isLoading || isLoadingInterests ? (
             <div className="text-center p-8 text-gray-500">
-              정보를 불러오는 중...
+              {isLoading
+                ? "사용자 정보를 불러오는 중..."
+                : "관심사 목록을 불러오는 중..."}
             </div>
           ) : (
             <>

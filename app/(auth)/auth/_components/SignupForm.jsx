@@ -25,7 +25,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Mail, Lock, User, Heart, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import {
-  CategoriesResponseSchema,
   SignupRequestSchema,
   SignupResponseSchema,
   NewsletterSubscriptionSchema,
@@ -33,6 +32,7 @@ import {
   AdditionalInfoRequestSchema,
 } from "@/lib/schemas";
 import { getDeviceId } from "@/lib/auth";
+import { useInterests } from "@/hooks/useInterests";
 
 export default function SignupForm({ mode = "signup", onSignupSuccess }) {
   const router = useRouter();
@@ -54,47 +54,11 @@ export default function SignupForm({ mode = "signup", onSignupSuccess }) {
 
   // UI 및 데이터 로딩 상태
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingInterests, setIsLoadingInterests] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [interests, setInterests] = useState([]);
-
-  useEffect(() => {
-    const fetchInterests = async () => {
-      try {
-        setIsLoadingInterests(true);
-        const res = await fetch("/api/users/categories");
-        if (!res.ok) throw new Error("failed");
-
-        const json = await res.json().catch(() => ({}));
-
-        // zod 스키마 검증
-        try {
-          const parsed = CategoriesResponseSchema.parse(json);
-          setInterests(parsed.data);
-        } catch (validationError) {
-          console.error("카테고리 API 응답 스키마 불일치:", validationError);
-          throw new Error("카테고리 데이터 형식이 올바르지 않습니다");
-        }
-      } catch {
-        // 폴백: 하드코드 목록 (백엔드 Category enum과 1:1 매칭)
-        setInterests([
-          { id: "POLITICS", icon: "🏛️", categoryName: "정치" },
-          { id: "ECONOMY", icon: "💰", categoryName: "경제" },
-          { id: "SOCIETY", icon: "👥", categoryName: "사회" },
-          { id: "LIFE", icon: "🎭", categoryName: "생활" },
-          { id: "INTERNATIONAL", icon: "🌍", categoryName: "세계" },
-          { id: "IT_SCIENCE", icon: "💻", categoryName: "IT/과학" },
-          { id: "VEHICLE", icon: "🚗", categoryName: "자동차/교통" },
-          { id: "TRAVEL_FOOD", icon: "🧳", categoryName: "여행/음식" },
-          { id: "ART", icon: "🎨", categoryName: "예술" },
-        ]);
-      } finally {
-        setIsLoadingInterests(false);
-      }
-    };
-    fetchInterests();
-  }, []);
+  
+  // 관심사 데이터 (커스텀 훅 사용)
+  const { interests, isLoading: isLoadingInterests, error: interestsError } = useInterests();
 
   // --- 핸들러 ---
   const toggleInterest = (id) => {
@@ -439,6 +403,37 @@ export default function SignupForm({ mode = "signup", onSignupSuccess }) {
             {isLoadingInterests ? (
               <div className="text-center p-4 text-gray-500">
                 관심사 목록을 불러오는 중...
+              </div>
+            ) : interestsError ? (
+              <div className="text-center p-4">
+                <div className="text-orange-600 text-sm mb-2">
+                  ⚠️ API 연결 실패: 기본 목록을 사용합니다
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {interests.map((interest) => {
+                    const isSelected = selectedInterests.includes(interest.id);
+                    const isDisabled =
+                      !isSelected && selectedInterests.length >= 3;
+                    return (
+                      <div
+                        key={interest.id}
+                        onClick={() => !isDisabled && toggleInterest(interest.id)}
+                        className={`p-3 rounded-lg border text-center transition-all ${
+                          isSelected
+                            ? "border-blue-500 bg-blue-50 ring-2 ring-blue-300"
+                            : isDisabled
+                            ? "border-gray-200 bg-gray-50 cursor-not-allowed opacity-50"
+                            : "border-gray-200 hover:border-gray-400 cursor-pointer"
+                        }`}
+                      >
+                        <div className="text-lg mb-1">{interest.icon}</div>
+                        <div className="text-sm font-medium">
+                          {interest.categoryName}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
