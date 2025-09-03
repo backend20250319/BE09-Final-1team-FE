@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import AiSummaryModal from '@/components/aisummarybot/AiSummaryModal';
 
 // UI & 아이콘 라이브러리
 import { Toaster, toast } from "sonner";
@@ -15,13 +16,11 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
-
 import { newsService } from "@/lib/newsService";
 import { useScrap } from "@/contexts/ScrapContext";
 import useSummary from '../../../../hooks/useSummary';
 import RelatedNewsCard from "@/components/RelatedNewsCard";
 import RecentNews from "@/components/RecentNews";
-
 
 const NewsHeader = ({ newsData }) => {
   return (
@@ -511,66 +510,6 @@ const ShareModal = ({ isOpen, onClose, newsData }) => {
       </div>
   );
 };
-
-const AiSummaryModal = ({ isOpen, onClose, data, loading, error, onRegenerate }) => {
-  if (!isOpen) return null;
-
-  const handleCopy = () => {
-    if (data && data.summary) {
-      navigator.clipboard.writeText(data.summary)
-      .then(() => toast.success('요약 내용이 복사되었습니다.'))
-      .catch(() => toast.error('요약 내용 복사에 실패했습니다.'));
-    }
-  };
-
-  const handleRegenerateClick = () => {
-    onRegenerate();
-  };
-
-  return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={onClose}>
-        <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl transform transition-all max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-          <div className="p-6 border-b flex justify-between items-center">
-            <h2 className="text-xl font-bold flex items-center gap-2"><Bot className="text-indigo-500" /> AI 요약봇</h2>
-            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full"><X /></button>
-          </div>
-          <div className="p-6 overflow-y-auto">
-            {loading && <p>요약 내용을 불러오는 중입니다...</p>}
-            {error && <p className='text-red-500'>요약 내용을 불러오는 데 실패했습니다: {error.message}</p>}
-            {data && (
-                <>
-                  <h3 className="font-semibold text-lg mb-3">핵심 요약</h3>
-                  <ul className="list-disc list-inside space-y-2 text-gray-700 whitespace-pre-wrap">
-                    {data.summary.split('\n').map((line, index) => line.trim() && <li key={index}>{line.replace(/^- /, '')}</li>)}
-                  </ul>
-                </>
-            )}
-          </div>
-          <div className="p-4 bg-gray-50 rounded-b-2xl flex justify-between items-center text-sm text-gray-500">
-            <p>이 요약은 AI가 생성한 내용으로, 일부 부정확한 정보가 포함될 수 있습니다.</p>
-            <div className="flex gap-2">
-              <Button
-                  variant="secondary"
-                  onClick={handleRegenerateClick}
-                  disabled={loading}
-                  className="px-4 py-2 text-sm font-semibold rounded-lg"
-              >
-                다시 생성
-              </Button>
-              <Button
-                  onClick={handleCopy}
-                  disabled={!data || loading}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-sm font-semibold rounded-lg"
-              >
-                복사
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-  );
-};
-
 
 export default function NewsPage() {
   const params = useParams();

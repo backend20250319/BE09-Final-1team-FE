@@ -12,8 +12,10 @@ export default function AiSummaryModal({
                                            anchorY,       // ⬅️ 마우스 클릭 Y (clientY)
                                            offset = 8,    // 클릭 지점에서 아래로 살짝 띄우기
                                            preferredWidth = 420,
-    lines, // 표시 라인 수. 없으면 응답/기본값(3) 사용
+                                           lines, // 표시 라인 수. 없으면 응답/기본값(3) 사용
+                                           isOpen,
                                        }) {
+    if (!isOpen) return null;
     const summary = data?.summary ?? "";
     const panelRef = useRef(null);
     const [pos, setPos] = useState({ top: 0, left: 0 });
