@@ -53,27 +53,29 @@ export default function ProfileTab() {
       setIsLoading(true);
       setError("");
       try {
-        // 실제 백엔드 API 사용
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        // ✅ Next.js API route를 통해 사용자 정보 가져오기 (쿠키 기반 인증)
+        const userResponse = await authenticatedFetch("/api/users/mypage");
 
-        // 사용자 정보 가져오기
-        const userResponse = await authenticatedFetch(
-          `${apiUrl}/api/users/mypage`
-        );
         if (!userResponse || !userResponse.ok)
           throw new Error("사용자 정보 로딩 실패");
+
         const userData = await userResponse.json();
+        console.log("🔍 ProfileTab: API 응답 데이터:", userData);
 
         // 받아온 데이터로 상태 설정
         if (userData.success) {
           // 사용자의 취미 목록(hobbies)을 selectedInterests 상태에 직접 설정
           setSelectedInterests(userData.data.hobbies || []);
           setNewsletterEnabled(userData.data.letterOk || false);
+          console.log("✅ ProfileTab: 사용자 데이터 로드 완료:", {
+            hobbies: userData.data.hobbies,
+            letterOk: userData.data.letterOk,
+          });
         } else {
           throw new Error(userData.message || "사용자 정보 로딩 실패");
         }
       } catch (err) {
-        console.error("사용자 데이터 로드 오류:", err);
+        console.error("ProfileTab 사용자 데이터 로드 오류:", err);
         setError(err.message);
       } finally {
         setIsLoading(false);
@@ -217,13 +219,13 @@ export default function ProfileTab() {
             <>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {interests.map((interest) => {
-                  const isSelected = selectedInterests.includes(interest.id);
+                  const isSelected = selectedInterests.includes(interest.categoryCode);
                   const isDisabled =
                     !isSelected && selectedInterests.length >= 3;
                   return (
                     <div
-                      key={interest.id}
-                      onClick={() => !isDisabled && toggleInterest(interest.id)}
+                      key={interest.categoryCode}
+                      onClick={() => !isDisabled && toggleInterest(interest.categoryCode)}
                       className={`p-4 rounded-lg border transition-all ${
                         isSelected
                           ? "border-blue-500 bg-blue-50 ring-2 ring-blue-300 cursor-pointer"
@@ -303,6 +305,7 @@ export default function ProfileTab() {
             {newPassword.length > 0 && (
               <ul className="text-xs space-y-1 mt-2 p-2 rounded-md bg-gray-50 text-gray-600">
                 <li
+                  key="length"
                   className={
                     passwordCriteria.length ? "text-green-600" : "text-red-500"
                   }
@@ -310,6 +313,7 @@ export default function ProfileTab() {
                   {passwordCriteria.length ? "✓" : "✗"} 10자 이상
                 </li>
                 <li
+                  key="letter"
                   className={
                     passwordCriteria.letter ? "text-green-600" : "text-red-500"
                   }
@@ -317,6 +321,7 @@ export default function ProfileTab() {
                   {passwordCriteria.letter ? "✓" : "✗"} 영문자 포함
                 </li>
                 <li
+                  key="number"
                   className={
                     passwordCriteria.number ? "text-green-600" : "text-red-500"
                   }
@@ -324,6 +329,7 @@ export default function ProfileTab() {
                   {passwordCriteria.number ? "✓" : "✗"} 숫자 포함
                 </li>
                 <li
+                  key="special"
                   className={
                     passwordCriteria.special ? "text-green-600" : "text-red-500"
                   }

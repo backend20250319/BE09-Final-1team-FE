@@ -38,9 +38,6 @@ export default function SignupForm({ mode = "signup", onSignupSuccess }) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  //소셜 로그인 모드일 때 URL에서 임시 토큰 가져옴
-  const tempToken = mode === "social" ? searchParams.get("token") : null;
-
   // --- 상태 관리 ---
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -50,7 +47,8 @@ export default function SignupForm({ mode = "signup", onSignupSuccess }) {
     letter: false,
     number: false,
     special: false,
-  });  const [birthYear, setBirthYear] = useState("");
+  });
+  const [birthYear, setBirthYear] = useState("");
   const [gender, setGender] = useState(""); // "MALE" | "FEMALE"
   const [selectedInterests, setSelectedInterests] = useState([]);
   const [newsletter, setNewsletter] = useState(false);
@@ -96,11 +94,9 @@ export default function SignupForm({ mode = "signup", onSignupSuccess }) {
   };
 
   useEffect(() => {
-    if (mode === "social" && !tempToken) {
-      alert("잘못된 접근입니다. 다시 로그인해주세요.");
-      router.push("/login");
-    }
-  }, [mode, tempToken, router]);
+    // 쿠키 기반 인증에서는 URL 토큰 검증이 불필요합니다.
+    // 백엔드에서 이미 httpOnly 쿠키로 인증 상태를 관리합니다.
+  }, [mode, router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -193,9 +189,9 @@ export default function SignupForm({ mode = "signup", onSignupSuccess }) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // 소셜 모드일 때 임시 토큰을 Authorization 헤더에 담아 보냅니다.
-          ...(mode === "social" && { Authorization: `Bearer ${tempToken}` }),
         },
+        // 쿠키 기반 인증: httpOnly 쿠키를 받기 위해 credentials 포함
+        credentials: "include",
         body: JSON.stringify(requestBody),
       });
 
@@ -212,20 +208,39 @@ export default function SignupForm({ mode = "signup", onSignupSuccess }) {
       const responseData = await response.json();
 
       if (mode === "social") {
-        // 소셜 모드에서는 응답으로 최종 Access/Refresh 토큰이 옵니다.
-        const { accessToken, refreshToken } = responseData.data || {};
-        if (accessToken && refreshToken) {
-          // setTokens 함수를 사용하여 안전하게 토큰 저장
-          const { setTokens } = await import("@/lib/auth");
-          setTokens(accessToken, refreshToken);
+        // 쿠키 기반 인증: 백엔드에서 httpOnly 쿠키를 설정하므로
+        // 클라이언트에서는 사용자 정보만 저장합니다.
+        const userData = responseData.data?.user || responseData.user;
+        if (userData) {
+          const { setUserInfo } = await import("@/lib/auth");
+          setUserInfo(userData);
+
+          console.log("🔐 소셜 로그인 추가 정보 입력 완료:", {
+            userId: userData.id,
+            email: userData.email,
+            role: userData.role,
+          });
 
           setSuccess("정보 입력이 완료되었습니다! 메인 페이지로 이동합니다.");
           setTimeout(() => router.push("/"), 1500);
         } else {
-          throw new Error("최종 토큰을 받지 못했습니다.");
+          throw new Error("사용자 정보를 받지 못했습니다.");
         }
       } else {
         // 기존 회원가입 성공 로직
+        // 쿠키 기반 인증: 백엔드에서 자동 로그인 처리하고 쿠키 설정
+        const userData = responseData.data?.user || responseData.user;
+        if (userData) {
+          const { setUserInfo } = await import("@/lib/auth");
+          setUserInfo(userData);
+
+          console.log("🔐 회원가입 후 자동 로그인 완료:", {
+            userId: userData.id,
+            email: userData.email,
+            role: userData.role,
+          });
+        }
+
         // 응답 스키마 검증 (선택사항)
         try {
           SignupResponseSchema.parse(responseData);
@@ -252,6 +267,7 @@ export default function SignupForm({ mode = "signup", onSignupSuccess }) {
             const subscriptionResponse = await fetch("/api/subscribe", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
+              credentials: "include", // 인증된 사용자의 뉴스레터 구독을 위해 쿠키 포함
               body: JSON.stringify(subscriptionData),
             });
 
@@ -401,7 +417,8 @@ export default function SignupForm({ mode = "signup", onSignupSuccess }) {
                           : "text-red-500"
                       }
                     >
-                      {passwordCriteria.special ? "✓" : "✗"} 특수문자(@$!%*?&) 포함
+                      {passwordCriteria.special ? "✓" : "✗"} 특수문자(@$!%*?&)
+                      포함
                     </li>
                   </ul>
                 )}

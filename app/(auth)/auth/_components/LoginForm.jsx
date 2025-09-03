@@ -40,6 +40,14 @@ export default function LoginForm() {
 
       if (result.success) {
         console.log("로그인 성공, 역할:", result.role);
+        console.log("로그인 후 localStorage:", localStorage.getItem("userInfo"));
+
+        // 헤더 상태 업데이트를 위한 이벤트 발생
+        if (typeof window !== "undefined") {
+          console.log("🔔 authStateChanged 이벤트 발생");
+          window.dispatchEvent(new CustomEvent("authStateChanged"));
+        }
+
         if (result.role === "admin") {
           router.push("/admin");
         } else {
