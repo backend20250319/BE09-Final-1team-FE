@@ -1,6 +1,6 @@
 import { Inter } from "next/font/google"
 import "./globals.css"
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from "sonner"
 import { Providers } from "@/components/providers"
 import { Suspense } from "react"
 import ErrorBoundary from "@/components/ErrorBoundary"
@@ -34,7 +34,7 @@ export default function RootLayout({ children }) {
               {children}
             </Suspense>
             <Footer />
-            <Toaster />
+            <Toaster richColors position="bottom-right" />
           </Providers>
         </ErrorBoundary>
       </body>
