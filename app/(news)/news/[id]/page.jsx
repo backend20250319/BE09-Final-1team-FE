@@ -31,6 +31,8 @@ import { useScrap } from '@/contexts/ScrapContext';
 import useSummary from '../../../../hooks/useSummary';
 import RelatedNewsCard from '@/components/RelatedNewsCard'; // Added import
 import { TextWithTooltips } from '@/components/tooltip'; // 툴팁 컴포넌트 import
+import TermTooltip from '@/components/tooltip'; // TermTooltip 컴포넌트 import
+import parse, { domToReact } from 'html-react-parser';
 
 const NewsHeader = ({ newsData }) => {
   return (
@@ -447,18 +449,12 @@ const NewsActions = ({
 const processNewsContent = (content) => {
   if (!content) return null;
 
-  // 1. (최종 수정) 사용자님의 제안대로, 'alt="' 부터 다음 속성(style=, class=) 또는
-  //    태그의 끝(>)이 시작되기 직전까지를 하나의 덩어리로 보고 통째로 제거합니다.
-  let preProcessedHtml = content.replace(/\s+alt=".*?(?=\s+(?:style)=)/g, '');
-
-  console.log('preProcessedHtml', preProcessedHtml);
-  // 2. 기본적인 이스케이프 문자 처리
+  // Your existing logic for pre-processing HTML is good. Let's keep it.
+  let preProcessedHtml = content.replace(/\s+alt=".*?(?=\s+(?:style|class|src)=|>)/g, '');
   preProcessedHtml = preProcessedHtml.replace(/\\n/g, '\n').replace(/\\'/g, "'");
 
-  // 3. 이제 문법적으로 완벽하게 깨끗해진 HTML을 Cheerio로 로드합니다.
   const $ = cheerio.load(preProcessedHtml);
 
-  // 4. 나머지 모든 HTML 처리 (cheerio가 안전하게 처리)
   $('img').each((i, el) => {
     const img = $(el);
     const dataSrc = img.attr('data-src');
@@ -474,7 +470,6 @@ const processNewsContent = (content) => {
     $(el).removeClass('_LAZY_LOADING_WRAP _LAZY_LOADING_ERROR_HIDE');
   });
 
-  // 5. 최종 HTML을 문자열로 가져와 줄바꿈 처리
   let finalHtml = $.html();
   finalHtml = finalHtml.replace(/\n{2,}/g, '<br><br>');
 
@@ -482,42 +477,34 @@ const processNewsContent = (content) => {
 };
 
 const NewsContent = ({ newsData, fontSize }) => {
-  const contentRef = useRef(null);
   const decodedContent = processNewsContent(newsData.content);
 
-  // 툴팁 기능을 위한 useEffect
-  useEffect(() => {
-    if (contentRef.current) {
-      const tooltipWords = contentRef.current.querySelectorAll('.tooltip-word');
+  // This is where the magic happens! We configure the parser.
+  const options = {
+    replace: ({ name, attribs, children }) => {
+      // Find our special tooltip spans
+      if (name === 'span' && attribs && attribs.class === 'tooltip-word') {
+        let definitions = [];
+        try {
+          let jsonString = attribs['data-definitions'];
+          // Robustly clean the JSON-like string
+          jsonString = jsonString.replace(/'([^']+)':/g, '"$1":');
+          jsonString = jsonString.replace(/,(\s*[}\]])/g, '$1');
+          definitions = JSON.parse(jsonString);
+        } catch (error) {
+          console.error('Failed to parse definitions:', attribs['data-definitions'], error);
+          definitions = []; // Fallback to an empty array on error
+        }
 
-      tooltipWords.forEach((span) => {
-        const term = span.getAttribute('data-term');
-        const definitions = span.getAttribute('data-definitions');
-
-        // 기존 span을 TermTooltip으로 교체
-        const tooltipElement = document.createElement('span');
-        tooltipElement.className = 'tooltip-word-replaced';
-        tooltipElement.innerHTML = span.innerHTML;
-
-        // React 컴포넌트로 교체하는 것은 복잡하므로,
-        // 기존 툴팁 스타일과 이벤트를 그대로 사용
-        span.style.cursor = 'help';
-        span.style.borderBottom = '1px dashed #60a5fa';
-        span.style.color = '#2563eb';
-
-        // 툴팁 이벤트 추가
-        span.addEventListener('mouseenter', (e) => {
-          // 툴팁 표시 로직
-          console.log('Tooltip hover:', term, definitions);
-          // 여기에 툴팁 UI 표시
-        });
-
-        span.addEventListener('mouseleave', () => {
-          // 툴팁 숨김 로직
-        });
-      });
-    }
-  }, [decodedContent]);
+        // Replace the static <span> with our interactive React component
+        return (
+          <TermTooltip term={attribs['data-term']} definitions={definitions}>
+            {domToReact(children, options)}
+          </TermTooltip>
+        );
+      }
+    },
+  };
 
   return (
     <>
@@ -582,15 +569,11 @@ const NewsContent = ({ newsData, fontSize }) => {
       >
         {/* HTML 태그가 포함된 경우 dangerouslySetInnerHTML 사용 */}
         {decodedContent ? (
-          <div
-            ref={contentRef}
-            className="news-content"
-            dangerouslySetInnerHTML={{
-              __html: decodedContent,
-            }}
-          />
+          // HERE is the main change: No more dangerouslySetInnerHTML!
+          <div className="news-content">{parse(decodedContent, options)}</div>
         ) : (
-          <TextWithTooltips text={decodedContent || newsData.content} />
+          // Fallback if there's no content
+          <TextWithTooltips text={newsData.content} />
         )}
       </article>
       {newsData.tags && newsData.tags.length > 0 && (
