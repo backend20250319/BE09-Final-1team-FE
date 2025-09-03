@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
@@ -15,12 +15,12 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
-// 서비스 및 커스텀 훅
 
 import { newsService } from "@/lib/newsService";
 import { useScrap } from "@/contexts/ScrapContext";
 import useSummary from '../../../../hooks/useSummary';
-import RelatedNewsCard from "@/components/RelatedNewsCard"; // Added import
+import RelatedNewsCard from "@/components/RelatedNewsCard";
+import RecentNews from "@/components/RecentNews";
 
 
 const NewsHeader = ({ newsData }) => {
@@ -35,7 +35,7 @@ const NewsHeader = ({ newsData }) => {
           {newsData.category}
         </span>
         </div>
-        <h1 className="text-3xl md:text-4xl font-bold leading-tight mb-4">
+        <h1 className="text-3xl md:text-4xl font-bold leading-tight mb-4 line-clamp-2">
           {newsData.title}
         </h1>
         <div className="flex justify-between items-center text-gray-600 text-sm">
@@ -342,7 +342,7 @@ const NewsActions = ({ newsData, onSummaryOpen, onShareOpen, isFontSizeSelectorO
                 <FontSizeSelector
                     currentValue={fontSize}
                     onSelect={onFontSizeChange}
-                    onClose={() => onFontSizeSelectorToggle(false)}
+                    onClose={() => setFontSizeSelectorOpen(false)}
                 />
             )}
           </div>
@@ -557,12 +557,10 @@ export default function NewsPage() {
   const [readingProgress, setReadingProgress] = useState(0);
 
   const [relatedNews, setRelatedNews] = useState([]);
-  const [headlineNews, setHeadlineNews] = useState([]);
-  const [rankingNews, setRankingNews] = useState([]);
 
   useEffect(() => {
     const fetchRelatedNews = async () => {
-      if (!articleId) return;
+      if (!articleId || articleId === 'undefined') return;
       try {
         const response = await fetch(`/api/news/related/${articleId}`);
         if (!response.ok) {
@@ -572,7 +570,6 @@ export default function NewsPage() {
         setRelatedNews(data);
       } catch (error) {
         console.error("Failed to fetch related news:", error);
-        // Optionally, set an error state or show a toast notification
       }
     };
 
@@ -600,7 +597,7 @@ export default function NewsPage() {
       setLoading(true);
       setError(null);
 
-      if (!articleId) {
+      if (!articleId || articleId === 'undefined') {
         setError({ status: 400, message: "기사 ID가 없습니다." });
         setLoading(false);
         return;
@@ -613,19 +610,21 @@ export default function NewsPage() {
         setNewsData(null);
       } else {
         const data = result.data;
-        const rawCategory = data.categoryName || "일반"; // Changed from data.category to data.categoryName
+        const rawCategory = data.categoryName || "일반";
         const convertedCategory = backendToFrontendCategory[rawCategory] || rawCategory;
+
+        const publicationTime = data.published_at || data.publishedAt;
 
         const transformedData = {
           category: convertedCategory,
-          date: data.publishedAt ? new Date(data.publishedAt).toLocaleString("ko-KR") : "-",
+          date: publicationTime ? new Date(publicationTime).toLocaleString("ko-KR") : "-",
           title: data.title,
-          reporter: { name: data.reporterName || data.author || "크롤링 시스템" }, // Changed from data.reporter to data.reporterName
+          reporter: { name: data.reporterName || data.author || "박창준" },
           content: data.content || "상세 내용은 원본 링크를 확인해주세요.",
           source: data.press || data.source || "크롤링 뉴스",
           tags: data.tags || [convertedCategory],
           newsId: data.newsId || data.id,
-          imageUrl: data.imageUrl, // Changed from data.image to data.imageUrl
+          imageUrl: data.imageUrl,
         };
         setNewsData(transformedData);
       }
@@ -633,7 +632,7 @@ export default function NewsPage() {
       setLoading(false);
     };
 
-    if (articleId) {
+    if (articleId && articleId !== 'undefined') {
       loadNewsData();
     }
 
@@ -699,9 +698,9 @@ export default function NewsPage() {
           background: "linear-gradient(135deg, rgba(102, 126, 234, 1) 0%, rgba(118, 75, 162, 1) 50%, rgba(245, 87, 108, 1) 100%)",
         }} />
 
-        <div className="container mx-auto max-w-screen-xl p-4 lg:p-8 mt-0">
-          <div className="grid grid-cols-12 gap-8">
-            <main className="col-span-12 lg:col-span-8 bg-white p-6 sm:p-8 rounded-2xl shadow-lg">
+        <div className="container mx-auto max-w-screen-2xl p-4 lg:p-8 mt-0">
+          <div className="flex justify-center">
+            <main className="w-full lg:w-3/4 bg-white p-6 sm:p-8 rounded-2xl shadow-lg">
               <NewsHeader newsData={newsData} />
               <NewsActions
                   newsData={newsData}
@@ -714,39 +713,21 @@ export default function NewsPage() {
               />
               <NewsContent newsData={newsData} fontSize={fontSize} />
 
-              <section className="mt-12 pt-8 border-t">
-                <h2 className="text-2xl font-bold mb-6">함께 보면 좋은 뉴스</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {relatedNews.map(news => (
-                      <RelatedNewsCard key={news.newsId} news={news} />
-                  ))}
-                </div>
-              </section>
+              {relatedNews.length > 0 && (
+                  <section className="mt-12 pt-8 border-t">
+                    <h2 className="text-2xl font-bold mb-6">함께 보면 좋은 뉴스</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
+                      {relatedNews.map(news => (
+                          <RelatedNewsCard key={news.newsId} news={news} />
+                      ))}
+                    </div>
+                  </section>
+              )}
+
+              <RecentNews />
 
               <CommentSection newsId={articleId} />
             </main>
-
-            <aside className="col-span-12 lg:col-span-4 space-y-8">
-              <div className="bg-white p-6 rounded-2xl shadow-lg border">
-                <h3 className="text-xl font-bold border-b pb-3 mb-4">헤드라인 뉴스</h3>
-                <ul className="space-y-3">
-                  {headlineNews.map(news => (
-                      <li key={news.id}><Link href={`/news/${news.id}`} className="hover:text-indigo-600">{news.title}</Link></li>
-                  ))}
-                </ul>
-              </div>
-              <div className="bg-white p-6 rounded-2xl shadow-lg border">
-                <h3 className="text-xl font-bold border-b pb-3 mb-4">랭킹 뉴스</h3>
-                <ul className="space-y-3">
-                  {rankingNews.map((news, index) => (
-                      <li key={news.id} className="flex items-center">
-                        <span className="text-lg font-bold text-indigo-600 w-6">{index + 1}</span>
-                        <Link href={`/news/${news.id}`} className="hover:text-indigo-600 flex-1">{news.title}</Link>
-                      </li>
-                  ))}
-                </ul>
-              </div>
-            </aside>
           </div>
         </div>
 
