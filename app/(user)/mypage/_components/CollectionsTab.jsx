@@ -1,13 +1,11 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, useCallback } from "react";
-import { toast } from "sonner";
-import Link from "next/link";
-import Image from "next/image";
-import { Archive, Trash2, ListVideo } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { BookMarked, Trash2, Newspaper, CalendarDays, Plus, Search, Pencil, X, Layers } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,193 +17,336 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { toast } from 'sonner';
 
-const CollectionsTab = () => {
+// --- Hooks ---
+const useCollections = () => {
   const [collections, setCollections] = useState([]);
-  const [newCollectionName, setNewCollectionName] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchCollections = useCallback(async () => {
+  const fetchCollections = async () => {
+    setIsLoading(true);
     const token = localStorage.getItem("accessToken");
     if (!token) {
       setError("로그인이 필요합니다.");
       setIsLoading(false);
       return;
     }
-
-    setIsLoading(true);
     try {
-      const response = await fetch("/api/news/collections", {
-        headers: { Authorization: `Bearer ${token}` },
+      const response = await fetch('/api/news/collections', {
+        headers: { 'Authorization': `Bearer ${token}` },
       });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "컬렉션을 불러오는 데 실패했습니다.");
-      }
+      if (!response.ok) throw new Error('컬렉션 목록을 불러오는데 실패했습니다.');
       const data = await response.json();
-      setCollections(Array.isArray(data) ? data : []);
+      setCollections(data || []);
     } catch (err) {
       setError(err.message);
       toast.error(err.message);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
     fetchCollections();
-  }, [fetchCollections]);
+  }, []);
 
-  const handleCreateCollection = async (e) => {
-    e.preventDefault();
-    if (!newCollectionName.trim()) {
-      toast.error("컬렉션 이름을 입력해주세요.");
+  return { collections, isLoading, error, setCollections, refetch: fetchCollections };
+};
+
+// --- Modals ---
+const CreateCollectionModal = ({ isOpen, onClose, onCollectionCreated }) => {
+  const [name, setName] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+
+  const handleCreate = async () => {
+    if (!name.trim()) {
+      toast.error('컬렉션 이름을 입력해주세요.');
       return;
     }
-
+    setIsCreating(true);
     const token = localStorage.getItem("accessToken");
-    if (!token) {
-      toast.error("로그인이 필요합니다.");
-      return;
-    }
-
     try {
-      const response = await fetch("/api/news/collections", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ storageName: newCollectionName }),
+      const response = await fetch('/api/news/collections', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ storageName: name }),
       });
-
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "컬렉션 생성에 실패했습니다.");
+        throw new Error(errorData.message || '컬렉션 생성에 실패했습니다.');
       }
-
-      const newCollection = await response.json();
-      setCollections((prev) => [newCollection, ...prev]);
-      setNewCollectionName("");
-      toast.success(`'${newCollection.storageName}' 컬렉션이 생성되었습니다.`);
+      toast.success(`'${name}' 컬렉션이 생성되었습니다.`);
+      onCollectionCreated();
+      onClose();
+      setName('');
     } catch (err) {
-      setError(err.message);
       toast.error(err.message);
+    } finally {
+      setIsCreating(false);
     }
   };
 
-  const handleDeleteCollection = async (collectionId) => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      toast.error("로그인이 필요합니다.");
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/news/collections/${collectionId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "컬렉션 삭제에 실패했습니다.");
-      }
-
-      setCollections((prev) => prev.filter((collection) => collection.storageId !== collectionId));
-      toast.success("컬렉션이 삭제되었습니다.");
-    } catch (err) {
-      toast.error(err.message);
-    }
-  };
+  if (!isOpen) return null;
 
   return (
-    <div className="p-4 md:p-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-        <h2 className="text-2xl font-bold mb-4 md:mb-0">나의 컬렉션</h2>
-        <form onSubmit={handleCreateCollection} className="flex w-full md:w-auto gap-2">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50" onClick={onClose}>
+      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold">새 컬렉션 만들기</h2>
+          <Button variant="ghost" size="icon" onClick={onClose}><X className="h-5 w-5" /></Button>
+        </div>
+        <Input
+          placeholder="컬렉션 이름"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="mb-4"
+        />
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={onClose} disabled={isCreating}>취소</Button>
+          <Button onClick={handleCreate} disabled={isCreating}>{isCreating ? '생성 중...' : '만들기'}</Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const EditCollectionModal = ({ isOpen, onClose, collection, onCollectionUpdated }) => {
+  const [name, setName] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (collection) {
+      setName(collection.storageName);
+    }
+  }, [collection]);
+
+  const handleSave = async () => {
+    if (!name.trim()) {
+      toast.error('컬렉션 이름은 비워둘 수 없습니다.');
+      return;
+    }
+    setIsSaving(true);
+    const token = localStorage.getItem("accessToken");
+    try {
+      const response = await fetch(`/api/news/collections/${collection.storageId}`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newName: name })
+      });
+      if (!response.ok) throw new Error('이름 변경에 실패했습니다.');
+      toast.success('컬렉션 이름이 변경되었습니다.');
+      onCollectionUpdated();
+      onClose();
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50" onClick={onClose}>
+      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold">컬렉션 이름 변경</h2>
+           <Button variant="ghost" size="icon" onClick={onClose}><X className="h-5 w-5" /></Button>
+        </div>
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="mb-4"
+        />
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={onClose} disabled={isSaving}>취소</Button>
+          <Button onClick={handleSave} disabled={isSaving}>{isSaving ? '저장 중...' : '저장'}</Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- Components ---
+
+const colorPalettes = [
+  ['#ff9a9e', '#fecfef'], ['#a1c4fd', '#c2e9fb'], ['#d4fc79', '#96e6a1'],
+  ['#f6d365', '#fda085'], ['#fbc2eb', '#a6c1ee'], ['#84fab0', '#8fd3f4'],
+  ['#ffecd2', '#fcb69f'], ['#a8edea', '#fed6e3'], ['#e0c3fc', '#8ec5fc'],
+  ['#f093fb', '#f5576c'], ['#fa709a', '#fee140'], ['#4facfe', '#00f2fe'],
+  ['#43e97b', '#38f9d7'], ['#667eea', '#764ba2'],
+];
+
+const generateGradientFromPalette = (text, offset = 0) => {
+  let hash = 0;
+  if (!text || text.length === 0) text = "default";
+  for (let i = 0; i < text.length; i++) {
+    hash = text.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = (Math.abs(hash) + offset) % colorPalettes.length;
+  const [color1, color2] = colorPalettes[index];
+  return `linear-gradient(135deg, ${color1}, ${color2})`;
+};
+
+const CollectionCard = ({ collection, onEdit, onDelete }) => {
+  const formattedDate = new Date(collection.createdAt).toLocaleDateString();
+
+  return (
+    <Card className="overflow-visible group border-none bg-transparent shadow-none">
+      <Link href={`/mypage/collections/${collection.storageId}`} className="block cursor-pointer">
+        <div className="relative w-full aspect-video mb-3">
+          {/* Stacked Photos Effect - Pyramid Animation */}
+          <div className="absolute w-[95%] h-[95%] bottom-0 right-0 rounded-lg shadow-md transition-transform duration-300 group-hover:-translate-y-3 group-hover:-translate-x-2 group-hover:rotate-[-6deg]" style={{ background: generateGradientFromPalette(collection.storageName, 1) }} />
+          <div className="absolute w-[95%] h-[95%] bottom-0 right-0 rounded-lg shadow-md transition-transform duration-300 group-hover:-translate-y-3 group-hover:translate-x-2 group-hover:rotate-6" style={{ background: generateGradientFromPalette(collection.storageName, 2) }} />
+          <div 
+            className="absolute w-full h-full bottom-0 right-0 rounded-lg shadow-lg flex items-center justify-center"
+            style={{ background: generateGradientFromPalette(collection.storageName, 0) }}
+          >
+            <BookMarked className="w-12 h-12 text-white opacity-70" />
+          </div>
+          {/* News Count Overlay */}
+          <div className="absolute bottom-2 right-2 flex items-center gap-2 bg-black bg-opacity-60 text-white text-xs font-bold px-2 py-1 rounded-md z-10">
+            <Layers className="h-3 w-3" />
+            <span>{collection.newsCount}</span>
+          </div>
+        </div>
+      </Link>
+      <CardContent className="p-0">
+        <div className="flex items-start gap-3">
+            <div className="flex-grow">
+                <Link href={`/mypage/collections/${collection.storageId}`} className="block cursor-pointer">
+                    <h3 className="font-bold text-base break-words line-clamp-2 leading-tight text-gray-800 group-hover:text-indigo-600 transition-colors">{collection.storageName}</h3>
+                </Link>
+                <div className="text-sm text-gray-500 mt-1">
+                    <span>{formattedDate}</span>
+                </div>
+            </div>
+            <div className="flex gap-1">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(collection)}>
+                    <Pencil className="w-4 h-4 text-gray-500 hover:text-indigo-600 transition-colors" />
+                </Button>
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Trash2 className="w-4 h-4 text-gray-500 hover:text-red-600 transition-colors" />
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>정말 삭제하시겠습니까?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                이 컬렉션을 삭제하면 되돌릴 수 없습니다. 컬렉션 안의 스크랩은 삭제되지 않습니다.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>취소</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => onDelete(collection.storageId)} className="bg-red-600 hover:bg-red-700">
+                                삭제
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+const CollectionsTab = () => {
+  const { collections, isLoading, error, setCollections, refetch } = useCollections();
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setEditModalOpen] = useState(false);
+  const [collectionToEdit, setCollectionToEdit] = useState(null);
+
+  const handleOpenEditModal = (collection) => {
+    setCollectionToEdit(collection);
+    setEditModalOpen(true);
+  };
+
+  const handleDelete = async (collectionId) => {
+    const token = localStorage.getItem("accessToken");
+    try {
+      const response = await fetch(`/api/news/collections/${collectionId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error('컬렉션 삭제에 실패했습니다.');
+      toast.success('컬렉션이 삭제되었습니다.');
+      setCollections(prev => prev.filter(c => c.storageId !== collectionId));
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
+  const filteredCollections = collections.filter(c =>
+    c.storageName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div>
+      <CreateCollectionModal 
+        isOpen={isCreateModalOpen} 
+        onClose={() => setCreateModalOpen(false)} 
+        onCollectionCreated={refetch} 
+      />
+      <EditCollectionModal
+        isOpen={isEditModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        collection={collectionToEdit}
+        onCollectionUpdated={refetch}
+      />
+
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+        <div className="relative w-full md:flex-grow">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
           <Input
-            type="text"
-            value={newCollectionName}
-            onChange={(e) => setNewCollectionName(e.target.value)}
-            placeholder="새 컬렉션 이름"
-            className="flex-grow"
+            placeholder="내 컬렉션 검색..."
+            className="pl-10 w-full"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
-          <Button type="submit">
-            <Archive className="mr-2 h-4 w-4" /> 만들기
-          </Button>
-        </form>
+        </div>
+        <Button onClick={() => setCreateModalOpen(true)} className="w-full md:w-auto flex-shrink-0">
+          <Plus className="mr-2 h-4 w-4" />
+          새 컬렉션 만들기
+        </Button>
       </div>
 
-      {isLoading && <div className="text-center"></div>}
-      {error && !isLoading && <div className="text-center text-red-500">{error}</div>}
+      {isLoading && <div className="text-center py-10">컬렉션을 불러오는 중...</div>}
+      {error && <div className="text-center text-red-500 py-10">{error}</div>}
 
       {!isLoading && !error && (
-        <>
-          {collections.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {collections.map((collection) => (
-                <Card key={collection.storageId} className="group overflow-hidden">
-                  <Link href={`/mypage/collections/${collection.storageId}`} passHref>
-                    <div className="relative">
-                      <div className="aspect-video w-full overflow-hidden">
-                        <Image
-                          src={collection.thumbnailUrl || "/placeholder.svg"}
-                          alt={collection.storageName}
-                          width={400}
-                          height={225}
-                          className="object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
-                      </div>
-                      <div className="absolute inset-0 bg-black bg-opacity-20 group-hover:bg-opacity-10 transition-all duration-300"></div>
-                      <div className="absolute bottom-0 right-0 bg-black bg-opacity-70 text-white text-xs px-2 py-1 m-2 rounded-md flex items-center gap-1">
-                        <ListVideo className="h-4 w-4" />
-                        <span>{collection.newsCount || 0}</span>
-                      </div>
-                    </div>
-                  </Link>
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start">
-                      <h3 className="font-semibold text-lg break-words pr-2">
-                        {collection.storageName}
-                      </h3>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-                            <Trash2 className="h-4 w-4 text-gray-500 group-hover:text-red-500" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>정말로 삭제하시겠습니까?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              '{collection.storageName}' 컬렉션을 삭제합니다. 이 작업은 되돌릴 수 없습니다.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>취소</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDeleteCollection(collection.storageId)}>
-                              삭제
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12 border-2 border-dashed rounded-lg">
-              <Archive className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">생성된 컬렉션이 없습니다.</h3>
-              <p className="mt-1 text-sm text-gray-500">새 컬렉션을 만들어 뉴스를 관리해보세요.</p>
-            </div>
-          )}
-        </>
+        filteredCollections.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-10">
+            {filteredCollections.map(collection => (
+              <CollectionCard 
+                key={collection.storageId} 
+                collection={collection} 
+                onEdit={handleOpenEditModal}
+                onDelete={handleDelete} 
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center text-gray-500 py-24 border-2 border-dashed rounded-xl bg-gray-50">
+            <BookMarked className="mx-auto h-16 w-16 text-gray-400" />
+            <h3 className="mt-4 text-xl font-semibold text-gray-800">
+              {searchQuery ? '검색된 컬렉션이 없습니다.' : '아직 생성된 컬렉션이 없습니다.'}
+            </h3>
+            <p className="mt-2 text-base text-gray-500">
+              새 컬렉션을 만들어 스크랩한 기사를 관리해보세요.
+            </p>
+            <Button onClick={() => setCreateModalOpen(true)} className="mt-6">
+              <Plus className="mr-2 h-4 w-4" />
+              새 컬렉션 만들기
+            </Button>
+          </div>
+        )
       )}
     </div>
   );
