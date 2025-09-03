@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { CategoriesResponseSchema } from "@/lib/schemas";
+import { getBackendUrl } from "@/lib/config";
+import { authenticatedFetch } from "@/lib/auth";
 
 // 기본 관심사 데이터 (백엔드 Category enum과 1:1 매칭)
 const DEFAULT_INTERESTS = [
@@ -16,7 +18,7 @@ const DEFAULT_INTERESTS = [
 
 /**
  * 관심사(카테고리) 목록을 가져오는 커스텀 훅
- * API 호출이 실패하면 fallback 데이터를 사용합니다.
+ * 백엔드 API에서 직접 가져오며, 실패하면 fallback 데이터를 사용합니다.
  *
  * @returns {Object} { interests, isLoading, error, refetch }
  */
@@ -30,8 +32,12 @@ export function useInterests() {
       setIsLoading(true);
       setError(null);
 
-      const res = await fetch("/api/users/categories");
-      if (!res.ok) throw new Error(`API 요청 실패: ${res.status}`);
+      // 백엔드 카테고리 API 직접 호출
+      const backendUrl = getBackendUrl("api/categories");
+      console.log("🔍 백엔드 카테고리 API 호출:", backendUrl);
+
+      const res = await authenticatedFetch(backendUrl);
+      if (!res.ok) throw new Error(`백엔드 API 요청 실패: ${res.status}`);
 
       const json = await res.json().catch(() => ({}));
 
@@ -40,16 +46,16 @@ export function useInterests() {
         const parsed = CategoriesResponseSchema.parse(json);
         setInterests(parsed.data);
         console.log(
-          "✅ 관심사 목록 API에서 로드됨:",
+          "✅ 관심사 목록 백엔드에서 로드됨:",
           parsed.data.length + "개"
         );
       } catch (validationError) {
-        console.error("카테고리 API 응답 스키마 불일치:", validationError);
+        console.error("백엔드 카테고리 응답 스키마 불일치:", validationError);
         throw new Error("카테고리 데이터 형식이 올바르지 않습니다");
       }
     } catch (fetchError) {
       console.warn(
-        "⚠️ 관심사 API 호출 실패, fallback 데이터 사용:",
+        "⚠️ 백엔드 관심사 API 호출 실패, fallback 데이터 사용:",
         fetchError.message
       );
       setError(fetchError.message);

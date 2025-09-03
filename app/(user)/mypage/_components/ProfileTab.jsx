@@ -53,27 +53,29 @@ export default function ProfileTab() {
       setIsLoading(true);
       setError("");
       try {
-        // 실제 백엔드 API 사용
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        // ✅ Next.js API route를 통해 사용자 정보 가져오기 (쿠키 기반 인증)
+        const userResponse = await authenticatedFetch("/api/users/mypage");
 
-        // 사용자 정보 가져오기
-        const userResponse = await authenticatedFetch(
-          `${apiUrl}/api/users/mypage`
-        );
         if (!userResponse || !userResponse.ok)
           throw new Error("사용자 정보 로딩 실패");
+
         const userData = await userResponse.json();
+        console.log("🔍 ProfileTab: API 응답 데이터:", userData);
 
         // 받아온 데이터로 상태 설정
         if (userData.success) {
           // 사용자의 취미 목록(hobbies)을 selectedInterests 상태에 직접 설정
           setSelectedInterests(userData.data.hobbies || []);
           setNewsletterEnabled(userData.data.letterOk || false);
+          console.log("✅ ProfileTab: 사용자 데이터 로드 완료:", {
+            hobbies: userData.data.hobbies,
+            letterOk: userData.data.letterOk,
+          });
         } else {
           throw new Error(userData.message || "사용자 정보 로딩 실패");
         }
       } catch (err) {
-        console.error("사용자 데이터 로드 오류:", err);
+        console.error("ProfileTab 사용자 데이터 로드 오류:", err);
         setError(err.message);
       } finally {
         setIsLoading(false);

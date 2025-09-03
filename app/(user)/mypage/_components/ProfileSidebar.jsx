@@ -26,25 +26,27 @@ export default function ProfileSidebar() {
     const fetchUserData = async () => {
       try {
         setIsLoading(true);
-        // 실제 백엔드 API 사용
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        const response = await authenticatedFetch(`${apiUrl}/api/users/mypage`);
+
+        // ✅ Next.js API route를 통해 사용자 정보 가져오기 (쿠키 기반 인증)
+        const response = await authenticatedFetch("/api/users/mypage");
 
         if (!response || !response.ok) {
           throw new Error("사용자 정보를 불러올 수 없습니다.");
         }
 
         const data = await response.json().catch(() => ({}));
+        console.log("🔍 ProfileSidebar: API 응답 데이터:", data);
 
         if (data.success) {
           setUserData(data.data);
+          console.log("✅ ProfileSidebar: 사용자 데이터 로드 완료:", data.data);
         } else {
           throw new Error(
             data.message || "사용자 정보를 불러오는데 실패했습니다."
           );
         }
       } catch (err) {
-        console.error("Failed to fetch user data:", err);
+        console.error("ProfileSidebar 사용자 데이터 로드 실패:", err);
         setError(err.message);
       } finally {
         setIsLoading(false);
@@ -54,17 +56,17 @@ export default function ProfileSidebar() {
     fetchUserData();
   }, []); // 컴포넌트가 처음 마운트될 때 한 번만 실행
 
-     // --일반 / 소셜 회원 구분--
-    const getAcccountType = (provider) => {
-      switch(provider) {
-        case "kakao":
-          return "카카오 회원";
-        case "google":
-          return "구글 회원";
-        default:
-          return "일반 회원";
-      }
+  // --일반 / 소셜 회원 구분--
+  const getAcccountType = (provider) => {
+    switch (provider) {
+      case "kakao":
+        return "카카오 회원";
+      case "google":
+        return "구글 회원";
+      default:
+        return "일반 회원";
     }
+  };
 
   // --- 로딩 중 UI ---
   if (isLoading) {

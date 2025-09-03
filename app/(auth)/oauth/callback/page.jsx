@@ -22,14 +22,21 @@ export default function OAuthCallbackPage() {
 
         // ✅ 1. 백엔드에 내 정보를 요청합니다.
         // 브라우저가 자동으로 HttpOnly 인증 쿠키를 포함하여 전송합니다.
+        console.log("🔍 OAuth 콜백: 사용자 정보 요청 중...");
         const response = await authenticatedFetch("/api/users/mypage"); // 내 정보 조회 API
+        console.log("🔍 OAuth 콜백: API 응답 상태:", response.status);
+
         const result = await response.json();
+        console.log("🔍 OAuth 콜백: API 응답 전체:", result);
 
         if (!response.ok || !result.success) {
-          throw new Error(result.message || "사용자 정보를 가져오는 데 실패했습니다.");
+          throw new Error(
+            result.message || "사용자 정보를 가져오는 데 실패했습니다."
+          );
         }
 
         const userInfo = result.data;
+        console.log("🔍 OAuth 콜백: 추출된 사용자 정보:", userInfo);
 
         // ✅ 2. 서버로부터 받은 사용자 정보를 localStorage에 저장합니다.
         // 이 정보는 UI 렌더링 및 클라이언트 사이드 권한 확인에 사용됩니다.

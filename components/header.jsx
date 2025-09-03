@@ -19,7 +19,7 @@ import {
   Shield,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { getUserRole, getUserInfo, logout } from "@/lib/auth";
+import { getUserInfo, logout } from "@/lib/auth";
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -31,7 +31,18 @@ export default function Header() {
     // 초기 로드 시 사용자 상태 확인
     const updateUserStatus = () => {
       const currentUserInfo = getUserInfo();
-      const currentUserRole = getUserRole();
+      const currentUserRole =
+        currentUserInfo?.role ||
+        currentUserInfo?.userRole ||
+        currentUserInfo?.authorities?.[0] ||
+        currentUserInfo?.roles?.[0] ||
+        (currentUserInfo ? "user" : null);
+
+      console.log("🔍 Header 상태 업데이트:", {
+        userInfo: currentUserInfo,
+        userRole: currentUserRole,
+        localStorage: localStorage.getItem("userInfo"),
+      });
       setUserInfo(currentUserInfo);
       setUserRole(currentUserRole);
     };
@@ -40,7 +51,11 @@ export default function Header() {
 
     // 커스텀 이벤트 감지 (로그인/로그아웃 시)
     const handleAuthChange = () => {
-      updateUserStatus();
+      console.log("🔍 AuthStateChanged 이벤트 감지");
+      // 약간의 지연을 두고 상태 업데이트 (localStorage 저장 완료 대기)
+      setTimeout(() => {
+        updateUserStatus();
+      }, 100);
     };
 
     window.addEventListener("authStateChanged", handleAuthChange);
@@ -74,6 +89,13 @@ export default function Header() {
     }
     return pathname.startsWith(href);
   };
+
+  // 렌더링 시 현재 상태 로그
+  console.log("🎨 Header 렌더링:", {
+    userRole,
+    userInfo,
+    isLoggedIn: !!userRole,
+  });
 
   return (
     <header className="sticky top-0 z-50 responsive-gradient glass">
