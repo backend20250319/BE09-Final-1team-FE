@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import * as cheerio from 'cheerio';
+import { createPortal } from 'react-dom';
 
 // UI & 아이콘 라이브러리
 import { Toaster, toast } from 'sonner';
@@ -21,6 +22,7 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent } from '@/components/ui/card';
 
 // 서비스 및 커스텀 훅
 
@@ -31,8 +33,6 @@ import { useScrap } from '@/contexts/ScrapContext';
 import useSummary from '../../../../hooks/useSummary';
 import RelatedNewsCard from '@/components/RelatedNewsCard'; // Added import
 import { TextWithTooltips } from '@/components/tooltip'; // 툴팁 컴포넌트 import
-import TermTooltip from '@/components/tooltip'; // TermTooltip 컴포넌트 import
-import parse, { domToReact } from 'html-react-parser';
 
 const NewsHeader = ({ newsData }) => {
   return (
@@ -449,12 +449,18 @@ const NewsActions = ({
 const processNewsContent = (content) => {
   if (!content) return null;
 
-  // Your existing logic for pre-processing HTML is good. Let's keep it.
-  let preProcessedHtml = content.replace(/\s+alt=".*?(?=\s+(?:style|class|src)=|>)/g, '');
+  // 1. (최종 수정) 사용자님의 제안대로, 'alt="' 부터 다음 속성(style=, class=) 또는
+  //    태그의 끝(>)이 시작되기 직전까지를 하나의 덩어리로 보고 통째로 제거합니다.
+  let preProcessedHtml = content.replace(/\s+alt=".*?(?=\s+(?:style)=)/g, '');
+
+  console.log('preProcessedHtml', preProcessedHtml);
+  // 2. 기본적인 이스케이프 문자 처리
   preProcessedHtml = preProcessedHtml.replace(/\\n/g, '\n').replace(/\\'/g, "'");
 
+  // 3. 이제 문법적으로 완벽하게 깨끗해진 HTML을 Cheerio로 로드합니다.
   const $ = cheerio.load(preProcessedHtml);
 
+  // 4. 나머지 모든 HTML 처리 (cheerio가 안전하게 처리)
   $('img').each((i, el) => {
     const img = $(el);
     const dataSrc = img.attr('data-src');
@@ -470,40 +476,118 @@ const processNewsContent = (content) => {
     $(el).removeClass('_LAZY_LOADING_WRAP _LAZY_LOADING_ERROR_HIDE');
   });
 
+  // 5. 최종 HTML을 문자열로 가져와 줄바꿈 처리
   let finalHtml = $.html();
   finalHtml = finalHtml.replace(/\n{2,}/g, '<br><br>');
 
   return finalHtml;
 };
 
+// const NewsContent = ({ newsData, fontSize }) => {
+//   const contentRef = useRef(null);
+//   const decodedContent = processNewsContent(newsData.content);
+
+//   // 툴팁 기능을 위한 useEffect
+//   useEffect(() => {
+//     if (contentRef.current) {
+//       const tooltipWords = contentRef.current.querySelectorAll('.tooltip-word');
+
+//       tooltipWords.forEach((span) => {
+//         const term = span.getAttribute('data-term');
+//         const definitions = span.getAttribute('data-definitions');
+
+//         // 기존 span을 TermTooltip으로 교체
+//         const tooltipElement = document.createElement('span');
+//         tooltipElement.className = 'tooltip-word-replaced';
+//         tooltipElement.innerHTML = span.innerHTML;
+
+//         // React 컴포넌트로 교체하는 것은 복잡하므로,
+//         // 기존 툴팁 스타일과 이벤트를 그대로 사용
+//         span.style.cursor = 'help';
+//         span.style.borderBottom = '1px dashed #60a5fa';
+//         span.style.color = '#2563eb';
+
+//         // 툴팁 이벤트 추가
+//         span.addEventListener('mouseenter', (e) => {
+//           // 툴팁 표시 로직
+//           console.log('Tooltip hover:', term, definitions);
+//           // 여기에 툴팁 UI 표시
+//         });
+
+//         span.addEventListener('mouseleave', () => {
+//           // 툴팁 숨김 로직
+//         });
+//       });
+//     }
+//   }, [decodedContent]);
+
 const NewsContent = ({ newsData, fontSize }) => {
   const decodedContent = processNewsContent(newsData.content);
 
-  // This is where the magic happens! We configure the parser.
-  const options = {
-    replace: ({ name, attribs, children }) => {
-      // Find our special tooltip spans
-      if (name === 'span' && attribs && attribs.class === 'tooltip-word') {
-        let definitions = [];
-        try {
-          let jsonString = attribs['data-definitions'];
-          // Robustly clean the JSON-like string
-          jsonString = jsonString.replace(/'([^']+)':/g, '"$1":');
-          jsonString = jsonString.replace(/,(\s*[}\]])/g, '$1');
-          definitions = JSON.parse(jsonString);
-        } catch (error) {
-          console.error('Failed to parse definitions:', attribs['data-definitions'], error);
-          definitions = []; // Fallback to an empty array on error
-        }
+  const [tooltip, setTooltip] = useState({
+    visible: false,
+    term: '',
+    definitions: [],
+    position: { top: 0, left: 0 },
+  });
 
-        // Replace the static <span> with our interactive React component
-        return (
-          <TermTooltip term={attribs['data-term']} definitions={definitions}>
-            {domToReact(children, options)}
-          </TermTooltip>
-        );
+  const handleMouseOver = (e) => {
+    const target = e.target.closest('.tooltip-word');
+    if (!target) return;
+
+    const term = target.getAttribute('data-term');
+    const definitionJson = target.getAttribute('data-definitions');
+
+    if (definitionJson) {
+      try {
+        // ✨✨✨ JSON을 보정하는 로직을 강화했습니다 ✨✨✨
+
+        // 1. 키(key)에 따옴표가 없는 경우 (예: {def:"..."})를 "key": 형태로 수정
+        //    단, 이 정규식은 값(value)에 콜론(:)이 포함되면 문제를 일으킬 수 있어 주의가 필요합니다.
+        //    백엔드 데이터가 [{def:'...', order:1}] 형태일 가능성이 높다고 가정합니다.
+        let fixedJson = definitionJson.replace(/([{,]\s*)(\w+)\s*:/g, '$1"$2":');
+
+        // 2. 값(value)이 홑따옴표로 된 경우 (예: {'key':'val'})를 쌍따옴표로 수정
+        fixedJson = fixedJson.replace(/'/g, '"');
+
+        const parsedDefinitions = JSON.parse(fixedJson);
+
+        setTooltip({
+          visible: true,
+          term: term,
+          definitions: parsedDefinitions,
+          position: { top: e.clientY + 15, left: e.clientX + 15 },
+        });
+      } catch (error) {
+        console.error('JSON 파싱 최종 실패:', error);
+        console.error(' 문제가 발생한 원본 데이터:', definitionJson); // 문제가 되는 데이터를 콘솔에 출력
       }
-    },
+    }
+  };
+
+  const handleMouseOut = () => {
+    setTooltip((prev) => ({ ...prev, visible: false }));
+  };
+
+  const handleMouseMove = (e) => {
+    if (tooltip.visible) {
+      const tooltipWidth = 350;
+      const tooltipHeight = 150;
+      let newLeft = e.clientX + 15;
+      let newTop = e.clientY + 15;
+
+      if (newLeft + tooltipWidth > window.innerWidth) {
+        newLeft = e.clientX - tooltipWidth - 15;
+      }
+      if (newTop + tooltipHeight > window.innerHeight) {
+        newTop = e.clientY - tooltipHeight - 15;
+      }
+
+      setTooltip((prev) => ({
+        ...prev,
+        position: { top: newTop, left: newLeft },
+      }));
+    }
   };
 
   return (
@@ -568,14 +652,52 @@ const NewsContent = ({ newsData, fontSize }) => {
         style={{ fontSize: `${fontSize}px` }}
       >
         {/* HTML 태그가 포함된 경우 dangerouslySetInnerHTML 사용 */}
-        {decodedContent ? (
-          // HERE is the main change: No more dangerouslySetInnerHTML!
-          <div className="news-content">{parse(decodedContent, options)}</div>
-        ) : (
-          // Fallback if there's no content
-          <TextWithTooltips text={newsData.content} />
+        {decodedContent && (
+          <div
+            className="news-content"
+            dangerouslySetInnerHTML={{ __html: decodedContent }}
+            // 이벤트 핸들러들을 부모 div에 연결!
+            onMouseOver={handleMouseOver}
+            onMouseOut={handleMouseOut}
+            onMouseMove={handleMouseMove}
+          />
         )}
       </article>
+      {/* 툴팁이 visible일 때만 createPortal을 이용해 body 최상단에 툴팁을 렌더링 */}
+      {tooltip.visible &&
+        createPortal(
+          <div
+            className="fixed z-[9999] animate-tooltip-fade-in"
+            style={{
+              top: `${tooltip.position.top}px`,
+              left: `${tooltip.position.left}px`,
+            }}
+          >
+            {/* TermTooltip.jsx의 UI를 참고하여 재구성 */}
+            <Card className="glass shadow-xl border-blue-200 min-w-[280px] max-w-[400px]">
+              <CardContent className="p-3">
+                <div className="text-sm">
+                  <div className="font-semibold text-blue-800 mb-2 break-words leading-normal">
+                    {tooltip.term}
+                  </div>
+                  <div className="space-y-2">
+                    {tooltip.definitions
+                      .sort((a, b) => a.order - b.order) // order 순서로 정렬
+                      .map((def, index) => (
+                        <div
+                          key={index}
+                          className="text-gray-600 text-xs leading-normal break-words"
+                        >
+                          <span className="font-medium text-blue-600">{def.order}.</span> {def.def}
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>,
+          document.body,
+        )}
       {newsData.tags && newsData.tags.length > 0 && (
         <div className="mt-8 pt-6 border-t border-gray-200">
           <h3 className="text-lg font-semibold text-gray-800 mb-3">관련 키워드</h3>
