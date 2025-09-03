@@ -1,19 +1,18 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
 import { isAuthenticated } from "@/lib/auth";
 
-// 분리된 컴포넌트들 import
 import ProfileSidebar from "./_components/ProfileSidebar";
 import ProfileTab from "./_components/ProfileTab";
 import ScrapsTab from "./_components/ScrapsTab";
 import HistoryTab from "./_components/HistoryTab";
 import SettingsTab from "./_components/SettingsTab";
-import CollectionsTab from "./_components/CollectionsTab"; // 컬렉션 탭 추가
+import CollectionsTab from "./_components/CollectionsTab";
 import { MypageProvider } from "@/contexts/MypageContext";
+import { ScrapProvider } from "@/contexts/ScrapContext";
 
 function MyPageContent() {
   const searchParams = useSearchParams();
@@ -22,7 +21,6 @@ function MyPageContent() {
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
   useEffect(() => {
-    // 인증 상태 체크
     const checkAuth = () => {
       if (!isAuthenticated()) {
         console.log("❌ 인증되지 않은 사용자, 로그인 페이지로 리다이렉트");
@@ -36,57 +34,50 @@ function MyPageContent() {
   }, [router]);
 
   useEffect(() => {
-    // URL 파라미터에서 탭 정보 확인
     const tab = searchParams.get("tab");
     if (
         tab &&
         ["profile", "scraps", "collections", "history", "settings"].includes(tab)
     ) {
       setActiveTab(tab);
-    } else if (tab) { // If an invalid or unwanted tab parameter exists, remove it
+    } else if (tab) {
       router.replace("/mypage", undefined, { shallow: true });
     }
-  }, [searchParams, router]); // Added router to dependency array
+  }, [searchParams, router]);
 
-  // 인증 체크 중이면 로딩 표시
   if (isAuthChecking) {
     return (
-        <>
-          <div className="min-h-screen bg-gray-50">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              <div className="animate-pulse">
-                <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-                <div className="h-64 bg-gray-200 rounded mb-4"></div>
-                <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-              </div>
+        <div className="min-h-screen bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+              <div className="h-64 bg-gray-200 rounded mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
             </div>
           </div>
-        </>
+        </div>
     );
   }
 
   return (
-      <>
-        <MypageProvider>
+      <MypageProvider>
+        <ScrapProvider>
           <div className="min-h-screen bg-gray-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
               <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                {/* 프로필 사이드바 */}
                 <div className="lg:col-span-1">
                   <ProfileSidebar />
                 </div>
 
-                {/* 메인 콘텐츠 영역 */}
                 <div className="lg:col-span-3">
                   <Tabs
                       value={activeTab}
                       onValueChange={setActiveTab}
                       className="w-full"
                   >
-                    {/* 탭 메뉴 */}
-                    <TabsList className="grid w-full grid-cols-5">
+                    <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
                       <TabsTrigger value="profile">프로필</TabsTrigger>
                       <TabsTrigger value="scraps">스크랩</TabsTrigger>
                       <TabsTrigger value="collections">컬렉션</TabsTrigger>
@@ -94,7 +85,6 @@ function MyPageContent() {
                       <TabsTrigger value="settings">설정</TabsTrigger>
                     </TabsList>
 
-                    {/* 각 탭별 컨텐츠 */}
                     <TabsContent value="profile">
                       <ProfileTab />
                     </TabsContent>
@@ -119,8 +109,8 @@ function MyPageContent() {
               </div>
             </div>
           </div>
-        </MypageProvider>
-      </>
+        </ScrapProvider>
+      </MypageProvider>
   );
 }
 
@@ -128,19 +118,17 @@ export default function MyPage() {
   return (
       <Suspense
           fallback={
-            <>
-              <div className="min-h-screen bg-gray-50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                  <div className="animate-pulse">
-                    <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-                    <div className="h-64 bg-gray-200 rounded mb-4"></div>
-                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  </div>
+            <div className="min-h-screen bg-gray-50">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="animate-pulse">
+                  <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+                  <div className="h-64 bg-gray-200 rounded mb-4"></div>
+                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
                 </div>
               </div>
-            </>
+            </div>
           }
       >
         <MyPageContent />
