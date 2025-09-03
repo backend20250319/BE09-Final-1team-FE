@@ -288,7 +288,7 @@ export default function ScrapsTab() {
                 </Button>
                 <div className="relative w-64">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-                  <Input placeholder="제목으로 검색..." className="pl-10" value={inputQuery} onChange={(e) => setInputQuery(e.target.value)} />
+                  <Input placeholder="제목으로 검색" className="pl-10" value={inputQuery} onChange={(e) => setInputQuery(e.target.value)} />
                 </div>
               </div>
             </div>

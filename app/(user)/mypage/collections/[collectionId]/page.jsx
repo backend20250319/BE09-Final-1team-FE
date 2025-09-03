@@ -333,7 +333,7 @@ const CollectionDetailPage = () => {
               </Link>
             </div>
 
-            {isLoading && !collectionInfo && <div className="text-center py-20 text-lg font-semibold">컬렉션 정보를 불러오는 중...</div>}
+            {isLoading && !collectionInfo && <div className="text-center py-20 text-lg font-semibold"></div>}
             {error && <div className="text-center py-20 text-red-600">{error}</div>}
 
             {!isLoading && !error && collectionInfo && (
@@ -366,7 +366,7 @@ const CollectionDetailPage = () => {
                       </div>
                       <div className="relative w-full md:w-72 mt-4 md:mt-0">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-                        <Input placeholder="컬렉션 내 검색..." className="pl-10" value={inputQuery} onChange={(e) => setInputQuery(e.target.value)} />
+                        <Input placeholder="기사 검색" className="pl-10" value={inputQuery} onChange={(e) => setInputQuery(e.target.value)} />
                       </div>
                     </div>
                   </header>

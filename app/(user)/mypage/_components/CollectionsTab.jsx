@@ -105,7 +105,7 @@ const CreateCollectionModal = ({ isOpen, onClose, onCollectionCreated }) => {
         />
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={onClose} disabled={isCreating}>취소</Button>
-          <Button onClick={handleCreate} disabled={isCreating}>{isCreating ? '생성 중...' : '만들기'}</Button>
+          <Button onClick={handleCreate} disabled={isCreating}>{isCreating ? '생성 중' : '만들기'}</Button>
         </div>
       </div>
     </div>
@@ -162,7 +162,7 @@ const EditCollectionModal = ({ isOpen, onClose, collection, onCollectionUpdated 
         />
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={onClose} disabled={isSaving}>취소</Button>
-          <Button onClick={handleSave} disabled={isSaving}>{isSaving ? '저장 중...' : '저장'}</Button>
+          <Button onClick={handleSave} disabled={isSaving}>{isSaving ? '' : '저장'}</Button>
         </div>
       </div>
     </div>
@@ -305,7 +305,7 @@ const CollectionsTab = () => {
         <div className="relative w-full md:flex-grow">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
           <Input
-            placeholder="내 컬렉션 검색..."
+            placeholder="내 컬렉션 검색"
             className="pl-10 w-full"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -317,7 +317,7 @@ const CollectionsTab = () => {
         </Button>
       </div>
 
-      {isLoading && <div className="text-center py-10">컬렉션을 불러오는 중...</div>}
+      {isLoading && <div className="text-center py-10">컬렉션을 불러오는 중</div>}
       {error && <div className="text-center text-red-500 py-10">{error}</div>}
 
       {!isLoading && !error && (
