@@ -31,9 +31,9 @@ export function useInterests() {
       setError(null);
 
       // Next.js API 라우트를 통해 카테고리 호출 (인증 불필요)
-      console.log("🔍 카테고리 API 호출: /api/categories");
+      console.log("🔍 카테고리 API 호출: /api/users/categories");
 
-      const res = await fetch("/api/categories");
+      const res = await fetch("/api/users/categories");
       if (!res.ok) throw new Error(`API 요청 실패: ${res.status}`);
 
       const json = await res.json().catch(() => ({}));

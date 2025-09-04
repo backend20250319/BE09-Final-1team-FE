@@ -56,8 +56,16 @@ export default function ProfileTab() {
         // ✅ Next.js API route를 통해 사용자 정보 가져오기 (쿠키 기반 인증)
         const userResponse = await authenticatedFetch("/api/users/mypage");
 
-        if (!userResponse || !userResponse.ok)
+        // 401 에러 처리 (인증 실패)
+        if (userResponse.status === 401) {
+          console.log("🚨 인증 실패: 로그인이 필요합니다.");
+          window.location.href = "/auth";
+          return;
+        }
+
+        if (!userResponse || !userResponse.ok) {
           throw new Error("사용자 정보 로딩 실패");
+        }
 
         const userData = await userResponse.json();
         console.log("🔍 ProfileTab: API 응답 데이터:", userData);
@@ -219,13 +227,17 @@ export default function ProfileTab() {
             <>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {interests.map((interest) => {
-                  const isSelected = selectedInterests.includes(interest.categoryCode);
+                  const isSelected = selectedInterests.includes(
+                    interest.categoryCode
+                  );
                   const isDisabled =
                     !isSelected && selectedInterests.length >= 3;
                   return (
                     <div
                       key={interest.categoryCode}
-                      onClick={() => !isDisabled && toggleInterest(interest.categoryCode)}
+                      onClick={() =>
+                        !isDisabled && toggleInterest(interest.categoryCode)
+                      }
                       className={`p-4 rounded-lg border transition-all ${
                         isSelected
                           ? "border-blue-500 bg-blue-50 ring-2 ring-blue-300 cursor-pointer"

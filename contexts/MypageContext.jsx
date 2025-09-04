@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
 import { authenticatedFetch } from "@/lib/auth";
-import { getApiUrl } from "@/lib/config";
 
 const MypageContext = createContext();
 
@@ -26,7 +25,8 @@ export const MypageProvider = ({ children }) => {
         setIsLoadingHistory(true);
         setHistoryError(null);
 
-        const historyUrl = getApiUrl(`/api/users/mypage/history/index?page=0&size=10&sort=updatedAt,DESC`);
+        // Next.js API 라우트를 호출 (백엔드 직접 호출 대신)
+        const historyUrl = `/api/users/mypage/history/index?page=0&size=10&sort=updatedAt,DESC`;
         const response = await authenticatedFetch(historyUrl);
 
         if (!response.ok) {
@@ -39,7 +39,9 @@ export const MypageProvider = ({ children }) => {
           setHistory(data.data.content || []);
           setReadArticleCount(data.data.totalElements || 0);
         } else {
-          throw new Error(data.message || "읽기 기록 정보를 불러오는데 실패했습니다.");
+          throw new Error(
+            data.message || "읽기 기록 정보를 불러오는데 실패했습니다."
+          );
         }
       } catch (err) {
         console.error("Failed to fetch history data:", err);
