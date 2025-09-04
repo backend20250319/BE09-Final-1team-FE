@@ -16,8 +16,6 @@ import {
   ChevronsRight,
   LogIn,
   X,
-  PlusSquare,
-  BookOpen,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Label } from '@/components/ui/label';
@@ -25,11 +23,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { toast } from 'sonner';
 
 import { TextWithTooltips } from '@/components/tooltip';
-import { getUserRole } from '@/lib/auth';
+import { getUserRole, isAuthenticated } from '@/lib/auth'; // isAuthenticated 임포트
 import dynamic from 'next/dynamic';
 import useSWR from 'swr';
 import { useScrap } from '@/contexts/ScrapContext';
-import AddToCollectionModal from './(user)/mypage/_components/AddToCollectionModal';
 
 const RealTimeKeywordWidget = dynamic(() => import('@/components/RealTimeKeywordWidget'), {
   ssr: false,
@@ -157,7 +154,6 @@ export default function MainPage({
   const { addScrap, scraps } = useScrap();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [newsToShare, setNewsToShare] = useState(null);
-  const [newsToCollect, setNewsToCollect] = useState(null);
 
   const itemsPerPage = 21;
   const fetcher = (url) => fetch(url).then((r) => r.json());
@@ -273,7 +269,7 @@ export default function MainPage({
   const handleScrapClick = async (e, newsItem) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!localStorage.getItem('accessToken')) {
+    if (!isAuthenticated()) { // 수정된 부분
       setIsLoginModalOpen(true);
       return;
     }
@@ -293,23 +289,6 @@ export default function MainPage({
     e.preventDefault();
     e.stopPropagation();
     setNewsToShare(newsItem);
-  };
-
-  const handleCollectionClick = (e, newsItem) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!localStorage.getItem('accessToken')) {
-      setIsLoginModalOpen(true);
-      return;
-    }
-
-    const isScrapped = scraps.some(scrap => scrap.newsId === newsItem.id);
-
-    if (isScrapped) {
-      setNewsToCollect(newsItem);
-    } else {
-      toast.info('스크랩된 기사만 컬렉션에 추가할 수 있습니다. 스크랩을 먼저 진행해주세요.');
-    }
   };
 
   const categories = ['전체', 'POLITICS', 'ECONOMY', 'SOCIETY', 'LIFE', 'INTERNATIONAL', 'IT_SCIENCE', 'VEHICLE', 'TRAVEL_FOOD', 'ART'];
@@ -398,9 +377,6 @@ export default function MainPage({
                                 })}
                               </span>
                               <div className="flex items-center space-x-2">
-                                <button onClick={(e) => handleCollectionClick(e, popularNews)} className="p-2 hover:bg-gray-100/20 rounded-full transition-all duration-200">
-                                  <BookOpen className="w-4 h-4 text-white" />
-                                </button>
                                 <button onClick={(e) => handleScrapClick(e, popularNews)} className="p-2 hover:bg-gray-100/20 rounded-full transition-all duration-200">
                                   <Bookmark className="w-4 h-4 text-white" />
                                 </button>
@@ -453,9 +429,6 @@ export default function MainPage({
                           <div className="flex items-center justify-between pt-3 mt-2">
                             <span className="text-sm text-gray-500 font-medium truncate mr-2">{item.source}</span>
                             <div className="flex items-center space-x-1 flex-shrink-0">
-                              <button onClick={(e) => handleCollectionClick(e, item)} className="p-2 hover:bg-gray-100 rounded-full transition-all duration-200">
-                                <BookOpen className="w-4 h-4 text-gray-600" />
-                              </button>
                               <button onClick={(e) => handleScrapClick(e, item)} className="p-2 hover:bg-gray-100 rounded-full transition-all duration-200">
                                 <Bookmark className="w-4 h-4 text-gray-600" />
                               </button>
@@ -514,9 +487,6 @@ export default function MainPage({
                         <div className="flex items-center justify-between pt-3 mt-2">
                           <span className="text-sm text-gray-500 font-medium truncate mr-2">{news.source}</span>
                           <div className="flex items-center space-x-1 flex-shrink-0">
-                            <button onClick={(e) => handleCollectionClick(e, news)} className="p-2 hover:bg-gray-100 rounded-full transition-all duration-200">
-                              <BookOpen className="w-4 h-4 text-gray-600" />
-                            </button>
                             <button onClick={(e) => handleScrapClick(e, news)} className="p-2 hover:bg-gray-100 rounded-full transition-all duration-200">
                               <Bookmark className="w-4 h-4 text-gray-600" />
                             </button>
@@ -638,7 +608,6 @@ export default function MainPage({
 
         <LoginConfirmModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
         {newsToShare && <ShareModal newsItem={newsToShare} onClose={() => setNewsToShare(null)} />}
-        {newsToCollect && <AddToCollectionModal newsIds={[newsToCollect.id]} isOpen={!!newsToCollect} onClose={() => setNewsToCollect(null)} onSuccess={() => setNewsToCollect(null)} />}
       </div>
   );
 }
