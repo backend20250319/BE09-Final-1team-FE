@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   BookMarked,
@@ -14,7 +14,7 @@ import {
   Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
@@ -27,6 +27,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+  } from "@/components/ui/pagination";
 import { toast } from "sonner";
 import { authenticatedFetch } from "@/lib/auth";
 
@@ -36,33 +44,31 @@ const useCollections = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchCollections = async () => {
+  const fetchCollections = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await authenticatedFetch("/api/news/collections");
-
-      if (response && response.success) {
-        setCollections(response.data || []);
-        setError(null);
-      } else if (response && response.error === "Authentication failed") {
-        setError("로그인이 필요합니다.");
-        setCollections([]);
-        toast.error("로그인이 필요합니다.");
-      } else {
-        throw new Error("컬렉션 목록을 불러오는데 실패했습니다.");
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "컬렉션 목록을 불러오는데 실패했습니다.");
       }
+      const data = await response.json();
+      setCollections(data || []);
+      setError(null);
     } catch (err) {
       setError(err.message);
       setCollections([]);
-      toast.error(err.message);
+      if (!err.message.includes("인증")) {
+        toast.error(err.message);
+      }
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchCollections();
-  }, []);
+  }, [fetchCollections]);
 
   return {
     collections,
@@ -91,15 +97,14 @@ const CreateCollectionModal = ({ isOpen, onClose, onCollectionCreated }) => {
         body: JSON.stringify({ storageName: name }),
       });
 
-      if (response && response.success) {
+      if (response.ok) {
         toast.success(`'${name}' 컬렉션이 생성되었습니다.`);
         onCollectionCreated();
         onClose();
         setName("");
-      } else if (response && response.error === "Authentication failed") {
-        toast.error("로그인이 필요합니다.");
       } else {
-        throw new Error(response?.error || "컬렉션 생성에 실패했습니다.");
+        const errorText = await response.text();
+        throw new Error(errorText || "컬렉션 생성에 실패했습니다.");
       }
     } catch (err) {
       toast.error(err.message);
@@ -175,14 +180,13 @@ const EditCollectionModal = ({
         }
       );
 
-      if (response && response.success) {
+      if (response.ok) {
         toast.success("컬렉션 이름이 변경되었습니다.");
         onCollectionUpdated();
         onClose();
-      } else if (response && response.error === "Authentication failed") {
-        toast.error("로그인이 필요합니다.");
       } else {
-        throw new Error(response?.error || "이름 변경에 실패했습니다.");
+        const errorText = await response.text();
+        throw new Error(errorText || "이름 변경에 실패했습니다.");
       }
     } catch (err) {
       toast.error(err.message);
@@ -218,7 +222,7 @@ const EditCollectionModal = ({
             취소
           </Button>
           <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? "" : "저장"}
+            {isSaving ? "저장 중" : "저장"}
           </Button>
         </div>
       </div>
@@ -296,10 +300,9 @@ const CollectionCard = ({ collection, onEdit, onDelete }) => {
           >
             <BookMarked className="w-12 h-12 text-white opacity-70" />
           </div>
-          {/* News Count Overlay */}
           <div className="absolute bottom-2 right-2 flex items-center gap-2 bg-black bg-opacity-60 text-white text-xs font-bold px-2 py-1 rounded-md z-10">
             <Layers className="h-3 w-3" />
-            <span>{collection.newsCount}</span>
+            <span>기사 {collection.newsCount}개</span>
           </div>
         </div>
       </Link>
@@ -360,9 +363,10 @@ const CollectionCard = ({ collection, onEdit, onDelete }) => {
 };
 
 const CollectionsTab = () => {
-  const { collections, isLoading, error, setCollections, refetch } =
+  const { collections, isLoading, error, refetch } =
     useCollections();
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(0);
 
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
   const [isEditModalOpen, setEditModalOpen] = useState(false);
@@ -382,15 +386,12 @@ const CollectionsTab = () => {
         }
       );
 
-      if (response && response.success) {
+      if (response.ok) {
         toast.success("컬렉션이 삭제되었습니다.");
-        setCollections((prev) =>
-          prev.filter((c) => c.storageId !== collectionId)
-        );
-      } else if (response && response.error === "Authentication failed") {
-        toast.error("로그인이 필요합니다.");
+        refetch(); // 삭제 후 전체 목록 다시 로드
       } else {
-        throw new Error(response?.error || "컬렉션 삭제에 실패했습니다.");
+        const errorText = await response.text();
+        throw new Error(errorText || "컬렉션 삭제에 실패했습니다.");
       }
     } catch (err) {
       toast.error(err.message);
@@ -399,6 +400,13 @@ const CollectionsTab = () => {
 
   const filteredCollections = collections.filter((c) =>
     c.storageName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(filteredCollections.length / itemsPerPage);
+  const paginatedCollections = filteredCollections.slice(
+    currentPage * itemsPerPage,
+    (currentPage + 1) * itemsPerPage
   );
 
   return (
@@ -415,58 +423,130 @@ const CollectionsTab = () => {
         onCollectionUpdated={refetch}
       />
 
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-        <div className="relative w-full md:flex-grow">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-          <Input
-            placeholder="내 컬렉션 검색"
-            className="pl-10 w-full"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        <Button
-          onClick={() => setCreateModalOpen(true)}
-          className="w-full md:w-auto flex-shrink-0"
-        >
-          <Plus className="mr-2 h-4 w-4" />새 컬렉션 만들기
-        </Button>
-      </div>
+      <Card>
+        <CardHeader className="p-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="flex items-center gap-4">
+                    <div className="bg-indigo-100 text-indigo-600 p-3 rounded-lg flex-shrink-0">
+                    <BookMarked className="h-6 w-6" />
+                    </div>
+                    <div>
+                    <h2 className="text-lg font-bold text-gray-800">나만의 컬렉션 관리</h2>
+                    <p className="text-sm text-gray-600 mt-1">
+                      스크랩한 기사들을 주제별로 모아 나만의 뉴스 컬렉션을 만들어 볼 수 있습니다.
+                    </p>
+                    </div>
+                </div>
+                <Button
+                    onClick={() => setCreateModalOpen(true)}
+                    className="w-full md:w-auto mt-15 flex-shrink-0 bg-indigo-600 hover:bg-indigo-700"
+                >
+                    <Plus className="mr-2 h-4 w-4" />새 컬렉션 만들기
+                </Button>
+            </div>
+            <div className="relative mt-4">
+                <Search className="absolute mt-2 left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                <Input
+                    placeholder="내 컬렉션 검색"
+                    className="pl-10 w-full mt-4 bg-white"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                />
+            </div>
+        </CardHeader>
+        <CardContent>
+            {isLoading && (
+                <div className="text-center py-10"></div>
+            )}
+            {error && <div className="text-center text-red-500 py-10">{error}</div>}
 
-      {isLoading && (
-        <div className="text-center py-10">컬렉션을 불러오는 중</div>
-      )}
-      {error && <div className="text-center text-red-500 py-10">{error}</div>}
-
-      {!isLoading &&
-        !error &&
-        (filteredCollections.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-10">
-            {filteredCollections.map((collection) => (
-              <CollectionCard
-                key={collection.storageId}
-                collection={collection}
-                onEdit={handleOpenEditModal}
-                onDelete={handleDelete}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center text-gray-500 py-24 border-2 border-dashed rounded-xl bg-gray-50">
-            <BookMarked className="mx-auto h-16 w-16 text-gray-400" />
-            <h3 className="mt-4 text-xl font-semibold text-gray-800">
-              {searchQuery
-                ? "검색된 컬렉션이 없습니다."
-                : "아직 생성된 컬렉션이 없습니다."}
-            </h3>
-            <p className="mt-2 text-base text-gray-500">
-              새 컬렉션을 만들어 스크랩한 기사를 관리해보세요.
-            </p>
-            <Button onClick={() => setCreateModalOpen(true)} className="mt-6">
-              <Plus className="mr-2 h-4 w-4" />새 컬렉션 만들기
-            </Button>
-          </div>
-        ))}
+            {!isLoading && !error && (
+                <>
+                {paginatedCollections.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-10">
+                    {paginatedCollections.map((collection) => (
+                        <CollectionCard
+                        key={collection.storageId}
+                        collection={collection}
+                        onEdit={handleOpenEditModal}
+                        onDelete={handleDelete}
+                        />
+                    ))}
+                    </div>
+                ) : (
+                    <div className="text-center text-gray-500 py-24 border-2 border-dashed rounded-xl bg-gray-50">
+                    <BookMarked className="mx-auto h-16 w-16 text-gray-400" />
+                    <h3 className="mt-4 text-xl font-semibold text-gray-800">
+                        {searchQuery
+                        ? "검색된 컬렉션이 없습니다."
+                        : "아직 생성된 컬렉션이 없습니다."}
+                    </h3>
+                    <p className="mt-2 text-base text-gray-500">
+                        새 컬렉션을 만들어 스크랩한 기사를 관리해보세요.
+                    </p>
+                    <Button onClick={() => setCreateModalOpen(true)} className="mt-6">
+                        <Plus className="mr-2 h-4 w-4" />새 컬렉션 만들기
+                    </Button>
+                    </div>
+                )}
+                </>
+            )}
+        </CardContent>
+        {totalPages > 1 && (
+            <CardFooter className="justify-center pt-6 border-t">
+                <Pagination>
+                    <PaginationContent>
+                        <PaginationItem>
+                        <PaginationPrevious
+                            href="#"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                setCurrentPage((p) => Math.max(0, p - 1));
+                            }}
+                            aria-disabled={currentPage === 0}
+                            className={
+                                currentPage === 0
+                                ? "pointer-events-none opacity-50"
+                                : ""
+                            }
+                        />
+                        </PaginationItem>
+                        {[...Array(totalPages).keys()].map((pageNumber) => (
+                        <PaginationItem key={pageNumber}>
+                            <PaginationLink
+                            href="#"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                setCurrentPage(pageNumber);
+                            }}
+                            isActive={currentPage === pageNumber}
+                            >
+                            {pageNumber + 1}
+                            </PaginationLink>
+                        </PaginationItem>
+                        ))}
+                        <PaginationItem>
+                        <PaginationNext
+                            href="#"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                setCurrentPage((p) =>
+                                Math.min(totalPages - 1, p + 1)
+                                );
+                            }}
+                            aria-disabled={currentPage >= totalPages - 1}
+                            className={
+                                currentPage >= totalPages - 1
+                                ? "pointer-events-none opacity-50"
+                                : ""
+                            }
+                        />
+                        </PaginationItem>
+                    </PaginationContent>
+                </Pagination>
+            </CardFooter>
+        )}
+      </Card>
     </div>
   );
 };

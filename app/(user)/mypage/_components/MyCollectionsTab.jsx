@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   BookMarked,
@@ -33,33 +33,31 @@ const useCollections = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchCollections = async () => {
+  const fetchCollections = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await authenticatedFetch("/api/news/collections");
-
-      if (response && response.success) {
-        setCollections(response.data || []);
-        setError(null);
-      } else if (response && response.error === "Authentication failed") {
-        setError("로그인이 필요합니다.");
-        setCollections([]);
-        toast.error("로그인이 필요합니다.");
-      } else {
-        throw new Error("컬렉션 목록을 불러오는데 실패했습니다.");
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "컬렉션 목록을 불러오는데 실패했습니다.");
       }
+      const data = await response.json();
+      setCollections(data || []); // .data 제거
+      setError(null);
     } catch (err) {
       setError(err.message);
       setCollections([]);
-      toast.error(err.message);
+      if (err.message !== "세션이 만료되었습니다. 다시 로그인해주세요.") {
+        toast.error(err.message);
+      }
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchCollections();
-  }, []);
+  }, [fetchCollections]);
 
   return {
     collections,
@@ -88,15 +86,14 @@ const CreateCollectionModal = ({ isOpen, onClose, onCollectionCreated }) => {
         body: JSON.stringify({ storageName: name }),
       });
 
-      if (response && response.success) {
+      if (response.ok) {
         toast.success(`'${name}' 컬렉션이 생성되었습니다.`);
         onCollectionCreated();
         onClose();
         setName("");
-      } else if (response && response.error === "Authentication failed") {
-        toast.error("로그인이 필요합니다.");
       } else {
-        throw new Error(response?.error || "컬렉션 생성에 실패했습니다.");
+        const errorText = await response.text();
+        throw new Error(errorText || "컬렉션 생성에 실패했습니다.");
       }
     } catch (err) {
       toast.error(err.message);
@@ -220,15 +217,14 @@ const MyCollectionsTab = () => {
         }
       );
 
-      if (response && response.success) {
+      if (response.ok) {
         toast.success("컬렉션이 삭제되었습니다.");
         setCollections((prev) =>
           prev.filter((c) => c.storageId !== collectionId)
         );
-      } else if (response && response.error === "Authentication failed") {
-        toast.error("로그인이 필요합니다.");
       } else {
-        throw new Error(response?.error || "컬렉션 삭제에 실패했습니다.");
+        const errorText = await response.text();
+        throw new Error(errorText || "컬렉션 삭제에 실패했습니다.");
       }
     } catch (err) {
       toast.error(err.message);
@@ -251,7 +247,7 @@ const MyCollectionsTab = () => {
         <div className="relative w-full md:flex-grow">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
           <Input
-            placeholder="내 컬렉션 검색..."
+            placeholder="내 컬렉션 검색"
             className="pl-10 w-full"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
