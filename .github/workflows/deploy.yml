@@ -3,6 +3,9 @@ name: Deploy Frontend to AWS Elastic Beanstalk
 on:
   push:
     branches: [develop]
+  pull_request:
+    branches:
+      - develop
 
 env:
   AWS_REGION: ap-northeast-2
