@@ -1,5 +1,6 @@
 "use client"
 
+import Header from "@/components/Header"
 import { useState, useEffect, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -75,7 +76,7 @@ function SearchPageContent() {
 
       console.log('🔍 검색 API 호출 파라미터:', params.toString())
 
-      const response = await fetch(`/api/search?${params}`)
+      const response = await fetch(`/api/news/search?${params}`)
       if (response.ok) {
         const data = await response.json()
         setSearchResults(data.content || [])

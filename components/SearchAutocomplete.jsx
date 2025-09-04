@@ -52,7 +52,7 @@ export default function SearchAutocomplete({
   const fetchSuggestions = async (searchQuery) => {
     setIsLoading(true)
     try {
-      const response = await fetch(`/api/search?query=${encodeURIComponent(searchQuery)}&size=5`)
+      const response = await fetch(`/api/news/search?query=${encodeURIComponent(searchQuery)}&size=5`)
       if (response.ok) {
         const data = await response.json()
         setSuggestions(data.content || [])

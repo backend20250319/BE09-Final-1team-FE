@@ -42,7 +42,7 @@ export default function ProfileSidebar() {
           console.log("✅ ProfileSidebar: 사용자 데이터 로드 완료:", data.data);
         } else {
           throw new Error(
-              data.message || "사용자 정보를 불러오는데 실패했습니다."
+            data.message || "사용자 정보를 불러오는데 실패했습니다."
           );
         }
       } catch (err) {
@@ -70,81 +70,81 @@ export default function ProfileSidebar() {
 
   if (isLoading) {
     return (
-        <Card>
-          <CardContent className="pt-6 text-center text-gray-500">
-            <p>사용자 정보를 불러오는 중...</p>
-          </CardContent>
-        </Card>
+      <Card>
+        <CardContent className="pt-6 text-center text-gray-500">
+          <p>사용자 정보를 불러오는 중...</p>
+        </CardContent>
+      </Card>
     );
   }
 
   if (error) {
     return (
-        <Card>
-          <CardContent className="pt-6 text-center text-red-500">
-            <p>오류: {error}</p>
-          </CardContent>
-        </Card>
+      <Card>
+        <CardContent className="pt-6 text-center text-red-500">
+          <p>오류: {error}</p>
+        </CardContent>
+      </Card>
     );
   }
 
   const userCreatedAt = userData?.createdAt
-      ? new Date(userData.createdAt)
-      .toLocaleDateString("ko-KR", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      })
-      .replace(/\. /g, ".")
-      .replace(/\.$/, "")
-      : "정보 없음";
+    ? new Date(userData.createdAt)
+        .toLocaleDateString("ko-KR", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        })
+        .replace(/\. /g, ".")
+        .replace(/\.$/, "")
+    : "정보 없음";
 
   return (
-      <Card>
-        <CardContent className="pt-6">
-          {/* 사용자 프로필 정보 */}
-          <div className="text-center">
-            <Avatar className="h-24 w-24 mx-auto mb-4">
-              <AvatarImage
-                  src={
-                      userData?.profileImageUrl ||
-                      "/placeholder.svg?height=96&width=96"
-                  }
-              />
-              <AvatarFallback className="text-lg">
-                {/* 이름의 첫 글자를 표시 */}
-                {userData?.name?.charAt(0) || "U"}
-              </AvatarFallback>
-            </Avatar>
-            {/* API로 받아온 이름 표시 */}
-            <h2 className="text-xl font-semibold">
-              {userData?.name || "사용자"}
-            </h2>
-            {/* API로 받아온 이메일 표시 */}
-            <p className="text-gray-600">
-              {userData?.email || "이메일 정보 없음"}
-            </p>
-            <Badge className="mt-2">{getAcccountType(userData?.provider)}</Badge>
-          </div>
+    <Card>
+      <CardContent className="pt-6">
+        {/* 사용자 프로필 정보 */}
+        <div className="text-center">
+          <Avatar className="h-24 w-24 mx-auto mb-4">
+            <AvatarImage
+              src={
+                userData?.profileImageUrl ||
+                "/placeholder.svg?height=96&width=96"
+              }
+            />
+            <AvatarFallback className="text-lg">
+              {/* 이름의 첫 글자를 표시 */}
+              {userData?.name?.charAt(0) || "U"}
+            </AvatarFallback>
+          </Avatar>
+          {/* API로 받아온 이름 표시 */}
+          <h2 className="text-xl font-semibold">
+            {userData?.name || "사용자"}
+          </h2>
+          {/* API로 받아온 이메일 표시 */}
+          <p className="text-gray-600">
+            {userData?.email || "이메일 정보 없음"}
+          </p>
+          <Badge className="mt-2">{getAcccountType(userData?.provider)}</Badge>
+        </div>
 
-          <Separator className="my-6" />
+        <Separator className="my-6" />
 
-          {/* 사용자 통계 정보 (현재는 정적 데이터) */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">가입일</span>
-              <span className="text-sm font-medium">{userCreatedAt}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">읽은 기사</span>
-              <span className="text-sm font-medium">{readArticleCount}개</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">스크랩</span>
-              <span className="text-sm font-medium">{totalScraps}개</span>
-            </div>
+        {/* 사용자 통계 정보 (현재는 정적 데이터) */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-600">가입일</span>
+            <span className="text-sm font-medium">{userCreatedAt}</span>
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-600">읽은 기사</span>
+            <span className="text-sm font-medium">{readArticleCount}개</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-600">스크랩</span>
+            <span className="text-sm font-medium">{totalScraps}개</span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
