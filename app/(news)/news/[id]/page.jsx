@@ -37,6 +37,7 @@ import { useScrap } from "@/contexts/ScrapContext";
 import useSummary from "../../../../hooks/useSummary";
 import RelatedNewsCard from "@/components/RelatedNewsCard";
 import RecentNews from "@/components/RecentNews";
+import { authenticatedFetch } from "@/lib/auth";
 
 const NewsHeader = ({ newsData }) => {
   return (
@@ -134,11 +135,9 @@ const ReportModal = ({ isOpen, onClose, newsId }) => {
     setIsLoading(true);
 
     try {
-      const authToken = localStorage.getItem("accessToken");
-      const response = await fetch(`/api/news/${newsId}/report`, {
+      const response = await authenticatedFetch(`/api/news/${newsId}/report`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${authToken}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ reason, details }),
@@ -146,6 +145,9 @@ const ReportModal = ({ isOpen, onClose, newsId }) => {
 
       if (response.ok) {
         toast.success("기사가 정상적으로 신고되었습니다.");
+        onClose();
+      } else if (response.status === 401) {
+        toast.error("로그인이 필요합니다. 로그인 후 다시 시도해주세요.");
         onClose();
       } else {
         const errorData = await response
@@ -339,10 +341,6 @@ const NewsActions = ({
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   const handleScrap = async () => {
-    if (!localStorage.getItem("accessToken")) {
-      setIsLoginModalOpen(true);
-      return;
-    }
     if (isScrapLoading) return;
 
     setIsScrapLoading(true);
@@ -354,11 +352,7 @@ const NewsActions = ({
   };
 
   const handleReportClick = () => {
-    if (!localStorage.getItem("accessToken")) {
-      setIsLoginModalOpen(true);
-    } else {
-      setIsReportModalOpen(true);
-    }
+    setIsReportModalOpen(true);
   };
 
   return (
@@ -470,22 +464,15 @@ const CommentSection = ({ newsId }) => {
   });
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    const storedUserInfo = localStorage.getItem("userInfo");
+    // 댓글 기능이 임시 구현이므로 기본적으로 로그아웃 상태로 처리
+    setIsLoggedIn(false);
+    setUserInfo({
+      name: "방문자",
+      avatar: "https://placehold.co/40x40/E2E8F0/4A5568?text=?",
+    });
 
-    if (token && storedUserInfo) {
-      setIsLoggedIn(true);
-      const parsedInfo = JSON.parse(storedUserInfo);
-      setUserInfo({
-        name: parsedInfo.name || "사용자",
-        avatar: `https://placehold.co/40x40/C7D2FE/4338CA?text=${
-          parsedInfo.name?.[0] || "U"
-        }`,
-      });
-    } else {
-      setIsLoggedIn(false);
-    }
     // TODO: 실제 댓글 목록 API 호출
+    // TODO: 사용자 인증 상태 확인 API 추가 후 구현
   }, [newsId]);
 
   const handleCommentSubmit = () => {
