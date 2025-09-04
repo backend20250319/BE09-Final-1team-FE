@@ -29,7 +29,7 @@ WORKDIR /app
 # 프로덕션 환경 변수 설정
 ENV NODE_ENV=production
 # Next.js의 익명 원격 측정 비활성화
-ENV NEXT_TELEMETRY_DISABLED 1
+ENV NEXT_TELEMETRY_DISABLED=1
 
 # 보안 강화를 위해 non-root 사용자 생성
 RUN addgroup --system --gid 1001 nodejs
@@ -48,7 +48,7 @@ USER nextjs
 EXPOSE 3000
 
 # 환경 변수로 포트 설정
-ENV PORT 3000
+ENV PORT=3000
 
 # 애플리케이션 시작 (standalone 모드는 내장된 server.js를 실행)
 CMD ["node", "server.js"]
