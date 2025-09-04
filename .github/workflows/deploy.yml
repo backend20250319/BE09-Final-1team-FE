@@ -35,6 +35,10 @@ jobs:
           role-to-assume: arn:aws:iam::883467884806:role/BE09-Final-1team-FE-github-deploy-role
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: WhoAmI
+        run: |
+          aws sts get-caller-identity
+
       # 3. Amazon ECR에 로그인
       - name: Login to Amazon ECR
         id: login-ecr
