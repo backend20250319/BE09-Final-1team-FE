@@ -31,7 +31,7 @@ export default function ApiTestPage() {
     },
     {
       name: "카테고리 목록",
-      endpoint: "/api/news/categories",
+      endpoint: "/api/categories",
       method: "GET"
     },
     {

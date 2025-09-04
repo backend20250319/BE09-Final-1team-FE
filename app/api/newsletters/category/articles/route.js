@@ -41,7 +41,7 @@ export async function GET(request) {
     const cookies = request.headers.get("cookie");
     let cookieToken = null;
     if (cookies) {
-      const tokenMatch = cookies.match(/access_token=([^;]+)/);
+      const tokenMatch = cookies.match(/access-token=([^;]+)/);
       if (tokenMatch) {
         cookieToken = tokenMatch[1];
         console.log("🍪 쿠키 토큰 존재:", !!cookieToken);

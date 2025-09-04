@@ -1,5 +1,6 @@
 "use client"
 
+import Header from "@/components/Header"
 import { useState, useEffect, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -43,6 +44,19 @@ function SearchPageContent() {
     category: ""
   })
 
+  // 카테고리 매핑
+  const backendToFrontendCategory = {
+    POLITICS: "정치",
+    ECONOMY: "경제",
+    SOCIETY: "사회",
+    LIFE: "생활/문화",
+    INTERNATIONAL: "세계",
+    IT_SCIENCE: "IT/과학",
+    VEHICLE: "자동차/교통",
+    TRAVEL_FOOD: "여행/음식",
+    ART: "예술",
+  };
+
   // 검색 실행
   useEffect(() => {
     if (query) {
@@ -78,7 +92,22 @@ function SearchPageContent() {
       const response = await fetch(`/api/news/search?${params}`)
       if (response.ok) {
         const data = await response.json()
-        setSearchResults(data.content || [])
+        const items = data.content || []
+        
+        const mappedResults = items.map(item => {
+          const categoryFromApi = item.category || item.categoryName;
+          let mappedCategory = categoryFromApi;
+
+          if (categoryFromApi && typeof categoryFromApi === 'string') {
+            mappedCategory = backendToFrontendCategory[categoryFromApi.toUpperCase()] || categoryFromApi;
+          }
+          return {
+            ...item,
+            categoryName: mappedCategory
+          }
+        });
+
+        setSearchResults(mappedResults)
         setTotalPages(data.totalPages || 1)
         setTotalElements(data.totalElements || 0)
       } else {
@@ -380,7 +409,7 @@ function SearchPageContent() {
                 ))}
               </CardContent>
             </Card>
-          ))}
+          ))}\
         </TabsContent>
 
         {/* 카테고리별 탭 */}
@@ -400,7 +429,7 @@ function SearchPageContent() {
                 ))}
               </CardContent>
             </Card>
-          ))}
+          ))}\
         </TabsContent>
       </Tabs>
       </div>
