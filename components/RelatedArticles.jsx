@@ -41,7 +41,7 @@ export default function RelatedArticles({
       
       // 여러 키워드로 검색하여 연관 기사 찾기
       const searchPromises = keywords.slice(0, 3).map(keyword =>
-        fetch(`/api/search?query=${encodeURIComponent(keyword)}&page=0&size=5`)
+        fetch(`/api/news/search?query=${encodeURIComponent(keyword)}&page=0&size=5`)
           .then(res => res.json())
           .then(data => data.content || [])
           .catch(() => [])

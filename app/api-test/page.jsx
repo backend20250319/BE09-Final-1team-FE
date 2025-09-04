@@ -41,7 +41,7 @@ export default function ApiTestPage() {
     },
     {
       name: "트렌딩 뉴스",
-      endpoint: "/api/trending",
+      endpoint: "/api/news/trending",
       method: "GET"
     },
     {
