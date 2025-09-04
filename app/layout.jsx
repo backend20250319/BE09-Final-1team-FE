@@ -4,7 +4,7 @@ import { Toaster } from 'sonner';
 import { Providers } from '@/components/providers';
 import { Suspense } from 'react';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import Footer from '@/components/Footer';
+import Footer from '@/components/footer';
 import Header from '@/components/header';
 
 const inter = Inter({
