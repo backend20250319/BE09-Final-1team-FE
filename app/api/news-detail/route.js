@@ -12,7 +12,7 @@ export async function GET(request) {
     console.log('🔄 뉴스 상세 API 호출:', { id })
     
     // 백엔드 서버 API 호출
-    const backendUrl = `http://localhost:8082/api/news/${id}`
+    const backendUrl = `http://localhost:8000/api/news/${id}`
     console.log('📡 백엔드 서버 API 호출:', backendUrl)
     
     const response = await fetch(backendUrl, {

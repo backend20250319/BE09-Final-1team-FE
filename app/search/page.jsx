@@ -75,7 +75,7 @@ function SearchPageContent() {
 
       console.log('🔍 검색 API 호출 파라미터:', params.toString())
 
-      const response = await fetch(`/api/news/search?${params}`)
+      const response = await fetch(`/api/search?${params}`)
       if (response.ok) {
         const data = await response.json()
         setSearchResults(data.content || [])

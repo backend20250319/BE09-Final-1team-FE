@@ -56,9 +56,9 @@ export default function UsersManagement() {
   const [pendingId, setPendingId] = useState(null);
 
   /** 백엔드 엔드포인트 - Next.js API routes를 통한 프록시 사용 */
-  const listUrl = `/api/admin`; // 쿠키 기반 인증으로 프록시
+  const listUrl = `/api/users/admin`; // 쿠키 기반 인증으로 프록시
   const meUrl = `/api/users/mypage`; // 기존과 동일
-  const deleteUrl = (id) => `/api/admin/${id}`; // 쿠키 기반 인증으로 프록시
+  const deleteUrl = (id) => `/api/users/admin/${id}`; // 쿠키 기반 인증으로 프록시
 
   /** 내 정보 조회(목록에서 자기 자신 제외를 위해 필요) */
   const fetchMe = useCallback(async () => {
