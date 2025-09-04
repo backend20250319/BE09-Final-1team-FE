@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import AiSummaryModal from "@/components/aisummarybot/AiSummaryModal";
+import { isAuthenticated, authenticatedFetch } from "@/lib/auth";
 
 // UI & 아이콘 라이브러리
 import { Toaster, toast } from "sonner";
@@ -104,7 +105,7 @@ const LoginConfirmModal = ({ isOpen, onClose }) => {
                 }}
             >
               로그인
-            </button>
+            </button>x
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -134,11 +135,9 @@ const ReportModal = ({ isOpen, onClose, newsId }) => {
     setIsLoading(true);
 
     try {
-      const authToken = localStorage.getItem("accessToken");
-      const response = await fetch(`/api/news/${newsId}/report`, {
+      const response = await authenticatedFetch(`/api/news/${newsId}/report`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${authToken}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ reason, details }),
@@ -148,14 +147,12 @@ const ReportModal = ({ isOpen, onClose, newsId }) => {
         toast.success("기사가 정상적으로 신고되었습니다.");
         onClose();
       } else {
-        const errorData = await response
-        .json()
-        .catch(() => ({ message: "서버 응답을 파싱할 수 없습니다." }));
-        toast.error(errorData.message || "신고 처리 중 오류가 발생했습니다.");
+        const errorText = await response.text();
+        toast.error(errorText || "신고 처리 중 오류가 발생했습니다.");
       }
     } catch (error) {
       console.error("Error during report:", error);
-      toast.error("네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+      toast.error(error.message || "네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
     } finally {
       setIsLoading(false);
     }
@@ -337,11 +334,10 @@ const NewsActions = ({
   const [isScrapLoading, setIsScrapLoading] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  // FontSizeSelector 상태를 NewsActions 내부에서 관리하도록 수정
   const [isFontSizeOpen, setFontSizeOpen] = useState(false);
 
   const handleScrap = async () => {
-    if (!localStorage.getItem("accessToken")) {
+    if (!isAuthenticated()) {
       setIsLoginModalOpen(true);
       return;
     }
@@ -356,14 +352,13 @@ const NewsActions = ({
   };
 
   const handleReportClick = () => {
-    if (!localStorage.getItem("accessToken")) {
+    if (!isAuthenticated()) {
       setIsLoginModalOpen(true);
     } else {
       setIsReportModalOpen(true);
     }
   };
 
-  // NewsPage에서 내려받는 isFontSizeSelectorOpen, onFontSizeSelectorToggle 대신 내부 상태 사용
   const handleFontSizeToggle = () => {
     setFontSizeOpen(prev => !prev);
   }
@@ -677,7 +672,7 @@ export default function NewsPage() {
 
         <div className="container mx-auto max-w-screen-2xl p-4 lg:p-8 mt-0">
           <div className="flex justify-center">
-            <main className="w-full lg:w-3/4 bg-white p-6 sm:p-8 rounded-2xl shadow-lg">
+            <main className="w-full lg:w-3/4 bg-white p-6 sm:p-8 rounded-2xl shadow-lg mb-14">
               <NewsHeader newsData={newsData} />
               <NewsActions
                   newsData={newsData}
@@ -705,7 +700,6 @@ export default function NewsPage() {
 
               <RecentNews />
 
-              {/* <CommentSection newsId={articleId} /> 이 부분이 삭제되었습니다. */}
             </main>
           </div>
         </div>
@@ -762,7 +756,6 @@ export default function NewsPage() {
                               setShareModalOpen(false);
                             })
                             .catch(() => {
-                                // Fallback for older browsers
                                 const textarea = document.createElement("textarea");
                                 textarea.value = currentUrl;
                                 document.body.appendChild(textarea);
