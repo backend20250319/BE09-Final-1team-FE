@@ -83,12 +83,16 @@ jobs:
           }' > Dockerrun.aws.json
 
       # 6. Elastic Beanstalk에 배포
-      - name: Deploy to Elastic Beanstalk
-        uses: einaregilsson/beanstalk-deploy@v21
+      - name: Zip Dockerrun
+        run: zip -r deploy.zip Dockerrun.aws.json
+
+      - name: Deploy to EB (official)
+        uses: aws-actions/elastic-beanstalk-deploy@v1
         with:
-          application_name: ${{ env.EB_APPLICATION_NAME }}
-          environment_name: ${{ env.EB_ENVIRONMENT_NAME }}
-          version_label: ${{ github.sha }}
+          application-name: ${{ env.EB_APPLICATION_NAME }}
+          environment-name: ${{ env.EB_ENVIRONMENT_NAME }}
+          version-label: ${{ github.sha }}
           region: ${{ env.AWS_REGION }}
-          # 바로 위에서 생성한 Dockerrun.aws.json 파일을 배포 패키지로 사용
-          deployment_package: Dockerrun.aws.json
+          # EB가 쓰는 S3 배포 버킷(콘솔에서 확인 가능, 예: elasticbeanstalk-ap-northeast-2-<account-id>)
+          deployment-bucket: elasticbeanstalk-ap-northeast-2-883467884806
+          zip-file: deploy.zip
