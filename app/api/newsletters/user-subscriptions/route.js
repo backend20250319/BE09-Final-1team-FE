@@ -16,6 +16,7 @@ export async function GET(request) {
         { status: 401 }
       );
     }
+    const authHeader = `Bearer ${accessToken}`
 
     // 백엔드 API 호출
     const response = await fetch(`${process.env.BACKEND_URL || 'http://localhost:8000'}/api/newsletter/subscription/my`, {
