@@ -1,5 +1,6 @@
-import NewsletterContentService from '@/lib/services/NewsletterContentService'
-import { emailRenderer } from '@/lib/renderers/EmailRenderer'
+import { cookies } from 'next/headers';
+import NewsletterContentService from '@/lib/services/NewsletterContentService';
+import { emailRenderer } from '@/lib/renderers/EmailRenderer';
 
 /**
  * 뉴스레터 이메일 HTML 생성 API (BFF)
@@ -12,7 +13,11 @@ import { emailRenderer } from '@/lib/renderers/EmailRenderer'
  */
 export async function POST(request) {
   try {
-    const body = await request.json()
+    // 쿠키에서 액세스 토큰 가져오기
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get('access-token')?.value;
+    
+    const body = await request.json();
     
     const {
       newsletterId = Date.now(),
@@ -26,7 +31,7 @@ export async function POST(request) {
       includeUnsubscribe = true,
       theme = 'default',
       format = 'html' // 'html' 또는 'text'
-    } = body
+    } = body;
 
     // 입력 검증
     if (personalized && !userId) {
@@ -37,11 +42,11 @@ export async function POST(request) {
           details: 'personalized=true일 때 userId는 필수입니다.'
         },
         { status: 400 }
-      )
+      );
     }
 
-    // 뉴스레터 콘텐츠 생성
-    let content
+    // 뉴스레터 콘텐츠 생성 (토큰 전달)
+    let content;
 
     if (personalized && userId) {
       content = await NewsletterContentService.buildPersonalizedContent(
@@ -52,8 +57,9 @@ export async function POST(request) {
           limit,
           includeTrending,
           includeLatest
-        }
-      )
+        },
+        accessToken // 인증 토큰 전달
+      );
     } else {
       content = await NewsletterContentService.buildContent(
         newsletterId,
@@ -62,24 +68,25 @@ export async function POST(request) {
           userId,
           category,
           limit
-        }
-      )
+        },
+        accessToken // 인증 토큰 전달
+      );
     }
 
     // 이메일 렌더링
-    let emailContent
-    let contentType
+    let emailContent;
+    let contentType;
 
     if (format === 'text') {
-      emailContent = emailRenderer.renderTextVersion(content)
-      contentType = 'text/plain; charset=utf-8'
+      emailContent = emailRenderer.renderTextVersion(content);
+      contentType = 'text/plain; charset=utf-8';
     } else {
       emailContent = emailRenderer.renderNewsletter(content, {
         includeTracking,
         includeUnsubscribe,
         theme
-      })
-      contentType = 'text/html; charset=utf-8'
+      });
+      contentType = 'text/html; charset=utf-8';
     }
 
     // HTML 또는 텍스트 형태로 반환 (BFF 헤더 추가)
@@ -90,10 +97,10 @@ export async function POST(request) {
         'Cache-Control': 'no-cache',
         'X-Source': 'BFF'
       }
-    })
+    });
 
   } catch (error) {
-    console.error('❌ 뉴스레터 이메일 생성 실패:', error)
+    console.error('❌ 뉴스레터 이메일 생성 실패:', error);
     
     return Response.json(
       { 
@@ -102,7 +109,7 @@ export async function POST(request) {
         details: error.message 
       },
       { status: 500 }
-    )
+    );
   }
 }
 
@@ -112,18 +119,21 @@ export async function POST(request) {
  */
 export async function GET(request) {
   try {
-    const { searchParams } = new URL(request.url)
+    // 쿠키에서 액세스 토큰 가져오기
+    const accessToken = cookies().get('access-token')?.value;
+    
+    const { searchParams } = new URL(request.url);
     
     // 쿼리 파라미터 파싱
-    const newsletterId = searchParams.get('id') || Date.now()
-    const category = searchParams.get('category')
-    const personalized = searchParams.get('personalized') === 'true'
-    const userId = searchParams.get('userId')
-    const limit = parseInt(searchParams.get('limit')) || 5
-    const includeTracking = searchParams.get('tracking') !== 'false'
-    const includeUnsubscribe = searchParams.get('unsubscribe') !== 'false'
-    const theme = searchParams.get('theme') || 'default'
-    const format = searchParams.get('format') || 'html'
+    const newsletterId = searchParams.get('id') || Date.now();
+    const category = searchParams.get('category');
+    const personalized = searchParams.get('personalized') === 'true';
+    const userId = searchParams.get('userId');
+    const limit = parseInt(searchParams.get('limit')) || 5;
+    const includeTracking = searchParams.get('tracking') !== 'false';
+    const includeUnsubscribe = searchParams.get('unsubscribe') !== 'false';
+    const theme = searchParams.get('theme') || 'default';
+    const format = searchParams.get('format') || 'html';
 
     // 입력 검증
     if (personalized && !userId) {
@@ -134,11 +144,11 @@ export async function GET(request) {
           details: 'personalized=true일 때 userId는 필수입니다.'
         },
         { status: 400 }
-      )
+      );
     }
 
-    // 뉴스레터 콘텐츠 생성
-    let content
+    // 뉴스레터 콘텐츠 생성 (토큰 전달)
+    let content;
 
     if (personalized && userId) {
       content = await NewsletterContentService.buildPersonalizedContent(
@@ -149,8 +159,9 @@ export async function GET(request) {
           limit,
           includeTrending: true,
           includeLatest: true
-        }
-      )
+        },
+        accessToken // 인증 토큰 전달
+      );
     } else {
       content = await NewsletterContentService.buildContent(
         newsletterId,
@@ -159,24 +170,25 @@ export async function GET(request) {
           userId,
           category,
           limit
-        }
-      )
+        },
+        accessToken // 인증 토큰 전달
+      );
     }
 
     // 이메일 렌더링
-    let emailContent
-    let contentType
+    let emailContent;
+    let contentType;
 
     if (format === 'text') {
-      emailContent = emailRenderer.renderTextVersion(content)
-      contentType = 'text/plain; charset=utf-8'
+      emailContent = emailRenderer.renderTextVersion(content);
+      contentType = 'text/plain; charset=utf-8';
     } else {
       emailContent = emailRenderer.renderNewsletter(content, {
         includeTracking,
         includeUnsubscribe,
         theme
-      })
-      contentType = 'text/html; charset=utf-8'
+      });
+      contentType = 'text/html; charset=utf-8';
     }
 
     // HTML 또는 텍스트 형태로 반환
@@ -186,10 +198,10 @@ export async function GET(request) {
         'Content-Type': contentType,
         'Cache-Control': 'no-cache'
       }
-    })
+    });
 
   } catch (error) {
-    console.error('❌ 뉴스레터 이메일 미리보기 실패:', error)
+    console.error('❌ 뉴스레터 이메일 미리보기 실패:', error);
     
     return Response.json(
       { 
@@ -197,6 +209,6 @@ export async function GET(request) {
         details: error.message 
       },
       { status: 500 }
-    )
+    );
   }
 }

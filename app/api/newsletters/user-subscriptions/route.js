@@ -1,14 +1,20 @@
 import { cookies } from 'next/headers';
+
 // 사용자 구독 목록 조회 API
 export async function GET(request) {
   try {
-    const accessToken = cookies().get("access-token")?.value;
-
+    // 쿠키에서 액세스 토큰 가져오기
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get('access-token')?.value;
+    
+    console.log('📋 사용자 구독 목록 조회 요청:', { hasAuth: !!accessToken });
+    
     if (!accessToken) {
+      console.log('❌ 인증 토큰 누락');
       return Response.json(
         { success: false, error: '인증이 필요합니다.' },
         { status: 401 }
-      )
+      );
     }
     const authHeader = `Bearer ${accessToken}`
 
@@ -16,16 +22,23 @@ export async function GET(request) {
     const response = await fetch(`${process.env.BACKEND_URL || 'http://localhost:8000'}/api/newsletter/subscription/my`, {
       method: 'GET',
       headers: {
-        'Authorization': authHeader,
+        'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       }
-    })
+    });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
+      const errorText = await response.text();
+      console.error('❌ 백엔드 구독 목록 API 실패:', { 
+        status: response.status, 
+        statusText: response.statusText,
+        errorText 
+      });
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data = await response.json()
+    const data = await response.json();
+    console.log('📡 백엔드 응답:', data);
     
     // 백엔드 응답을 프론트엔드 형식으로 변환
     const userSubscriptions = data.data?.map(subscription => ({
@@ -44,11 +57,21 @@ export async function GET(request) {
       // 기존 호환성을 위한 필드들
       title: `${subscription.preferredCategories?.join(', ') || '뉴스레터'} 구독`,
       category: subscription.preferredCategories?.[0] || '일반'
-    })) || []
+    })) || [];
 
-    return Response.json(userSubscriptions)
+    console.log('✅ 구독 목록 조회 성공:', { count: userSubscriptions.length });
+
+    return Response.json({
+      success: true,
+      data: userSubscriptions,
+      metadata: {
+        total: userSubscriptions.length,
+        timestamp: new Date().toISOString()
+      }
+    });
+
   } catch (error) {
-    console.error('사용자 구독 목록 조회 실패:', error)
+    console.error('❌ 사용자 구독 목록 조회 실패:', error);
     return Response.json(
       { 
         success: false,
@@ -56,6 +79,6 @@ export async function GET(request) {
         details: error.message 
       },
       { status: 500 }
-    )
+    );
   }
 }

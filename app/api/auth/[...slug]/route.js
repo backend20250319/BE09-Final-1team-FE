@@ -23,7 +23,7 @@ async function handler(request, { params }) {
 
   const headers = {
     "Content-Type": "application/json",
-  };
+  };ㅋ
   if (accessToken) {
     headers["Authorization"] = `Bearer ${accessToken}`;
   }
@@ -42,9 +42,27 @@ async function handler(request, { params }) {
       duplex: "half",
     });
 
+    // 백엔드 서버가 503을 반환하는 경우 처리
+    if (backendResponse.status === 503) {
+      console.error(`백엔드 서버 에러 (${backendServicePath}/${path}): 503 Service Unavailable`);
+      return NextResponse.json(
+        { error: "백엔드 서버가 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해주세요." },
+        { status: 503 }
+      );
+    }
+
     return backendResponse;
   } catch (error) {
     console.error(`API Proxy Error (${backendServicePath}/${path}):`, error);
+    
+    // 네트워크 에러인 경우
+    if (error.code === 'ECONNREFUSED' || error.message.includes('fetch')) {
+      return NextResponse.json(
+        { error: "백엔드 서버에 연결할 수 없습니다. 서버 상태를 확인해주세요." },
+        { status: 503 }
+      );
+    }
+    
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
