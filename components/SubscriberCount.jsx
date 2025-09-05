@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { authenticatedFetch } from '@/lib/auth';
 
 export default function SubscriberCount({ 
   darkTheme = false, 
@@ -24,7 +25,8 @@ export default function SubscriberCount({
           url = "/api/newsletter/stats/subscribers";
         }
 
-        const res = await fetch(url, {
+        // authenticatedFetch를 사용하여 쿠키 인증 자동 처리
+        const res = await authenticatedFetch(url, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -66,7 +68,11 @@ export default function SubscriberCount({
   }, [category, showCategoryStats]);
 
   if (loading || count === null) {
-    return <span className={`text-xs ${darkTheme ? 'text-gray-400' : 'text-gray-500'}`}>구독자 수 로딩 중...</span>;
+    return (
+      <span className={`text-xs ${darkTheme ? 'text-gray-400' : 'text-gray-500'}`}>
+        구독자 수 로딩 중...
+      </span>
+    );
   }
 
   // 카테고리별 통계 표시
@@ -106,4 +112,4 @@ export default function SubscriberCount({
       {count.toLocaleString()}명이 구독중
     </span>
   );
-} 
+}
