@@ -1,33 +1,29 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
+import { authenticatedFetch } from "@/lib/auth";
 
 const CommentSection = ({ newsId }) => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userInfo, setUserInfo] = useState({ name: '방문자', avatar: 'https://placehold.co/40x40/E2E8F0/4A5568?text=?' });
+  const [userInfo, setUserInfo] = useState({
+    name: "방문자",
+    avatar: "https://placehold.co/40x40/E2E8F0/4A5568?text=?",
+  });
 
   useEffect(() => {
-    // 컴포넌트가 로드될 때, 로컬 스토리지에서 토큰과 사용자 정보를 확인
-    const token = localStorage.getItem('accessToken');
-    const storedUserInfo = localStorage.getItem('userInfo');
-
-    if (token && storedUserInfo) {
-      setIsLoggedIn(true);
-      const parsedInfo = JSON.parse(storedUserInfo);
-      setUserInfo({
-        name: parsedInfo.name || '사용자',
-        avatar: `https://placehold.co/40x40/C7D2FE/4338CA?text=${parsedInfo.name?.[0] || 'U'}`
-      });
-    } else {
-      setIsLoggedIn(false);
-    }
+    // 기본적으로 로그인하지 않은 상태로 설정
+    // 실제 댓글 작성 시점에 인증 체크를 하도록 변경
+    setIsLoggedIn(false);
+    setUserInfo({
+      name: "방문자",
+      avatar: "https://placehold.co/40x40/E2E8F0/4A5568?text=?",
+    });
 
     // TODO: 다음 단계에서 실제 댓글 목록을 불러오는 API 호출 로직이 여기에 추가해야됨.
-
   }, [newsId]);
 
   const handleCommentSubmit = () => {
@@ -56,8 +52,7 @@ const CommentSection = ({ newsId }) => {
   return (
     <section className="mt-12 pt-8 border-t">
       <h2 className="text-2xl font-bold mb-6">
-        댓글{" "}
-        <span className="text-indigo-600">{comments.length}</span>
+        댓글 <span className="text-indigo-600">{comments.length}</span>
       </h2>
       <div className="space-y-6">
         {/*로그인 상태에 따라 다른 UI 설정*/}
@@ -92,7 +87,9 @@ const CommentSection = ({ newsId }) => {
           </div>
         ) : (
           <div className="text-center p-6 border-2 border-dashed rounded-lg bg-gray-50">
-            <p className="text-gray-600 mb-4">댓글을 작성하려면 로그인이 필요합니다.</p>
+            <p className="text-gray-600 mb-4">
+              댓글을 작성하려면 로그인이 필요합니다.
+            </p>
             <Link href="/auth">
               <span className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors cursor-pointer">
                 로그인 페이지로 이동
