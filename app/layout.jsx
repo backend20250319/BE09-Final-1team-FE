@@ -1,17 +1,17 @@
-import { Inter } from "next/font/google"
-import "./globals.css"
-import { Toaster } from "sonner"
-import { Providers } from "@/components/providers"
-import { Suspense } from "react"
-import ErrorBoundary from "@/components/ErrorBoundary"
-import Footer from "@/components/Footer"
-import Header from "@/components/Header"
+import { Inter } from 'next/font/google';
+import './globals.css';
+import { Toaster } from 'sonner';
+import { Providers } from '@/components/providers';
+import { Suspense } from 'react';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import Footer from '@/components/footer';
+import Header from '@/components/header';
 
-const inter = Inter({ 
-  subsets: ["latin"],
+const inter = Inter({
+  subsets: ['latin'],
   display: 'swap',
-  preload: true
-})
+  preload: true,
+});
 
 export default function RootLayout({ children }) {
   return (
@@ -23,14 +23,16 @@ export default function RootLayout({ children }) {
         <ErrorBoundary>
           <Header />
           <Providers>
-            <Suspense fallback={
-              <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                  <p className="text-gray-600"></p>
+            <Suspense
+              fallback={
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600"></p>
+                  </div>
                 </div>
-              </div>
-            }>
+              }
+            >
               {children}
             </Suspense>
             <Footer />
@@ -39,5 +41,5 @@ export default function RootLayout({ children }) {
         </ErrorBoundary>
       </body>
     </html>
-  )
+  );
 }

@@ -39,13 +39,13 @@ const AddToCollectionModal = ({ isOpen, onClose, newsIds, onSuccess }) => {
         try {
           const response = await authenticatedFetch("/api/news/collections");
           if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
+            const errorText = await response.text();
             throw new Error(
-              errorData.message || "컬렉션 목록을 불러오는데 실패했습니다."
+              errorText || "컬렉션 목록을 불러오는데 실패했습니다."
             );
           }
           const data = await response.json();
-          setCollections(data || []);
+          setCollections(data || []); // .data 제거
         } catch (err) {
           if (err.message.includes("로그인") || err.message.includes("인증")) {
             setError("로그인이 필요합니다.");
@@ -119,10 +119,8 @@ const AddToCollectionModal = ({ isOpen, onClose, newsIds, onSuccess }) => {
         if (onSuccess) onSuccess();
         onClose();
       } else if (!isSingleItemAdd && duplicateCount === itemCount) {
-        // 여러 개를 추가했는데 모든 기사가 중복일 경우에만 닫기
         onClose();
       }
-      // 단일 추가이고 중복일 경우에는 모달을 닫지 않음
     } catch (err) {
       toast.error("요청 처리 중 오류가 발생했습니다.");
       console.error(err);
@@ -146,10 +144,10 @@ const AddToCollectionModal = ({ isOpen, onClose, newsIds, onSuccess }) => {
         body: JSON.stringify({ storageName: newCollectionName }),
       });
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "컬렉션 생성에 실패했습니다.");
+        const errorText = await response.text();
+        throw new Error(errorText || "컬렉션 생성에 실패했습니다.");
       }
-      const newCollection = await response.json();
+      const newCollection = await response.json(); // .data 제거
       toast.success(`'${newCollectionName}' 컬렉션이 생성되었습니다.`);
       setCollections((prev) => [newCollection, ...prev]);
       setNewCollectionName("");
@@ -182,7 +180,7 @@ const AddToCollectionModal = ({ isOpen, onClose, newsIds, onSuccess }) => {
         <div className="relative my-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
           <Input
-            placeholder="컬렉션 검색..."
+            placeholder="컬렉션 검색"
             value={collectionSearchQuery}
             onChange={(e) => setCollectionSearchQuery(e.target.value)}
             className="pl-10"

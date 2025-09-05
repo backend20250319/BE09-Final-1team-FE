@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +31,7 @@ const categories = [
   "예술",
 ];
 
-// 스크랩 목록을 불러오는 API 함수 (uncollectedOnly 파라미터 추가)
+// 스크랩 목록을 불러오는 API 함수
 const fetchScrapsAPI = async (
   page = 0,
   size = 10,
@@ -51,10 +51,11 @@ const fetchScrapsAPI = async (
     `/api/news/mypage/scraps?${params.toString()}`
   );
 
-  if (!response) {
-    throw new Error("스크랩 목록을 불러오는데 실패했습니다.");
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || "스크랩 목록을 불러오는데 실패했습니다.");
   }
-  return response;
+  return response.json();
 };
 
 const AddScrapsToCollectionModal = ({
@@ -77,6 +78,27 @@ const AddScrapsToCollectionModal = ({
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data = await fetchScrapsAPI(
+        currentPage,
+        10,
+        selectedCategory,
+        searchQuery,
+        true
+      );
+      setScraps(data?.content || []);
+      setTotalPages(data?.totalPages || 0);
+    } catch (error) {
+      console.error("Error loading scraps:", error);
+      toast.error(error.message || "스크랩 목록을 불러오는데 실패했습니다.");
+      setScraps([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentPage, selectedCategory, searchQuery]);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setSearchQuery(inputQuery);
@@ -87,44 +109,8 @@ const AddScrapsToCollectionModal = ({
 
   useEffect(() => {
     if (isOpen) {
-      const loadData = async () => {
-        setIsLoading(true);
-        try {
-          // uncollectedOnly=true 파라미터를 사용하여 아직 컬렉션에 추가되지 않은 스크랩만 조회
-          const scrapsData = await fetchScrapsAPI(
-            currentPage,
-            10,
-            selectedCategory,
-            searchQuery,
-            true
-          );
-
-          if (scrapsData && scrapsData.success) {
-            setScraps(scrapsData.data?.content || []);
-            setTotalPages(scrapsData.data?.totalPages || 0);
-          } else if (
-            scrapsData &&
-            scrapsData.error === "Authentication failed"
-          ) {
-            toast.error("로그인이 필요합니다.");
-            setScraps([]);
-          } else {
-            throw new Error("스크랩 목록을 불러오는데 실패했습니다.");
-          }
-        } catch (error) {
-          console.error("Error loading scraps:", error);
-          toast.error(
-            error.message || "스크랩 목록을 불러오는데 실패했습니다."
-          );
-          setScraps([]);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
       loadData();
     } else {
-      // 모달이 닫힐 때 상태 초기화
       setScraps([]);
       setSelectedScraps(new Set());
       setInputQuery("");
@@ -134,7 +120,7 @@ const AddScrapsToCollectionModal = ({
       setTotalPages(0);
       setIsLoading(true);
     }
-  }, [isOpen, collectionId, selectedCategory, searchQuery, currentPage]);
+  }, [isOpen, collectionId, loadData]);
 
   const handleCategoryChange = (category) => {
     setSelectedCategory(category);
@@ -158,54 +144,28 @@ const AddScrapsToCollectionModal = ({
   const handleAddSelectedScraps = async () => {
     setIsAdding(true);
     try {
-      const results = await Promise.all(
-        Array.from(selectedScraps).map(async (newsId) => {
-          const response = await authenticatedFetch(
-            `/api/news/collections/${collectionId}/news`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ newsId }),
-            }
-          );
-          return response;
-        })
+      const responses = await Promise.all(
+        Array.from(selectedScraps).map((newsId) =>
+          authenticatedFetch(`/api/news/collections/${collectionId}/news`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ newsId }),
+          })
+        )
       );
 
-      // 모든 요청이 성공적인지 확인
-      const allSuccessful = results.every((result) => result && result.success);
+      const successfulCount = responses.filter((res) => res.ok).length;
+      const failedCount = responses.length - successfulCount;
 
-      if (allSuccessful) {
+      if (failedCount > 0) {
+        toast.error(`${failedCount}개 기사 추가에 실패했습니다.`);
+      }
+      if (successfulCount > 0) {
         toast.success(
-          `${selectedScraps.size}개의 기사를 컬렉션에 추가했습니다.`
+          `${successfulCount}개의 기사를 컬렉션에 추가했습니다.`
         );
         onSuccess();
         onClose();
-      } else {
-        // 일부 실패한 경우 처리
-        const failedCount = results.filter(
-          (result) => !result || !result.success
-        ).length;
-        if (failedCount === results.length) {
-          // 모두 실패한 경우
-          const authFailed = results.some(
-            (result) => result && result.error === "Authentication failed"
-          );
-          if (authFailed) {
-            toast.error("로그인이 필요합니다.");
-          } else {
-            toast.error("컬렉션에 기사 추가를 실패했습니다.");
-          }
-        } else {
-          // 일부만 실패한 경우
-          toast.warning(
-            `${
-              selectedScraps.size - failedCount
-            }개의 기사를 컬렉션에 추가했습니다. ${failedCount}개는 실패했습니다.`
-          );
-          onSuccess();
-          onClose();
-        }
       }
     } catch (err) {
       console.error("Error adding scraps to collection:", err);

@@ -131,7 +131,6 @@ const NewsCard = ({ news, onRemove, onShare, onAddToCollection }) => {
   const rawCategory = news.categoryName;
   const category =
     backendToFrontendCategory[rawCategory] || rawCategory || "기타";
-  const displayDate = news.published_at;
   const imageSrc = news.imageUrl || "/placeholder.svg";
 
   return (
@@ -153,10 +152,6 @@ const NewsCard = ({ news, onRemove, onShare, onAddToCollection }) => {
               <span>{press}</span>
               <Badge variant="secondary">{category}</Badge>
             </div>
-            {/*<div className="text-xs text-gray-500 flex items-center flex-shrink-0">*/}
-            {/*    <CalendarDays className="h-4 w-4 mr-1" />*/}
-            {/*    <span>{formattedDate}</span>*/}
-            {/*</div>*/}
           </div>
           <Link
             href={`/news/${news.newsId}`}
@@ -240,6 +235,7 @@ const CollectionDetailPage = () => {
   const [pageInfo, setPageInfo] = useState(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isNewsLoading, setIsNewsLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -248,80 +244,76 @@ const CollectionDetailPage = () => {
   const [isShareModalOpen, setShareModalOpen] = useState(false);
   const [selectedNewsForShare, setSelectedNewsForShare] = useState(null);
 
-  // 이름 변경 상태
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState("");
 
-  // 스크랩 추가 모달 상태
   const [isAddScrapsModalOpen, setAddScrapsModalOpen] = useState(false);
-  // 단일 뉴스 추가 모달 상태
   const [isAddToCollectionModalOpen, setAddToCollectionModalOpen] =
     useState(false);
   const [modalNewsIds, setModalNewsIds] = useState([]);
 
-  const fetchData = useCallback(
-    async (page, category, query) => {
-      setIsLoading(true);
-      try {
-        // 컬렉션 정보는 한 번만 불러오도록 최적화
-        if (!collectionInfo) {
-          const infoResponse = await authenticatedFetch(
-            `/api/news/collections/${collectionId}`
-          );
-          if (infoResponse && infoResponse.success) {
-            setCollectionInfo(infoResponse.data);
-            setEditedName(infoResponse.data.storageName);
-          } else if (
-            infoResponse &&
-            infoResponse.error === "Authentication failed"
-          ) {
-            setError("로그인이 필요합니다. 로그인 페이지로 이동합니다.");
-            setTimeout(() => router.push("/auth"), 2000);
-            return;
-          } else {
-            throw new Error("컬렉션 정보를 불러오는데 실패했습니다.");
-          }
-        }
+  // 컬렉션 기본 정보 및 뉴스 목록 조회
+  const fetchData = useCallback(async () => {
+    if (!collectionId) return;
+    
+    setIsLoading(true);
+    setIsNewsLoading(true);
 
-        const urlParams = new URLSearchParams({
-          page: String(page),
-          size: "12",
-        });
-        if (query) urlParams.append("query", query);
-        if (category && category !== "전체")
-          urlParams.append("category", category);
+    try {
+      // 컬렉션 정보 조회
+      const infoPromise = authenticatedFetch(
+        `/api/news/collections/${collectionId}`
+      );
 
-        const newsResponse = await authenticatedFetch(
-          `/api/news/collections/${collectionId}/news?${urlParams.toString()}`
-        );
-        if (newsResponse && newsResponse.success) {
-          setNewsList(newsResponse.data.content || []);
-          setPageInfo(newsResponse.data);
-        } else if (
-          newsResponse &&
-          newsResponse.error === "Authentication failed"
-        ) {
-          setError("로그인이 필요합니다. 로그인 페이지로 이동합니다.");
-          setTimeout(() => router.push("/auth"), 2000);
-          return;
-        } else {
-          throw new Error("컬렉션의 기사 목록을 불러오는데 실패했습니다.");
-        }
-      } catch (err) {
-        setError(err.message);
-        toast.error(err.message);
-      } finally {
-        setIsLoading(false);
+      // 뉴스 목록 조회
+      const urlParams = new URLSearchParams({
+        page: String(currentPage),
+        size: "12",
+      });
+      if (searchQuery) urlParams.append("query", searchQuery);
+      if (selectedCategory && selectedCategory !== "전체")
+        urlParams.append("category", selectedCategory);
+      const newsPromise = authenticatedFetch(
+        `/api/news/collections/${collectionId}/news?${urlParams.toString()}`
+      );
+
+      const [infoResponse, newsResponse] = await Promise.all([infoPromise, newsPromise]);
+
+      // 정보 응답 처리
+      if (!infoResponse.ok) {
+        const errorText = await infoResponse.text();
+        throw new Error(errorText || "컬렉션 정보를 불러오는데 실패했습니다.");
       }
-    },
-    [collectionId, router]
-  );
+      const infoData = await infoResponse.json();
+      setCollectionInfo(infoData);
+      setEditedName(infoData.storageName);
+
+      // 뉴스 응답 처리
+      if (!newsResponse.ok) {
+        const errorText = await newsResponse.text();
+        throw new Error(errorText || "컬렉션의 기사 목록을 불러오는데 실패했습니다.");
+      }
+      const newsData = await newsResponse.json();
+      setNewsList(newsData.content || []);
+      setPageInfo(newsData);
+
+    } catch (err) {
+      setError(err.message);
+      if (err.message.includes("인증")) {
+        toast.error("로그인이 필요합니다. 로그인 페이지로 이동합니다.");
+        setTimeout(() => router.push("/auth"), 2000);
+      } else {
+        toast.error(err.message);
+      }
+    } finally {
+      setIsLoading(false);
+      setIsNewsLoading(false);
+    }
+  }, [collectionId, currentPage, selectedCategory, searchQuery, router]);
 
   useEffect(() => {
-    if (collectionId) {
-      fetchData(currentPage, selectedCategory, searchQuery);
-    }
-  }, [collectionId, currentPage, selectedCategory, searchQuery, fetchData]);
+    fetchData();
+  }, [fetchData]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -342,18 +334,18 @@ const CollectionDetailPage = () => {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ storageName: editedName }),
+          body: JSON.stringify({ newName: editedName }),
         }
       );
 
-      if (response && response.success) {
-        setCollectionInfo(response.data);
+      if (response.ok) {
+        const updatedCollection = await response.json();
+        setCollectionInfo(updatedCollection);
         toast.success("컬렉션 이름이 변경되었습니다.");
         setIsEditing(false);
-      } else if (response && response.error === "Authentication failed") {
-        toast.error("로그인이 필요합니다.");
       } else {
-        throw new Error(response?.error || "이름 변경에 실패했습니다.");
+        const errorText = await response.text();
+        throw new Error(errorText || "이름 변경에 실패했습니다.");
       }
     } catch (err) {
       toast.error(err.message);
@@ -369,14 +361,12 @@ const CollectionDetailPage = () => {
         }
       );
 
-      if (response && response.success) {
+      if (response.ok) {
         toast.success("컬렉션에서 기사를 삭제했습니다.");
-        // 현재 페이지 데이터 다시 로드
-        fetchData(currentPage, selectedCategory, searchQuery);
-      } else if (response && response.error === "Authentication failed") {
-        toast.error("로그인이 필요합니다.");
+        fetchData(); // 데이터 다시 불러오기
       } else {
-        throw new Error(response?.error || "기사 삭제에 실패했습니다.");
+        const errorText = await response.text();
+        throw new Error(errorText || "기사 삭제에 실패했습니다.");
       }
     } catch (err) {
       toast.error(err.message);
@@ -407,13 +397,12 @@ const CollectionDetailPage = () => {
     setModalNewsIds([]);
   };
 
-  // 기사 추가 성공 시 데이터 새로고침 (첫 페이지로 이동)
   const handleAddSuccess = () => {
-    fetchData(0, "전체", "");
     setCurrentPage(0);
     setSelectedCategory("전체");
     setSearchQuery("");
     setInputQuery("");
+    fetchData(); // 데이터 다시 불러오기
   };
 
   return (
@@ -450,7 +439,7 @@ const CollectionDetailPage = () => {
             </Link>
           </div>
 
-          {isLoading && !collectionInfo && (
+          {isLoading && (
             <div className="text-center py-20 text-lg font-semibold"></div>
           )}
           {error && (
@@ -562,7 +551,7 @@ const CollectionDetailPage = () => {
               </div>
 
               <main>
-                {isLoading && newsList.length === 0 ? (
+                {isNewsLoading ? (
                   <NewsCardSkeleton />
                 ) : newsList.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
