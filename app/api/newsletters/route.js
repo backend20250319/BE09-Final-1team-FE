@@ -4,7 +4,7 @@ import { mapBackendNewsletter, processBackendResponse } from '@/lib/utils';
 export async function GET() {
   try {
     // 백엔드 API URL (환경변수에서 가져오기)
-    const backendUrl = process.env.BACKEND_API_URL || 'http://localhost:8080';
+    const backendUrl = process.env.BACKEND_API_URL || 'http://localhost:8000';
     
     // 실제 백엔드 API 호출
     const response = await fetch(`${backendUrl}/api/newsletters`, {
