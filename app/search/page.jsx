@@ -446,7 +446,6 @@ function SearchPageContent() {
                 </CardContent>
               </Card>
             ))}
-            \
           </TabsContent>
         </Tabs>
       </div>
