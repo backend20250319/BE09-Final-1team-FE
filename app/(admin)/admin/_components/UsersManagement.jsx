@@ -58,7 +58,7 @@ export default function UsersManagement() {
   /** 백엔드 엔드포인트 - Next.js API routes를 통한 프록시 사용 */
   const listUrl = `/api/users/admin`; // 쿠키 기반 인증으로 프록시
   const meUrl = `/api/users/mypage`; // 기존과 동일
-  const deleteUrl = (id) => `/api/users/admin/${id}`; // 쿠키 기반 인증으로 프록시
+  const deleteUrl = (id) => `/api/users/internal/admin/${id}`; // 쿠키 기반 인증으로 프록시
 
   /** 내 정보 조회(목록에서 자기 자신 제외를 위해 필요) */
   const fetchMe = useCallback(async () => {
@@ -335,17 +335,88 @@ export default function UsersManagement() {
             </TableBody>
           </Table>
 
-          {/* (선택) 간단 페이지네이션 컨트롤: 필요 시 주석 해제
-          <div className="flex items-center justify-end gap-2 mt-4">
-            <span className="text-sm text-muted-foreground">Page {page + 1}</span>
-            <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(p - 1, 0))} disabled={isFirst}>
-              이전
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setPage((p) => p + 1)} disabled={isLast}>
-              다음
-            </Button>
+          {/* 수정된 페이지네이션 컨트롤 - 주석 해제하고 개선 */}
+          <div className="flex items-center justify-between mt-6">
+            {/* 왼쪽: 현재 페이지 정보 */}
+            <div className="text-sm text-muted-foreground">
+              페이지 {page + 1} / {Math.ceil(total / size)}
+              <span className="ml-2">
+                (총 {total}명 중 {page * size + 1}-
+                {Math.min((page + 1) * size, total)}번째)
+              </span>
+            </div>
+
+            {/* 오른쪽: 페이지네이션 버튼들 */}
+            <div className="flex items-center gap-2">
+              {/* 맨 처음으로 */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(0)}
+                disabled={isFirst || isLoading}
+              >
+                ««
+              </Button>
+
+              {/* 이전 페이지 */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
+                disabled={isFirst || isLoading}
+              >
+                이전
+              </Button>
+
+              {/* 현재 페이지 번호 표시 (클릭 가능한 페이지들) */}
+              {(() => {
+                const totalPages = Math.ceil(total / size);
+                const currentPage = page;
+                const pageButtons = [];
+
+                // 현재 페이지 주변 2개씩 보여주기
+                const startPage = Math.max(0, currentPage - 2);
+                const endPage = Math.min(totalPages - 1, currentPage + 2);
+
+                for (let i = startPage; i <= endPage; i++) {
+                  pageButtons.push(
+                    <Button
+                      key={i}
+                      variant={i === currentPage ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setPage(i)}
+                      disabled={isLoading}
+                      className="min-w-[2.5rem]"
+                    >
+                      {i + 1}
+                    </Button>
+                  );
+                }
+
+                return pageButtons;
+              })()}
+
+              {/* 다음 페이지 */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((prev) => prev + 1)}
+                disabled={isLast || isLoading}
+              >
+                다음
+              </Button>
+
+              {/* 맨 마지막으로 */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(Math.ceil(total / size) - 1)}
+                disabled={isLast || isLoading}
+              >
+                »»
+              </Button>
+            </div>
           </div>
-          */}
         </CardContent>
       </Card>
     </div>
