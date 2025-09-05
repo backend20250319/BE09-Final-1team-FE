@@ -496,14 +496,14 @@ export default function SignupForm({ mode = "signup", onSignupSuccess }) {
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {interests.map((interest) => {
-                    const isSelected = selectedInterests.includes(interest.id);
+                    const isSelected = selectedInterests.includes(interest.categoryCode);
                     const isDisabled =
                       !isSelected && selectedInterests.length >= 3;
                     return (
                       <div
-                        key={interest.id}
+                        key={interest.categoryCode}
                         onClick={() =>
-                          !isDisabled && toggleInterest(interest.id)
+                          !isDisabled && toggleInterest(interest.categoryCode)
                         }
                         className={`p-3 rounded-lg border text-center transition-all ${
                           isSelected
@@ -525,13 +525,13 @@ export default function SignupForm({ mode = "signup", onSignupSuccess }) {
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {interests.map((interest) => {
-                  const isSelected = selectedInterests.includes(interest.id);
+                  const isSelected = selectedInterests.includes(interest.categoryCode);
                   const isDisabled =
                     !isSelected && selectedInterests.length >= 3;
                   return (
                     <div
-                      key={interest.id}
-                      onClick={() => !isDisabled && toggleInterest(interest.id)}
+                      key={interest.categoryCode}
+                      onClick={() => !isDisabled && toggleInterest(interest.categoryCode)}
                       className={`p-3 rounded-lg border text-center transition-all ${
                         isSelected
                           ? "border-blue-500 bg-blue-50 ring-2 ring-blue-300"
