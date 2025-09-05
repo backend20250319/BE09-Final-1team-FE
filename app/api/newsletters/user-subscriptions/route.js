@@ -1,14 +1,16 @@
+import { cookies } from 'next/headers';
 // 사용자 구독 목록 조회 API
 export async function GET(request) {
   try {
-    const authHeader = request.headers.get('authorization')
-    
-    if (!authHeader) {
+    const accessToken = cookies().get("access-token")?.value;
+
+    if (!accessToken) {
       return Response.json(
         { success: false, error: '인증이 필요합니다.' },
         { status: 401 }
       )
     }
+    const authHeader = `Bearer ${accessToken}`
 
     // 백엔드 API 호출
     const response = await fetch(`${process.env.BACKEND_URL || 'http://localhost:8000'}/api/newsletter/subscription/my`, {
