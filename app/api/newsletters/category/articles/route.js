@@ -1,4 +1,5 @@
-// 카테고리별 기사 조회 API (쿼리 파라미터 방식)
+import { cookies } from 'next/headers';
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -14,7 +15,7 @@ export async function GET(request) {
       );
     }
 
-    // 프론트엔드 카테고리명을 백엔드 카테고리명으로 매핑
+    // 카테고리 매핑
     const categoryMapping = {
       정치: "POLITICS",
       경제: "ECONOMY",
@@ -28,30 +29,14 @@ export async function GET(request) {
     };
 
     const backendCategory = categoryMapping[category] || category;
-    console.log("🔄 카테고리 매핑:", {
-      frontend: category,
-      backend: backendCategory,
-    });
 
-    // 클라이언트에서 전달받은 인증 헤더 가져오기
-    const authHeader = request.headers.get("authorization");
-    console.log("🔑 Authorization 헤더 존재:", !!authHeader);
-
-    // 쿠키에서 토큰 가져오기
-    const cookies = request.headers.get("cookie");
-    let cookieToken = null;
-    if (cookies) {
-      const tokenMatch = cookies.match(/access-token=([^;]+)/);
-      if (tokenMatch) {
-        cookieToken = tokenMatch[1];
-        console.log("🍪 쿠키 토큰 존재:", !!cookieToken);
-      }
-    }
-
-    // Authorization 헤더나 쿠키에서 토큰을 찾지 못한 경우
-    if (!authHeader && !cookieToken) {
-      console.log("❌ 인증 토큰이 없음 (헤더와 쿠키 모두)");
-      // 인증이 없어도 기본 데이터 반환 (401 대신 200)
+    // 쿠키에서 토큰 가져오기 (Next.js 방식)
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get('access-token')?.value;
+    
+    if (!accessToken) {
+      console.log("❌ 인증 토큰이 없음");
+      // 기본 데이터 반환
       return Response.json({
         success: true,
         data: {
@@ -63,32 +48,22 @@ export async function GET(request) {
       });
     }
 
-    // 사용할 토큰 결정 (헤더 우선, 없으면 쿠키)
-    const token = authHeader ? authHeader.replace("Bearer ", "") : cookieToken;
-    const authHeaderValue = `Bearer ${token}`;
-
     const backendUrl = `${
       process.env.BACKEND_URL || "http://localhost:8000"
     }/api/news/category/${backendCategory}/articles?limit=${limit}`;
-    console.log("🌐 백엔드 API 호출:", backendUrl);
 
     // 백엔드 API 호출
     const response = await fetch(backendUrl, {
       method: "GET",
       headers: {
-        Authorization: authHeaderValue,
+        Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
     });
 
-    console.log("📡 백엔드 응답 상태:", response.status, response.statusText);
-
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("❌ 백엔드 에러 응답:", errorText);
-
-      // 백엔드에서 401이나 다른 오류가 발생해도 기본 데이터 반환
-      console.log("🔄 백엔드 오류로 인해 기본 데이터 반환");
+      console.error("❌ 백엔드 에러:", response.status);
+      // 기본 데이터 반환
       return Response.json({
         success: true,
         data: {
@@ -101,11 +76,10 @@ export async function GET(request) {
     }
 
     const data = await response.json();
-    console.log("✅ 백엔드 응답 성공:", data);
     return Response.json(data);
+
   } catch (error) {
     console.error("🚨 카테고리별 기사 조회 실패:", error);
-    // 에러 발생 시에도 기본 데이터 반환
     return Response.json({
       success: true,
       data: {
