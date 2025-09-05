@@ -1393,7 +1393,8 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                       id: 'newsletter-main',
                       title: '📰 NewSphere - 최신 뉴스를 한눈에!',
                       description: `🔥 ${newsletters.length}개의 뉴스레터 | 📊 ${newsletters.reduce((sum, n) => sum + n.subscribers, 0).toLocaleString()}명 구독 | 🎯 정치, 경제, 사회, IT/과학 등 다양한 카테고리의 최신 정보를 받아보세요!`,
-                      imageUrl: 'https://via.placeholder.com/800x400/667eea/ffffff?text=NewSphere+Newsletter'
+                      imageUrl: 'https://via.placeholder.com/800x400/667eea/ffffff?text=NewSphere+Newsletter',
+                      url: typeof window !== 'undefined' ? window.location.href : ''
                     }}
                     showStats={true}
                     showFloating={false}
