@@ -111,7 +111,7 @@ export default function ScrapsTab() {
   const [selectedNews, setSelectedNews] = useState(null);
   const [inputQuery, setInputQuery] = useState(searchQuery);
   const [selectedScraps, setSelectedScraps] = useState(new Set());
-  const [modalNewsIds, setModalNewsIds] = useState([]);
+  const [modalNewsItems, setModalNewsItems] = useState([]);
   const [scrapToDelete, setScrapToDelete] = useState(null); // 삭제할 스크랩 ID 상태
 
   useEffect(() => {
@@ -144,14 +144,14 @@ export default function ScrapsTab() {
     });
   };
 
-  const openCollectionModal = (newsIds) => {
-    setModalNewsIds(newsIds);
+  const openCollectionModal = (newsItems) => {
+    setModalNewsItems(newsItems);
     setAddToCollectionModalOpen(true);
   };
 
   const closeCollectionModal = () => {
     setAddToCollectionModalOpen(false);
-    setModalNewsIds([]);
+    setModalNewsItems([]);
     setSelectedScraps(new Set());
   };
 
@@ -210,7 +210,7 @@ export default function ScrapsTab() {
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => openCollectionModal([news.newsId])}
+                        onClick={() => openCollectionModal([{ newsId: news.newsId, title: news.title }])}
                         disabled={selectedScraps.size > 0}
                     >
                       <FolderPlus className="h-4 w-4 mr-1" />
@@ -280,11 +280,16 @@ export default function ScrapsTab() {
               </div>
               <div className="flex items-center space-x-2">
                 <Button
-                    onClick={() => openCollectionModal(Array.from(selectedScraps))}
+                    onClick={() => {
+                      const selectedItems = scraps
+                        .filter(scrap => selectedScraps.has(scrap.newsId))
+                        .map(scrap => ({ newsId: scrap.newsId, title: scrap.title }));
+                      openCollectionModal(selectedItems);
+                    }}
                     disabled={selectedScraps.size === 0}
                 >
                   <FolderPlus className="mr-2 h-4 w-4" />
-                  {selectedScraps.size > 0 ? `선택한 ${selectedScraps.size}개 기사 추가` : "컬렉션에 추가"}
+                  {selectedScraps.size > 0 ? `선택한 ${selectedScraps.size}개의 기사 컬렉션에 추가` : "컬렉션에 추가"}
                 </Button>
                 <div className="relative w-64">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
@@ -322,7 +327,7 @@ export default function ScrapsTab() {
             <AddToCollectionModal
                 isOpen={isAddToCollectionModalOpen}
                 onClose={closeCollectionModal}
-                newsIds={modalNewsIds}
+                newsItems={modalNewsItems}
                 onSuccess={closeCollectionModal}
             />
         )}

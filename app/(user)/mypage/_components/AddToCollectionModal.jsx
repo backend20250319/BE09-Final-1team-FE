@@ -14,7 +14,14 @@ import { toast } from "sonner";
 import { Loader2, Search, Plus } from "lucide-react";
 import { authenticatedFetch } from "@/lib/auth";
 
-const AddToCollectionModal = ({ isOpen, onClose, newsIds, onSuccess }) => {
+const truncateTitle = (title, maxLength = 20) => {
+  if (title.length > maxLength) {
+    return title.substring(0, maxLength) + "...";
+  }
+  return title;
+};
+
+const AddToCollectionModal = ({ isOpen, onClose, newsItems, onSuccess }) => {
   const [collections, setCollections] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -23,7 +30,8 @@ const AddToCollectionModal = ({ isOpen, onClose, newsIds, onSuccess }) => {
   const [addingToCollectionId, setAddingToCollectionId] = useState(null);
   const [collectionSearchQuery, setCollectionSearchQuery] = useState("");
 
-  const itemCount = newsIds?.length || 0;
+  const newsIds = newsItems?.map(item => item.newsId);
+  const itemCount = newsItems?.length || 0;
   const isSingleItemAdd = itemCount === 1;
 
   useEffect(() => {
@@ -45,7 +53,7 @@ const AddToCollectionModal = ({ isOpen, onClose, newsIds, onSuccess }) => {
             );
           }
           const data = await response.json();
-          setCollections(data || []); // .data 제거
+          setCollections(data || []);
         } catch (err) {
           if (err.message.includes("로그인") || err.message.includes("인증")) {
             setError("로그인이 필요합니다.");
@@ -76,42 +84,63 @@ const AddToCollectionModal = ({ isOpen, onClose, newsIds, onSuccess }) => {
         )
       );
 
-      let successfulCount = 0;
-      let duplicateCount = 0;
-      let otherFailureCount = 0;
+      const successfulItems = [];
+      const duplicateItems = [];
+      const failedItems = [];
 
-      for (const res of responses) {
-        if (res.ok) {
-          successfulCount++;
-        } else {
-          const errorText = await res.text();
-          const isDuplicate =
-            res.status === 409 || (errorText && errorText.includes("이미"));
-
-          if (isDuplicate) {
-            duplicateCount++;
+      await Promise.all(
+        responses.map(async (res, index) => {
+          const newsItem = newsItems[index];
+          if (res.ok) {
+            successfulItems.push(newsItem);
           } else {
-            otherFailureCount++;
-            console.error(
-              "Unhandled error while adding to collection:",
-              errorText
-            );
+            const errorText = await res.text();
+            const isDuplicate =
+              res.status === 409 || (errorText && errorText.includes("이미"));
+
+            if (isDuplicate) {
+              duplicateItems.push(newsItem);
+            } else {
+              failedItems.push(newsItem);
+              console.error(
+                `Unhandled error while adding '${newsItem.title}' to collection:`,
+                errorText
+              );
+            }
           }
+        })
+      );
+
+      const successfulCount = successfulItems.length;
+      const duplicateCount = duplicateItems.length;
+      const otherFailureCount = failedItems.length;
+
+      // --- 알림 메시지 로직 ---
+      if (successfulCount > 0) {
+        if (successfulCount === 1) {
+           const title = truncateTitle(successfulItems[0].title);
+           toast.success(`'${title}' 기사를 컬렉션에 추가했습니다.`);
+        } else {
+           toast.success(`${successfulCount}개의 기사를 컬렉션에 추가했습니다.`);
         }
       }
 
-      // --- 알림 메시지 로직 ---
-      if (isSingleItemAdd) {
-        if (successfulCount > 0) toast.success("기사를 컬렉션에 추가했습니다.");
-        if (duplicateCount > 0) toast.info("이미 컬렉션에 추가된 기사입니다.");
-        if (otherFailureCount > 0) toast.error("기사 추가에 실패했습니다.");
-      } else {
-        if (successfulCount > 0)
-          toast.success(`${successfulCount}개의 기사를 컬렉션에 추가했습니다.`);
-        if (duplicateCount > 0)
+      if (duplicateCount > 0) {
+        if (duplicateCount === 1) {
+          const title = truncateTitle(duplicateItems[0].title);
+          toast.info(`'${title}' 기사는 이미 컬렉션에 존재합니다.`);
+        } else {
           toast.info(`${duplicateCount}개의 기사는 이미 컬렉션에 존재합니다.`);
-        if (otherFailureCount > 0)
+        }
+      }
+
+      if (otherFailureCount > 0) {
+        if (otherFailureCount === 1) {
+          const title = truncateTitle(failedItems[0].title);
+          toast.error(`'${title}' 기사 추가에 실패했습니다.`);
+        } else {
           toast.error(`${otherFailureCount}개의 기사 추가에 실패했습니다.`);
+        }
       }
 
       // --- 모달 닫기 로직 ---
@@ -147,11 +176,10 @@ const AddToCollectionModal = ({ isOpen, onClose, newsIds, onSuccess }) => {
         const errorText = await response.text();
         throw new Error(errorText || "컬렉션 생성에 실패했습니다.");
       }
-      const newCollection = await response.json(); // .data 제거
+      const newCollection = await response.json();
       toast.success(`'${newCollectionName}' 컬렉션이 생성되었습니다.`);
       setCollections((prev) => [newCollection, ...prev]);
       setNewCollectionName("");
-      await handleAddToCollection(newCollection.storageId);
     } catch (err) {
       toast.error(err.message);
     } finally {
