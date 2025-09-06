@@ -1,22 +1,14 @@
-"use client";
+// 기사 신고 기능을 제공하는 모달 컴포넌트
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog";
-import { authenticatedFetch } from "@/lib/auth";
+import React, { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
+import { authenticatedFetch } from "@/lib/auth";
+import { toast } from 'sonner';
 
 const reportReasons = [
   { id: "FAKE_NEWS", label: "허위 정보 / 가짜뉴스" },
@@ -26,12 +18,11 @@ const reportReasons = [
   { id: "OTHER", label: "기타" },
 ];
 
-export default function ReportModal({ isOpen, onClose, newsId }) {
+const ReportModal = ({ isOpen, onClose, newsId }) => {
   const [reason, setReason] = useState(reportReasons[0].id);
   const [details, setDetails] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const router = useRouter();
 
   const handleReportClick = () => {
     setIsConfirmModalOpen(true);
@@ -54,14 +45,12 @@ export default function ReportModal({ isOpen, onClose, newsId }) {
         toast.success("기사가 정상적으로 신고되었습니다.");
         onClose();
       } else {
-        const errorData = await response
-          .json()
-          .catch(() => ({ message: "서버 응답을 파싱할 수 없습니다." }));
-        toast.error(errorData.message || "신고 처리 중 오류가 발생했습니다.");
+        const errorText = await response.text();
+        toast.error(errorText || "신고 처리 중 오류가 발생했습니다.");
       }
     } catch (error) {
       console.error("Error during report:", error);
-      toast.error("네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+      toast.error(error.message || "네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
     } finally {
       setIsLoading(false);
     }
@@ -116,8 +105,6 @@ export default function ReportModal({ isOpen, onClose, newsId }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Confirmation Modal */}
       <Dialog open={isConfirmModalOpen} onOpenChange={setIsConfirmModalOpen}>
         <DialogContent>
           <DialogHeader>
@@ -143,4 +130,6 @@ export default function ReportModal({ isOpen, onClose, newsId }) {
       </Dialog>
     </>
   );
-}
+};
+
+export default ReportModal;

@@ -1,3 +1,4 @@
+// 뉴스 본문, 이미지, 관련 키워드를 표시하는 컴포넌트
 "use client";
 
 import React from 'react';
@@ -10,18 +11,16 @@ const NewsContent = ({ newsData, fontSize }) => {
           <img
             src={newsData.imageUrl}
             alt={newsData.title}
-            className="w-full max-h-[400px] object-cover rounded-xl mx-auto"
+            className="w-full max-h-[1000px] object-cover rounded-xl mx-auto"
           />
         </div>
       )}
-
       <article
         className="prose prose-lg max-w-none text-lg leading-relaxed text-gray-800"
         style={{ fontSize: `${fontSize}px` }}
       >
         <div dangerouslySetInnerHTML={{ __html: newsData.content }} />
       </article>
-
       {newsData.tags && newsData.tags.length > 0 && (
         <div className="mt-8 pt-6 border-t border-gray-200">
           <h3 className="text-lg font-semibold text-gray-800 mb-3">
