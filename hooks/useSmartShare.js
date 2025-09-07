@@ -72,12 +72,19 @@ export function useSmartShare() {
         });
       }
 
+      // 뉴스레터 미리보기 URL 생성 (실제 newsletterId 사용)
+      const newsletterPreviewUrl = personalizedData.id 
+        ? `${typeof window !== 'undefined' ? window.location.origin : ''}/newsletter/${personalizedData.id}/preview`
+        : (typeof window !== 'undefined' ? window.location.href : '');
+      
+      console.log('🔗 스마트 공유 뉴스레터 URL:', newsletterPreviewUrl);
+      
       const templateArgs = {
         title: personalizedData.title || '오늘의 뉴스레터',
         description: personalizedData.description || '맞춤형 뉴스를 확인하세요',
         imageUrl: personalizedData.imageUrl || 'https://via.placeholder.com/800x400/667eea/ffffff?text=Newsletter',
-        webUrl: typeof window !== 'undefined' ? window.location.href : '',
-        mobileWebUrl: typeof window !== 'undefined' ? window.location.href : '',
+        webUrl: newsletterPreviewUrl,
+        mobileWebUrl: newsletterPreviewUrl,
         userName: user?.name || '구독자',
         userEmail: user?.email || '',
         personalizedMessage: personalizedData.personalizationApplied ? '맞춤형' : '일반',

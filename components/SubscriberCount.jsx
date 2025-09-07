@@ -15,7 +15,7 @@ export default function SubscriberCount({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        let url = "/api/subscriber-count";
+        let url = "/api/newsletter/stats/subscribers";
         
         if (category) {
           // 특정 카테고리 구독자 수 조회

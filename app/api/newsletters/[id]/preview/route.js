@@ -5,7 +5,8 @@ import { getApiUrl } from "@/lib/config";
 // /api/newsletters/[id]/preview - 뉴스레터 미리보기 (개인화 적용)
 export async function GET(request, { params }) {
   try {
-    const accessToken = cookies().get("access-token")?.value;
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get("access-token")?.value;
     const { id } = params;
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');

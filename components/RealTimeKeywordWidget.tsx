@@ -23,6 +23,7 @@ export default function RealTimeKeywordWidget({
   const [showFullList, setShowFullList] = useState(false)
   const [cardPosition, setCardPosition] = useState({ top: 0, left: 0 })
   const [isHoveringCard, setIsHoveringCard] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
 
   const timerRef = useRef<number | null>(null)
   const widgetRef = useRef<HTMLDivElement>(null)
@@ -52,14 +53,22 @@ export default function RealTimeKeywordWidget({
     }
   }
 
-  // 초기 로드
+  // 클라이언트 사이드 마운트 확인
   useEffect(() => {
-    fetchTrendingKeywords()
+    setIsMounted(true)
   }, [])
 
-  // 주기적 순환 및 데이터 업데이트
+  // 초기 로드 (클라이언트에서만)
   useEffect(() => {
-    if (paused) return
+    if (isMounted) {
+      fetchTrendingKeywords()
+    }
+  }, [isMounted])
+
+  // 주기적 순환 및 데이터 업데이트 (클라이언트에서만)
+  useEffect(() => {
+    if (!isMounted || paused) return
+    
     timerRef.current = window.setInterval(() => {
       // 다음 인덱스
       setIdx((p) => (p + 1) % items.length)
@@ -73,7 +82,7 @@ export default function RealTimeKeywordWidget({
     return () => {
       if (timerRef.current) window.clearInterval(timerRef.current)
     }
-  }, [intervalMs, paused, items.length])
+  }, [isMounted, intervalMs, paused, items.length])
 
   const cur = items[idx]
 
@@ -87,7 +96,7 @@ export default function RealTimeKeywordWidget({
     )
 
   const handleCardClick = () => {
-    if (widgetRef.current) {
+    if (isMounted && widgetRef.current) {
       const rect = widgetRef.current.getBoundingClientRect()
       setCardPosition({
         top: rect.bottom + window.scrollY,
@@ -99,8 +108,10 @@ export default function RealTimeKeywordWidget({
   }
 
   const handleKeywordClick = (keyword: string) => {
-    // 검색 페이지로 이동
-    window.location.href = `/search?q=${encodeURIComponent(keyword)}`
+    // 검색 페이지로 이동 (클라이언트에서만)
+    if (isMounted) {
+      window.location.href = `/search?q=${encodeURIComponent(keyword)}`
+    }
   }
 
   const handleWidgetMouseEnter = () => {
@@ -129,6 +140,30 @@ export default function RealTimeKeywordWidget({
     setIsHoveringCard(false)
     setShowFullList(false)
     setPaused(false)
+  }
+
+  // SSR에서 렌더링할 때는 초기 상태를 보여줌
+  if (!isMounted) {
+    return (
+      <div
+        className="glass-enhanced hover-lift animate-slide-in rounded-xl shadow-md px-4 py-3 shimmer-effect relative"
+        style={{ width, "--delay": "0.2s" } as React.CSSProperties}
+      >
+        <div className="glass-content">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center text-sm font-semibold">
+              <TrendingUp className="h-4 w-4 mr-2 text-red-500" />
+              실시간 인기 키워드
+            </div>
+            <div className="text-xs text-gray-500 opacity-60">로딩 중...</div>
+          </div>
+          <div className="h-9 flex items-center justify-between px-3 py-2 rounded-lg bg-gray-100 animate-pulse">
+            <div className="h-4 w-16 bg-gray-300 rounded" />
+            <div className="h-4 w-24 bg-gray-300 rounded" />
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

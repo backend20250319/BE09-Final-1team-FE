@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
+import Head from "next/head"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -283,44 +284,68 @@ export default function NewsletterPreviewPage() {
             </div>
             <h2 className="text-xl font-semibold mb-2">뉴스레터를 찾을 수 없습니다</h2>
             <p className="text-gray-600 mb-4">{error}</p>
-            {(error.includes('템플릿 문자열') || error.includes('잘못된 뉴스레터 ID')) && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                <p className="text-sm text-yellow-800">
-                  <strong>해결 방법:</strong><br/>
-                  다른 페이지에서 이 링크를 클릭할 때 실제 뉴스레터 ID를 사용해야 합니다.<br/>
-                  예: <code>/newsletter/123/preview</code>
-                </p>
-                <div className="mt-3">
-                  <p className="text-sm text-yellow-700">
-                    <strong>테스트용 뉴스레터:</strong>
-                  </p>
-                  <div className="flex gap-2 mt-2 flex-wrap">
-                    <Button 
-                      onClick={() => router.push('/newsletter/1/preview')}
-                      size="sm"
-                      variant="outline"
-                      className="text-xs"
-                    >
-                      뉴스레터 #1 보기
-                    </Button>
-                    <Button 
-                      onClick={() => router.push('/newsletter/2/preview')}
-                      size="sm"
-                      variant="outline"
-                      className="text-xs"
-                    >
-                      뉴스레터 #2 보기
-                    </Button>
-                    <Button 
-                      onClick={() => router.push('/newsletter/3/preview')}
-                      size="sm"
-                      variant="outline"
-                      className="text-xs"
-                    >
-                      뉴스레터 #3 보기
-                    </Button>
+            
+            {/* 템플릿 문자열 오류인 경우 */}
+            {(error.includes('템플릿 문자열') || error.includes('잘못된 뉴스레터 ID') || newsletterId?.includes('{')) && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                <div className="flex items-start gap-3">
+                  <div className="text-red-500 mt-1">
+                    <FileText className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-red-800 mb-2">잘못된 뉴스레터 ID 형식입니다</h3>
+                    <p className="text-sm text-red-700 mb-3">
+                      URL에 <code className="bg-red-100 px-1 rounded">{newsletterId}</code>와 같은 템플릿 문자열이 사용되었습니다.
+                    </p>
+                    <div className="bg-white border border-red-200 rounded p-3 mb-3">
+                      <p className="text-sm text-red-800">
+                        <strong>해결 방법:</strong><br/>
+                        다른 페이지에서 이 링크를 클릭할 때 실제 뉴스레터 ID를 사용해야 합니다.<br/>
+                        예: <code className="bg-gray-100 px-1 rounded">/newsletter/123/preview</code>
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-red-700 mb-2">
+                        <strong>테스트용 뉴스레터:</strong>
+                      </p>
+                      <div className="flex gap-2 flex-wrap">
+                        <Button 
+                          onClick={() => router.push('/newsletter/1/preview')}
+                          size="sm"
+                          variant="outline"
+                          className="text-xs border-red-300 text-red-700 hover:bg-red-50"
+                        >
+                          뉴스레터 #1 보기
+                        </Button>
+                        <Button 
+                          onClick={() => router.push('/newsletter/2/preview')}
+                          size="sm"
+                          variant="outline"
+                          className="text-xs border-red-300 text-red-700 hover:bg-red-50"
+                        >
+                          뉴스레터 #2 보기
+                        </Button>
+                        <Button 
+                          onClick={() => router.push('/newsletter/3/preview')}
+                          size="sm"
+                          variant="outline"
+                          className="text-xs border-red-300 text-red-700 hover:bg-red-50"
+                        >
+                          뉴스레터 #3 보기
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
+              </div>
+            )}
+            
+            {/* 일반적인 오류인 경우 */}
+            {!(error.includes('템플릿 문자열') || error.includes('잘못된 뉴스레터 ID') || newsletterId?.includes('{')) && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <p className="text-sm text-blue-800">
+                  <strong>도움말:</strong> 뉴스레터 목록에서 올바른 뉴스레터를 선택해주세요.
+                </p>
               </div>
             )}
             <div className="space-y-2">

@@ -44,8 +44,24 @@ import { useScrap } from "@/contexts/ScrapContext";
 const RealTimeKeywordWidget = dynamic(
   () => import("@/components/RealTimeKeywordWidget"),
   {
-    ssr: false,
-    loading: () => <div className="h-10 rounded bg-white/50 animate-pulse" />,
+    ssr: true,
+    loading: () => (
+      <div className="glass-enhanced hover-lift animate-slide-in rounded-xl shadow-md px-4 py-3 shimmer-effect relative">
+        <div className="glass-content">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center text-sm font-semibold">
+              <div className="h-4 w-4 mr-2 bg-gray-300 rounded animate-pulse" />
+              <div className="h-4 w-32 bg-gray-300 rounded animate-pulse" />
+            </div>
+            <div className="h-3 w-20 bg-gray-300 rounded animate-pulse" />
+          </div>
+          <div className="h-9 flex items-center justify-between px-3 py-2 rounded-lg bg-gray-100 animate-pulse">
+            <div className="h-4 w-16 bg-gray-300 rounded" />
+            <div className="h-4 w-24 bg-gray-300 rounded" />
+          </div>
+        </div>
+      </div>
+    ),
   }
 );
 

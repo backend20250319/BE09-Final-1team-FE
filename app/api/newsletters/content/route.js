@@ -85,7 +85,8 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     // 쿠키에서 액세스 토큰 가져오기
-    const accessToken = cookies().get('access-token')?.value;
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get('access-token')?.value;
     
     const body = await request.json();
     

@@ -20,6 +20,7 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { useSmartShare } from '@/hooks/useSmartShare'
 import { loadKakaoSDK } from '@/utils/kakaoShare'
+import { isAuthenticated, getUserInfo } from '@/lib/auth'
 
 // 로그인 방식 감지 및 사용자 정보 관리
 const useUserAuth = () => {

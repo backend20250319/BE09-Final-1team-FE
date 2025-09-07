@@ -167,6 +167,13 @@ export default function KakaoFriendMessage({
     try {
       const uuids = selectedFriends.map(friend => friend.uuid);
       
+      // 뉴스레터 미리보기 URL 생성 (실제 newsletterId 사용)
+      const newsletterPreviewUrl = newsletterData.id 
+        ? `${window.location.origin}/newsletter/${newsletterData.id}/preview`
+        : window.location.href;
+      
+      console.log('🔗 친구에게 보낼 뉴스레터 URL:', newsletterPreviewUrl);
+      
       // 뉴스레터 메시지 템플릿 구성
       const templateObject = {
         object_type: 'feed',
@@ -175,8 +182,8 @@ export default function KakaoFriendMessage({
           description: newsletterData.description || '흥미로운 뉴스를 확인해보세요!',
           image_url: newsletterData.imageUrl || 'https://via.placeholder.com/800x400/667eea/ffffff?text=Newsletter',
           link: {
-            web_url: window.location.href,
-            mobile_web_url: window.location.href,
+            web_url: newsletterPreviewUrl,
+            mobile_web_url: newsletterPreviewUrl,
           },
         },
         social: {
@@ -188,8 +195,8 @@ export default function KakaoFriendMessage({
           {
             title: '뉴스레터 보기',
             link: {
-              web_url: window.location.href,
-              mobile_web_url: window.location.href,
+              web_url: newsletterPreviewUrl,
+              mobile_web_url: newsletterPreviewUrl,
             },
           },
           {

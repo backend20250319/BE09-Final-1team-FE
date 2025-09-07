@@ -5,7 +5,8 @@ import { getApiUrl } from "@/lib/config";
 // /api/auth/me - 사용자 정보 조회 (쿠키 기반)
 export async function GET(request) {
   try {
-    const accessToken = cookies().get("access-token")?.value;
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get("access-token")?.value;
     
     if (!accessToken) {
       return NextResponse.json({ error: '인증이 필요합니다' }, { status: 401 });

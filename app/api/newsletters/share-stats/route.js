@@ -113,7 +113,8 @@ export async function GET(request) {
     console.log('📊 공유 통계 조회 API 시작');
     
     // 쿠키에서 액세스 토큰 가져오기
-    const accessToken = cookies().get('access-token')?.value;
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get('access-token')?.value;
     
     const { searchParams } = new URL(request.url);
     const newsletterId = searchParams.get('newsletterId') || 'default';
