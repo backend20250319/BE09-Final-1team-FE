@@ -115,25 +115,42 @@ export async function GET(request) {
     console.log('📡 백엔드 응답:', data);
     
     // 백엔드 응답을 프론트엔드 형식으로 변환
-    const userSubscriptions = data.data?.map(subscription => ({
-      id: subscription.id,
-      userId: subscription.userId,
-      email: subscription.email,
-      status: subscription.status,
-      frequency: subscription.frequency,
-      preferredCategories: subscription.preferredCategories || [],
-      keywords: subscription.keywords || [],
-      sendTime: subscription.sendTime,
-      isPersonalized: subscription.personalized,
-      subscribedAt: subscription.subscribedAt,
-      lastSentAt: subscription.lastSentAt,
-      createdAt: subscription.createdAt,
-      // 기존 호환성을 위한 필드들
-      title: `${subscription.preferredCategories?.join(', ') || '뉴스레터'} 구독`,
-      category: subscription.preferredCategories?.[0] || '일반'
-    })) || [];
+    const userSubscriptions = data.data?.map(subscription => {
+      // 활성 구독만 필터링
+      if (!subscription.isActive) {
+        return null;
+      }
+      
+      return {
+        id: subscription.categoryId,
+        userId: subscription.userId || 1,
+        email: subscription.email || 'user@example.com',
+        status: subscription.isActive ? 'ACTIVE' : 'INACTIVE',
+        frequency: 'DAILY',
+        preferredCategories: [subscription.categoryName],
+        keywords: subscription.keywords || [],
+        sendTime: subscription.sendTime,
+        isPersonalized: subscription.isPersonalized || true,
+        subscribedAt: subscription.subscribedAt,
+        lastSentAt: subscription.lastSentAt,
+        createdAt: subscription.createdAt,
+        // 기존 호환성을 위한 필드들
+        title: `${subscription.categoryNameKo} 뉴스레터 구독`,
+        category: subscription.categoryNameKo,
+        // 백엔드 원본 데이터 보존
+        _backendData: subscription
+      };
+    }).filter(Boolean) || [];
 
-    console.log('✅ 구독 목록 조회 성공:', { count: userSubscriptions.length });
+    console.log('✅ 구독 목록 조회 성공:', { 
+      count: userSubscriptions.length,
+      subscriptions: userSubscriptions.map(sub => ({
+        id: sub.id,
+        category: sub.category,
+        preferredCategories: sub.preferredCategories,
+        isActive: sub.status === 'ACTIVE'
+      }))
+    });
 
     return Response.json({
       success: true,

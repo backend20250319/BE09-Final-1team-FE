@@ -96,7 +96,9 @@ export default function IntegratedNewsletterDashboard() {
     subscriptionsError: subscriptionsError,
     userRole: userRole,
     enabled: !!userRole,
-    length: userSubscriptions?.length || 0
+    length: userSubscriptions?.length || 0,
+    isArray: Array.isArray(userSubscriptions),
+    firstSubscription: userSubscriptions?.[0]
   });
 
   const unsubscribeMutation = useUnsubscribeNewsletter()
