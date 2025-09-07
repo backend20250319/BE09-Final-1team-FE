@@ -23,9 +23,7 @@ const NewsContent = ({ newsData, fontSize }) => {
       </article>
       {newsData.tags && newsData.tags.length > 0 && (
         <div className="mt-8 pt-6 border-t border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-800 mb-3">
-            관련 키워드
-          </h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-3">관련 키워드</h3>
           <div className="flex flex-wrap gap-2">
             {newsData.tags.map((tag, index) => (
               <span
