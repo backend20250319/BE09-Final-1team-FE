@@ -1,7 +1,8 @@
-"use client";
+// 뉴스 상세 페이지의 헤더 (제목, 기자, 날짜 등) 컴포넌트
+'use client';
 
 import React from 'react';
-import { User, Clock } from "lucide-react";
+import { User, Clock } from 'lucide-react';
 
 const NewsHeader = ({ newsData }) => {
   return (
@@ -15,7 +16,7 @@ const NewsHeader = ({ newsData }) => {
           {newsData.category}
         </span>
       </div>
-      <h1 className="text-3xl md:text-4xl font-bold leading-tight mb-4">
+      <h1 className="text-3xl md:text-4xl font-bold leading-tight mb-4 line-clamp-2">
         {newsData.title}
       </h1>
       <div className="flex justify-between items-center text-gray-600 text-sm">

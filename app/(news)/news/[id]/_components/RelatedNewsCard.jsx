@@ -1,3 +1,4 @@
+// 함께 보면 좋은 뉴스 컴포넌트
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';

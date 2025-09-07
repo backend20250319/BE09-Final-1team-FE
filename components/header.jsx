@@ -132,11 +132,12 @@ export default function Header() {
           <div className="flex items-center space-x-4">
             {/* Search */}
             <div className="relative hidden md:block">
-              <SearchAutocomplete placeholder="뉴스 검색..." className="w-64" />
+              <SearchAutocomplete placeholder="뉴스 검색" className="w-64" />
             </div>
 
             {/* Action Buttons */}
             <div className="flex items-center space-x-2">
+<<<<<<< HEAD
               <Button
                 variant="ghost"
                 size="icon"
@@ -147,6 +148,18 @@ export default function Header() {
                   3
                 </Badge> */}
               </Button>
+=======
+              {/*<Button*/}
+              {/*  variant="ghost"*/}
+              {/*  size="icon"*/}
+              {/*  className="relative hover-glow text-white hover:bg-white/20"*/}
+              {/*>*/}
+              {/*  <Bell className="h-5 w-5" />*/}
+              {/*  <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs floating-badge">*/}
+              {/*    3*/}
+              {/*  </Badge>*/}
+              {/*</Button>*/}
+>>>>>>> develop
 
               {userRole ? (
                 <div className="flex items-center space-x-2">
@@ -210,7 +223,14 @@ export default function Header() {
             <div className="space-y-2">
               {/* Mobile Search */}
               <div className="relative mb-4">
+<<<<<<< HEAD
                 <SearchAutocomplete placeholder="뉴스 검색..." className="w-full" />
+=======
+                <SearchAutocomplete
+                  placeholder="뉴스 검색"
+                  className="w-full"
+                />
+>>>>>>> develop
               </div>
 
               {/* Mobile Navigation Links */}

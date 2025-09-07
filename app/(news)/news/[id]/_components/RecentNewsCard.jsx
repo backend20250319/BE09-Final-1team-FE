@@ -1,3 +1,4 @@
+// 최근 본 뉴스 컴포넌트
 "use client";
 
 import { useState, useEffect } from "react";
@@ -20,7 +21,7 @@ const backendToFrontendCategory = {
   ART: "예술",
 };
 
-export default function RecentNews() {
+export default function RecentNewsCard() {
   const [recentNews, setRecentNews] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -33,26 +34,24 @@ export default function RecentNews() {
     const fetchRecentNews = async () => {
       try {
         setIsLoading(true);
-        // 1. 읽기 기록 ID 목록을 불러옵니다.
         const historyUrl = `/api/users/mypage/history/index?page=0&size=8&sort=updatedAt,DESC`;
-        console.log("📖 RecentNews - 읽기 기록 요청:", historyUrl);
+        console.log("📖 RecentNewsCard - 읽기 기록 요청:", historyUrl);
 
         const historyResponse = await authenticatedFetch(historyUrl);
         if (!historyResponse.ok) {
           console.error(
-            "📖 RecentNews - 읽기 기록 조회 실패:",
+            "📖 RecentNewsCard - 읽기 기록 조회 실패:",
             historyResponse.status
           );
           throw new Error("최근 본 뉴스를 불러오는데 실패했습니다.");
         }
         const historyData = await historyResponse.json();
-        console.log("📖 RecentNews - 읽기 기록 응답:", historyData);
+        console.log("📖 RecentNewsCard - 읽기 기록 응답:", historyData);
 
         if (historyData.success && historyData.data.content.length > 0) {
           const newsHistory = historyData.data.content;
-          console.log("📖 RecentNews - 뉴스 기록 목록:", newsHistory);
+          console.log("📖 RecentNewsCard - 뉴스 기록 목록:", newsHistory);
 
-          // 2. newsService를 사용해 각 기사의 상세 정보를 안정적으로 불러옵니다.
           const newsDetailsPromises = newsHistory.map((newsItem) =>
             newsService.getNewsById(newsItem.newsId)
           );
@@ -62,7 +61,6 @@ export default function RecentNews() {
           const enrichedNews = newsHistory
             .map((newsItem, index) => {
               const newsDetails = newsDetailsResults[index];
-              // newsService.getNewsById()가 이제 직접 뉴스 객체를 반환하므로 .data 제거
               if (newsDetails) {
                 return {
                   newsId: newsItem.newsId,
@@ -79,14 +77,14 @@ export default function RecentNews() {
             })
             .filter((item) => item !== null);
 
-          console.log("🔄 RecentNews - 처리된 최근 본 뉴스:", enrichedNews);
+          console.log("🔄 RecentNewsCard - 처리된 최근 본 뉴스:", enrichedNews);
           setRecentNews(enrichedNews);
         } else {
-          console.log("📖 RecentNews - 읽기 기록이 없거나 빈 목록");
+          console.log("📖 RecentNewsCard - 읽기 기록이 없거나 빈 목록");
           setRecentNews([]);
         }
       } catch (error) {
-        console.error("❌ RecentNews - 최근 본 뉴스 조회 실패:", error);
+        console.error("❌ RecentNewsCard - 최근 본 뉴스 조회 실패:", error);
         setRecentNews([]);
       } finally {
         setIsLoading(false);
