@@ -2,21 +2,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useScrap } from "@/contexts/ScrapContext";
-import { isAuthenticated } from "@/lib/auth";
+import { useScrap } from '@/contexts/ScrapContext';
+import { isAuthenticated } from '@/lib/auth';
 import { Bookmark, Bot, Share, Siren } from 'lucide-react';
 import FontSizeButton from './FontSizeButton';
 import FontSizeSelector from './FontSizeSelector';
 import ReportModal from './ReportModal';
 import LoginConfirmModal from './LoginConfirmModal';
 
-const NewsActions = ({
-  newsData,
-  onSummaryOpen,
-  onShareOpen,
-  fontSize,
-  onFontSizeChange,
-}) => {
+const NewsActions = ({ newsData, onSummaryOpen, onShareOpen, fontSize, onFontSizeChange }) => {
   const { addScrap } = useScrap();
   const [isScrapLoading, setIsScrapLoading] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -47,11 +41,11 @@ const NewsActions = ({
   };
 
   const handleFontSizeToggle = () => {
-    setFontSizeOpen(prev => !prev);
-  }
+    setFontSizeOpen((prev) => !prev);
+  };
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2">
+    <div className="flex mb-7 flex-wrap items-center justify-between gap-2">
       <div className="flex items-center gap-2">
         <button
           onClick={handleScrap}
@@ -66,7 +60,7 @@ const NewsActions = ({
           className="flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors text-sm font-semibold text-white"
           style={{
             background:
-              "linear-gradient(135deg, rgba(102, 126, 234, 1) 0%, rgba(118, 75, 162, 1) 50%, rgba(245, 87, 108, 1) 100%)",
+              'linear-gradient(135deg, rgba(102, 126, 234, 1) 0%, rgba(118, 75, 162, 1) 50%, rgba(245, 87, 108, 1) 100%)',
           }}
         >
           <Bot size={18} />
@@ -102,10 +96,7 @@ const NewsActions = ({
         onClose={() => setIsReportModalOpen(false)}
         newsId={newsData.newsId}
       />
-      <LoginConfirmModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-      />
+      <LoginConfirmModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
     </div>
   );
 };

@@ -1,31 +1,31 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import AiSummaryModal from "@/components/aisummarybot/AiSummaryModal";
-import { Toaster } from "sonner";
-import { ShieldAlert } from "lucide-react";
-import { newsService } from "@/lib/newsService";
-import useSummary from "../../../../hooks/useSummary";
+import React, { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import AiSummaryModal from '@/components/aisummarybot/AiSummaryModal';
+import { Toaster } from 'sonner';
+import { ShieldAlert } from 'lucide-react';
+import { newsService } from '@/lib/newsService';
+import useSummary from '../../../../hooks/useSummary';
 
-import NewsHeader from "./_components/NewsHeader";
-import NewsActions from "./_components/NewsActions";
-import NewsContent from "./_components/NewsContent";
-import ShareModal from "./_components/ShareModal";
-import RelatedNewsCard from "./_components/RelatedNewsCard";
-import RecentNewsCard from "./_components/RecentNewsCard";
+import NewsHeader from './_components/NewsHeader';
+import NewsActions from './_components/NewsActions';
+import NewsContent from './_components/NewsContent';
+import ShareModal from './_components/ShareModal';
+import RelatedNewsCard from './_components/RelatedNewsCard';
+import RecentNewsCard from './_components/RecentNewsCard';
 
 const backendToFrontendCategory = {
-  POLITICS: "정치",
-  ECONOMY: "경제",
-  SOCIETY: "사회",
-  LIFE: "생활",
-  INTERNATIONAL: "세계",
-  IT_SCIENCE: "IT/과학",
-  VEHICLE: "자동차/교통",
-  TRAVEL_FOOD: "여행/음식",
-  ART: "예술",
+  POLITICS: '정치',
+  ECONOMY: '경제',
+  SOCIETY: '사회',
+  LIFE: '생활',
+  INTERNATIONAL: '세계',
+  IT_SCIENCE: 'IT/과학',
+  VEHICLE: '자동차/교통',
+  TRAVEL_FOOD: '여행/음식',
+  ART: '예술',
 };
 
 export default function NewsPage() {
@@ -63,8 +63,8 @@ export default function NewsPage() {
       setLoading(true);
       setError(null);
 
-      if (!articleId || articleId === "undefined") {
-        setError({ status: 400, message: "기사 ID가 없습니다." });
+      if (!articleId || articleId === 'undefined') {
+        setError({ status: 400, message: '기사 ID가 없습니다.' });
         setLoading(false);
         return;
       }
@@ -73,19 +73,19 @@ export default function NewsPage() {
         const result = await newsService.getNewsById(articleId, true);
 
         if (!result) {
-          setError({ status: 404, message: "기사를 찾을 수 없습니다." });
+          setError({ status: 404, message: '기사를 찾을 수 없습니다.' });
           setNewsData(null);
         } else {
-          const rawCategory = result.category || result.categoryName || "일반";
+          const rawCategory = result.category || result.categoryName || '일반';
           const publicationTime = result.publishedAt || result.published_at;
 
           const transformedData = {
             category: backendToFrontendCategory[rawCategory] || rawCategory,
-            date: publicationTime ? new Date(publicationTime).toLocaleString("ko-KR") : "-",
-            title: result.title || "제목 없음",
-            reporter: { name: result.author || result.reporterName || "취재기자" },
-            content: result.content || "상세 내용은 원본 링크를 확인해주세요.",
-            source: result.source || result.press || "뉴스",
+            date: publicationTime ? new Date(publicationTime).toLocaleString('ko-KR') : '-',
+            title: result.title || '제목 없음',
+            reporter: { name: result.author || result.reporterName || '취재기자' },
+            content: result.content || '상세 내용은 원본 링크를 확인해주세요.',
+            source: result.source || result.press || '뉴스',
             tags: result.tags || [rawCategory],
             newsId: result.id || result.newsId,
             imageUrl: result.image || result.imageUrl,
@@ -94,11 +94,11 @@ export default function NewsPage() {
         }
       } catch (error) {
         const status = error?.status || (error?.response && error.response.status) || 500;
-        const message = error?.message || "뉴스를 불러오는 중 오류가 발생했습니다.";
+        const message = error?.message || '뉴스를 불러오는 중 오류가 발생했습니다.';
         if (status !== 403) {
-          console.error("❌ 뉴스 데이터 로딩 실패:", error);
+          console.error('❌ 뉴스 데이터 로딩 실패:', error);
         } else {
-          console.info("접근 제한된 기사(403):", message);
+          console.info('접근 제한된 기사(403):', message);
         }
         setError({ status, message });
         setNewsData(null);
@@ -107,19 +107,19 @@ export default function NewsPage() {
       }
     };
 
-    if (articleId && articleId !== "undefined") {
+    if (articleId && articleId !== 'undefined') {
       loadNewsData();
     }
   }, [articleId]);
 
   useEffect(() => {
     const fetchRelatedNews = async () => {
-      if (!articleId || articleId === "undefined") return;
+      if (!articleId || articleId === 'undefined') return;
       try {
-        const relatedArticles = await newsService.getRelatedArticles(articleId, "전체", 4);
+        const relatedArticles = await newsService.getRelatedArticles(articleId, '전체', 4);
         setRelatedNews(relatedArticles || []);
       } catch (error) {
-        console.error("관련 뉴스 조회 실패:", error);
+        console.error('관련 뉴스 조회 실패:', error);
         setRelatedNews([]);
       }
     };
@@ -129,15 +129,16 @@ export default function NewsPage() {
 
   useEffect(() => {
     const handleScroll = () => {
-      const totalHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const totalHeight =
+        document.documentElement.scrollHeight - document.documentElement.clientHeight;
       if (totalHeight > 0) {
         const progress = (window.scrollY / totalHeight) * 100;
         setReadingProgress(progress);
       }
     };
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   if (loading) {
@@ -152,8 +153,13 @@ export default function NewsPage() {
             <ShieldAlert className="w-12 h-12 text-red-500" />
           </div>
           <h1 className="text-3xl font-bold mb-3">접근이 제한된 기사입니다</h1>
-          <p className="text-gray-600 text-lg mb-8">누적된 신고 또는 기타 사유로 인해 비공개 처리되었습니다.</p>
-          <Link href="/" className="inline-block px-8 py-3 bg-gray-800 text-white font-semibold rounded-lg shadow-md hover:bg-gray-900">
+          <p className="text-gray-600 text-lg mb-8">
+            누적된 신고 또는 기타 사유로 인해 비공개 처리되었습니다.
+          </p>
+          <Link
+            href="/"
+            className="inline-block px-8 py-3 bg-gray-800 text-white font-semibold rounded-lg shadow-md hover:bg-gray-900"
+          >
             메인 페이지로 돌아가기
           </Link>
         </div>
@@ -166,8 +172,13 @@ export default function NewsPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="bg-white rounded-2xl shadow-lg p-6 text-center">
           <h1 className="text-2xl font-bold mb-4">뉴스를 찾을 수 없습니다</h1>
-          <p className="text-gray-600 mb-6">{error?.message || "기사를 불러오는 데 실패했습니다."}</p>
-          <Link href="/" className="px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700">
+          <p className="text-gray-600 mb-6">
+            {error?.message || '기사를 불러오는 데 실패했습니다.'}
+          </p>
+          <Link
+            href="/"
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700"
+          >
             메인으로 돌아가기
           </Link>
         </div>
@@ -182,7 +193,8 @@ export default function NewsPage() {
         className="fixed top-16 left-0 h-2 z-[60]"
         style={{
           width: `${readingProgress}%`,
-          background: "linear-gradient(135deg, rgba(102, 126, 234, 1) 0%, rgba(118, 75, 162, 1) 50%, rgba(245, 87, 108, 1) 100%)",
+          background:
+            'linear-gradient(135deg, rgba(102, 126, 234, 1) 0%, rgba(118, 75, 162, 1) 50%, rgba(245, 87, 108, 1) 100%)',
         }}
       />
       <div className="container mx-auto max-w-screen-2xl p-4 lg:p-8 mt-0">
