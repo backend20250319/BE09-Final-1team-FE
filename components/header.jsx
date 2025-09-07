@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import SearchAutocomplete from "@/components/SearchAutocomplete";
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import SearchAutocomplete from '@/components/SearchAutocomplete';
 import {
   Bell,
   Search,
@@ -17,9 +17,9 @@ import {
   Eye,
   LogOut,
   Shield,
-} from "lucide-react";
-import { usePathname } from "next/navigation";
-import { getUserInfo, logout } from "@/lib/auth";
+} from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { getUserInfo, logout } from '@/lib/auth';
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -36,12 +36,12 @@ export default function Header() {
         currentUserInfo?.userRole ||
         currentUserInfo?.authorities?.[0] ||
         currentUserInfo?.roles?.[0] ||
-        (currentUserInfo ? "user" : null);
+        (currentUserInfo ? 'user' : null);
 
-      console.log("🔍 Header 상태 업데이트:", {
+      console.log('🔍 Header 상태 업데이트:', {
         userInfo: currentUserInfo,
         userRole: currentUserRole,
-        localStorage: localStorage.getItem("userInfo"),
+        localStorage: localStorage.getItem('userInfo'),
       });
       setUserInfo(currentUserInfo);
       setUserRole(currentUserRole);
@@ -51,17 +51,17 @@ export default function Header() {
 
     // 커스텀 이벤트 감지 (로그인/로그아웃 시)
     const handleAuthChange = () => {
-      console.log("🔍 AuthStateChanged 이벤트 감지");
+      console.log('🔍 AuthStateChanged 이벤트 감지');
       // 약간의 지연을 두고 상태 업데이트 (localStorage 저장 완료 대기)
       setTimeout(() => {
         updateUserStatus();
       }, 100);
     };
 
-    window.addEventListener("authStateChanged", handleAuthChange);
+    window.addEventListener('authStateChanged', handleAuthChange);
 
     return () => {
-      window.removeEventListener("authStateChanged", handleAuthChange);
+      window.removeEventListener('authStateChanged', handleAuthChange);
     };
   }, []);
 
@@ -70,7 +70,7 @@ export default function Header() {
     try {
       await logout();
     } catch (error) {
-      console.error("로그아웃 오류:", error);
+      console.error('로그아웃 오류:', error);
       // 에러가 발생해도 사용자 정보는 즉시 클리어
       setUserInfo(null);
       setUserRole(null);
@@ -78,20 +78,20 @@ export default function Header() {
   };
 
   const navigation = [
-    { name: "홈", href: "/" },
-    { name: "뉴스레터", href: "/newsletter" },
-    { name: "마이페이지", href: "/mypage" },
+    { name: '홈', href: '/' },
+    { name: '뉴스레터', href: '/newsletter' },
+    { name: '마이페이지', href: '/mypage' },
   ];
 
   const isActive = (href) => {
-    if (href === "/") {
-      return pathname === "/";
+    if (href === '/') {
+      return pathname === '/';
     }
     return pathname.startsWith(href);
   };
 
   // 렌더링 시 현재 상태 로그
-  console.log("🎨 Header 렌더링:", {
+  console.log('🎨 Header 렌더링:', {
     userRole,
     userInfo,
     isLoggedIn: !!userRole,
@@ -103,10 +103,7 @@ export default function Header() {
         <div className="flex justify-between items-center h-16">
           {/* Logo and Navigation */}
           <div className="flex items-center space-x-4">
-            <Link
-              href="/"
-              className="flex items-center space-x-2 animate-slide-in"
-            >
+            <Link href="/" className="flex items-center space-x-2 animate-slide-in">
               <h1 className="text-2xl font-logo font-bold text-white drop-shadow-lg animate-pulse-slow">
                 NewSphere
               </h1>
@@ -120,8 +117,8 @@ export default function Header() {
                   href={item.href}
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 hover-lift ${
                     isActive(item.href)
-                      ? "text-white bg-white/20 backdrop-blur-sm shadow-lg"
-                      : "text-white/80 hover:text-white hover:bg-white/10"
+                      ? 'text-white bg-white/20 backdrop-blur-sm shadow-lg'
+                      : 'text-white/80 hover:text-white hover:bg-white/10'
                   }`}
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
@@ -146,9 +143,9 @@ export default function Header() {
                 className="relative hover-glow text-white hover:bg-white/20"
               >
                 <Bell className="h-5 w-5" />
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs floating-badge">
+                {/* <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs floating-badge">
                   3
-                </Badge>
+                </Badge> */}
               </Button>
 
               {userRole ? (
@@ -160,7 +157,7 @@ export default function Header() {
                     </span>
                   )}
 
-                  {userRole === "admin" && (
+                  {userRole === 'admin' && (
                     <Link href="/admin">
                       <Button
                         variant="ghost"
@@ -213,10 +210,7 @@ export default function Header() {
             <div className="space-y-2">
               {/* Mobile Search */}
               <div className="relative mb-4">
-                <SearchAutocomplete
-                  placeholder="뉴스 검색..."
-                  className="w-full"
-                />
+                <SearchAutocomplete placeholder="뉴스 검색..." className="w-full" />
               </div>
 
               {/* Mobile Navigation Links */}
@@ -226,8 +220,8 @@ export default function Header() {
                   href={item.href}
                   className={`block px-3 py-2 rounded-md text-base font-medium transition-all duration-300 ${
                     isActive(item.href)
-                      ? "text-white bg-white/20 backdrop-blur-sm"
-                      : "text-white/80 hover:text-white hover:bg-white/10"
+                      ? 'text-white bg-white/20 backdrop-blur-sm'
+                      : 'text-white/80 hover:text-white hover:bg-white/10'
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                   style={{ animationDelay: `${index * 0.1}s` }}

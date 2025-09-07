@@ -363,7 +363,7 @@ const NewsActions = ({
           <span>요약봇</span>
         </button>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center mb-7 gap-2">
         <div className="relative">
           <FontSizeButton onClick={handleFontSizeToggle} />
           {isFontSizeOpen && (
