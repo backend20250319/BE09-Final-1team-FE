@@ -11,7 +11,7 @@ const NewsContent = ({ newsData, fontSize }) => {
           <img
             src={newsData.imageUrl}
             alt={newsData.title}
-            className="w-full max-h-[1000px] object-cover rounded-xl mx-auto"
+            className="w-full max-h-full object-cover rounded-xl mx-auto"
           />
         </div>
       )}
