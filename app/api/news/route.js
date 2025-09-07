@@ -51,6 +51,24 @@ export async function GET(request) {
     const data = await response.json();
     console.log('📡 백엔드 응답:', data);
     
+    // HTML 태그를 제거하는 함수
+    const stripHtmlTags = (html) => {
+      if (!html) return ''
+      return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()
+    }
+
+    // 뉴스 요약을 생성하는 함수
+    const getNewsDescription = (news) => {
+      if (news.summary) {
+        return stripHtmlTags(news.summary)
+      }
+      if (news.content) {
+        const cleanContent = stripHtmlTags(news.content)
+        return cleanContent.length > 150 ? cleanContent.substring(0, 150) + '...' : cleanContent
+      }
+      return '뉴스 내용을 불러오는 중입니다.'
+    }
+
     // 백엔드 응답을 프론트엔드 형식으로 변환
     const newsItems = data.content?.map(news => ({
       id: news.newsId,
@@ -66,7 +84,7 @@ export async function GET(request) {
       createdAt: news.createdAt,
       reporterName: news.reporterName,
       // 기존 호환성을 위한 필드들
-      description: news.summary || news.content?.substring(0, 200) + '...',
+      description: getNewsDescription(news),
       author: news.reporterName || news.press,
       // 백엔드 원본 데이터 보존
       _backendData: news

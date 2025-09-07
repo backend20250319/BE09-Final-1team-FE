@@ -577,9 +577,15 @@ export default function NewsletterPageClient({ initialNewsletters }) {
     });
   };
 
-  // 구독 여부 판단
+  // 구독 여부 판단 (로컬 상태 우선, 서버 상태 보조)
   const isSubscribedByCategory = (category) => {
-    // 서버 구독 목록에서 먼저 확인 (더 정확함)
+    // 로컬 상태에서 먼저 확인 (즉시 반영)
+    if (localSubscriptions.has(category)) {
+      console.log(`✅ ${category}: 로컬 상태에서 구독 중`);
+      return true;
+    }
+    
+    // 서버 구독 목록에서 확인 (백업)
     if (Array.isArray(userSubscriptions)) {
       const isSubscribed = userSubscriptions.some(sub => {
         // 매핑된 카테고리 직접 매칭
@@ -618,12 +624,6 @@ export default function NewsletterPageClient({ initialNewsletters }) {
       if (isSubscribed) {
         return true;
       }
-    }
-    
-    // 로컬 상태에서 확인 (서버 상태가 없을 때 fallback)
-    if (localSubscriptions.has(category)) {
-      console.log(`✅ ${category}: 로컬 상태에서 구독 중 (서버 상태 없음)`);
-      return true;
     }
     
     console.log(`❌ ${category}: 구독하지 않음`);
@@ -672,7 +672,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
       }
     }
 
-    // 로컬 상태 업데이트 (낙관적 업데이트)
+    // 로컬 상태 즉시 업데이트 (낙관적 업데이트)
     if (checked) {
       setLocalSubscriptions(prev => new Set([...prev, newsletter.category]));
     } else {
@@ -683,15 +683,18 @@ export default function NewsletterPageClient({ initialNewsletters }) {
       });
     }
     
+    // 즉시 UI 업데이트를 위한 강제 리렌더링
+    setTimeout(() => {
+      refetchSubscriptions();
+    }, 100);
+    
     // 새로운 토글 API 사용
     toggleSubscriptionMutation.mutate(
       { category: newsletter.category, isActive: checked },
       {
         onSuccess: (data) => {
-          // fallback 모드가 아닌 경우에만 서버에서 최신 구독 정보를 가져옴
-          if (!data.fallback) {
-            refetchSubscriptions();
-          }
+          // 항상 서버에서 최신 구독 정보를 가져옴 (fallback 모드에서도)
+          refetchSubscriptions();
           
           // 구독자 통계 즉시 업데이트 (fallback 모드에서도 로컬 통계는 업데이트)
           const queryClient = toggleSubscriptionMutation.queryClient;
@@ -733,6 +736,11 @@ export default function NewsletterPageClient({ initialNewsletters }) {
               icon: <AlertCircle className="h-4 w-4 text-red-500" />
             });
           }
+          
+          // 실패 시에도 구독 정보 새로고침
+          setTimeout(() => {
+            refetchSubscriptions();
+          }, 100);
         }
       }
     );

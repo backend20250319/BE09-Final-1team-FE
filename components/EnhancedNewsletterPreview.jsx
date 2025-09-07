@@ -113,7 +113,11 @@ const NewsArticle = ({ article, index, userId, newsletterId, onNewsClick }) => {
 export default function EnhancedNewsletterPreview({ 
   newsletterData = {},
   userId = null,
-  showPersonalization = true 
+  showPersonalization = true,
+  newsData = [],
+  newsLoading = false,
+  newsError = null,
+  onNewsRefresh = null
 }) {
   const [viewCount, setViewCount] = useState(0);
   const [shareStats, setShareStats] = useState({ total: 0, recent: 0 });
@@ -326,6 +330,50 @@ export default function EnhancedNewsletterPreview({
           </div>
         ))}
       </div>
+
+      {/* 최신 뉴스 섹션 */}
+      {newsData && newsData.length > 0 && (
+        <div className="border-t bg-white p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center">
+            <Eye className="h-5 w-5 mr-2 text-blue-600" />
+            최신 뉴스
+          </h3>
+          {newsLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto mb-2"></div>
+              <p className="text-sm text-gray-500">뉴스를 불러오는 중...</p>
+            </div>
+          ) : newsError ? (
+            <div className="text-center py-8">
+              <div className="text-red-500 mb-2">
+                <Eye className="h-8 w-8 mx-auto" />
+              </div>
+              <p className="text-sm text-red-600">{newsError}</p>
+              {onNewsRefresh && (
+                <button 
+                  onClick={onNewsRefresh}
+                  className="mt-2 px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  다시 시도
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {newsData.slice(0, 5).map((news, index) => (
+                <NewsArticle
+                  key={news.id || index}
+                  article={news}
+                  index={index}
+                  userId={userId}
+                  newsletterId={newsletterData.id}
+                  onNewsClick={handleNewsClick}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 공유 섹션 */}
       <div className="border-t bg-gray-50 p-6">

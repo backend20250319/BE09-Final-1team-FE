@@ -5,39 +5,37 @@ async function checkBackendHealth() {
   try {
     // 실제 작동하는 API 엔드포인트로 헬스 체크
     const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/newsletter/stats/subscribers`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3초 타임아웃으로 단축
+    
     const response = await fetch(backendUrl, {
       method: 'GET',
-      timeout: 5000 // 5초 타임아웃
+      signal: controller.signal
     });
+    
+    clearTimeout(timeoutId);
     return response.ok;
   } catch (error) {
     console.log('🔍 백엔드 헬스 체크 실패:', error.message);
-    return false;
+    // 헬스 체크 실패해도 구독 조회는 시도하도록 true 반환
+    return true;
   }
 }
 
 // 사용자 구독 목록 조회 API
 export async function GET(request) {
   try {
-    // 백엔드 연결 상태 먼저 확인
+    // 백엔드 연결 상태 확인 (헬스 체크 실패해도 구독 조회 시도)
     const isBackendHealthy = await checkBackendHealth();
     if (!isBackendHealthy) {
-      console.log('🔄 백엔드 서비스가 사용할 수 없음 - fallback 모드로 동작');
-      return Response.json({
-        success: true,
-        data: [],
-        metadata: {
-          total: 0,
-          timestamp: new Date().toISOString(),
-          fallback: true,
-          message: '백엔드 서비스가 일시적으로 사용할 수 없습니다.'
-        }
-      });
+      console.log('🔄 백엔드 헬스 체크 실패 - 구독 조회 시도 계속 진행');
     }
 
     // 쿠키에서 액세스 토큰 가져오기
     const cookieStore = await cookies();
-    const accessToken = cookieStore.get('access-token')?.value;
+    const accessToken = cookieStore.get('access-token')?.value || 
+                       cookieStore.get('token')?.value ||
+                       cookieStore.get('accessToken')?.value;
     
     console.log('📋 사용자 구독 목록 조회 요청:', { 
       hasAuth: !!accessToken,
@@ -47,10 +45,17 @@ export async function GET(request) {
     
     if (!accessToken) {
       console.log('❌ 인증 토큰 누락 - 쿠키에서 access-token을 찾을 수 없음');
-      return Response.json(
-        { success: false, error: '인증이 필요합니다.' },
-        { status: 401 }
-      );
+      
+      // 개발 환경에서는 기본 토큰 사용
+      if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
+        console.log('🔧 개발 환경에서 기본 토큰 사용');
+        // 토큰이 없어도 구독 조회 시도는 계속 진행
+      } else {
+        return Response.json(
+          { success: false, error: '인증이 필요합니다.' },
+          { status: 401 }
+        );
+      }
     }
     const authHeader = `Bearer ${accessToken}`
 
@@ -65,7 +70,7 @@ export async function GET(request) {
     const response = await fetch(backendUrl, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
+        'Authorization': `Bearer ${accessToken || 'dev-token-for-testing'}`,
         'Content-Type': 'application/json',
       }
     });

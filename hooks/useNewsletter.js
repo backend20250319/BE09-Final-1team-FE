@@ -216,11 +216,9 @@ export function useToggleSubscription() {
       newsletterService.toggleSubscription(category, isActive),
     
     onSuccess: (data, variables) => {
-      // fallback 모드가 아닌 경우에만 쿼리 무효화
-      if (!data.fallback) {
-        queryClient.invalidateQueries(['user-subscriptions'])
-        queryClient.invalidateQueries(['newsletter-stats-subscribers'])
-      }
+      // 항상 쿼리 무효화하여 UI 즉시 업데이트
+      queryClient.invalidateQueries(['user-subscriptions'])
+      queryClient.invalidateQueries(['newsletter-stats-subscribers'])
       
       const action = variables.isActive ? '구독' : '구독 해제'
       

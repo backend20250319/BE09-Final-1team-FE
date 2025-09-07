@@ -391,6 +391,31 @@ export default function IntegratedNewsletterDashboard() {
     }
   }, [])
 
+  // 구독 데이터 주기적 새로고침 (30초마다)
+  useEffect(() => {
+    if (!userRole) return;
+
+    const refreshInterval = setInterval(() => {
+      console.log('🔄 대시보드 구독 데이터 자동 새로고침');
+      refetchSubscriptions();
+    }, 30000); // 30초마다
+
+    return () => clearInterval(refreshInterval);
+  }, [userRole, refetchSubscriptions]);
+
+  // 페이지 포커스 시 구독 데이터 새로고침
+  useEffect(() => {
+    if (!userRole) return;
+
+    const handleFocus = () => {
+      console.log('🔄 페이지 포커스 시 구독 데이터 새로고침');
+      refetchSubscriptions();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [userRole, refetchSubscriptions]);
+
   // 뉴스 데이터 가져오기
   useEffect(() => {
     const fetchNews = async () => {
@@ -414,6 +439,27 @@ export default function IntegratedNewsletterDashboard() {
 
     fetchNews()
   }, [])
+
+  // HTML 태그를 제거하는 함수
+  const stripHtmlTags = (html) => {
+    if (!html) return ''
+    return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()
+  }
+
+  // 뉴스 요약을 생성하는 함수
+  const getNewsSummary = (news) => {
+    if (news.summary) {
+      return stripHtmlTags(news.summary)
+    }
+    if (news.description) {
+      return stripHtmlTags(news.description)
+    }
+    if (news.content) {
+      const cleanContent = stripHtmlTags(news.content)
+      return cleanContent.length > 100 ? cleanContent.substring(0, 100) + '...' : cleanContent
+    }
+    return '뉴스 내용을 불러오는 중입니다.'
+  }
 
   // 백엔드 카테고리명을 프론트엔드 카테고리명으로 변환하는 함수
   const mapBackendCategoryToFrontend = (backendCategory) => {
@@ -508,13 +554,7 @@ export default function IntegratedNewsletterDashboard() {
     }
   ]
 
-  // 최근 활동
-  const recentActivity = [
-    { type: "구독", content: "매일경제 뉴스", time: "2시간 전" },
-    { type: "읽음", content: "AI & Tech Weekly", time: "4시간 전" },
-    { type: "북마크", content: "환경 & 지속가능", time: "1일 전" },
-    { type: "평가", content: "정치 인사이드", time: "2일 전" }
-  ]
+
 
   // 로딩 중일 때
   if (!isLoaded) {
@@ -737,7 +777,7 @@ export default function IntegratedNewsletterDashboard() {
                                 {news.title}
                               </h4>
                               <p className="text-xs text-gray-600 line-clamp-2">
-                                {news.description}
+                                {getNewsSummary(news)}
                               </p>
                             </div>
                             {news.imageUrl && (
@@ -875,19 +915,36 @@ export default function IntegratedNewsletterDashboard() {
             <div className="mb-8">
               <Card className="glass hover-lift animate-slide-in">
                 <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Mail className="h-5 w-5 mr-2 text-blue-500" />
-                    내 구독 정보
-                  </CardTitle>
-                  <CardDescription>
-                    현재 구독 중인 뉴스레터 ({userSubscriptions?.length || 0}/3개)
-                    {subscriptionsError && (
-                      <span className="text-red-500 ml-2">(오류 발생)</span>
-                    )}
-                    {!subscriptionsLoading && !subscriptionsError && userSubscriptions?.length === 0 && (
-                      <span className="text-gray-500 ml-2">(구독 정보 없음)</span>
-                    )}
-                  </CardDescription>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center">
+                        <Mail className="h-5 w-5 mr-2 text-blue-500" />
+                        내 구독 정보
+                      </CardTitle>
+                      <CardDescription>
+                        현재 구독 중인 뉴스레터 ({userSubscriptions?.length || 0}/3개)
+                        {subscriptionsError && (
+                          <span className="text-red-500 ml-2">(오류 발생)</span>
+                        )}
+                        {!subscriptionsLoading && !subscriptionsError && userSubscriptions?.length === 0 && (
+                          <span className="text-gray-500 ml-2">(구독 정보 없음)</span>
+                        )}
+                      </CardDescription>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        console.log('🔄 수동 새로고침 버튼 클릭');
+                        refetchSubscriptions();
+                      }}
+                      disabled={subscriptionsLoading}
+                      className="hover-lift"
+                    >
+                      <RefreshCw className={`h-4 w-4 mr-2 ${subscriptionsLoading ? 'animate-spin' : ''}`} />
+                      새로고침
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {subscriptionsLoading ? (
@@ -928,8 +985,14 @@ export default function IntegratedNewsletterDashboard() {
                                    subscription.frequency === 'MONTHLY' ? '월간' : '즉시'} 발송
                                 </p>
                                 <div className="text-xs text-gray-500 space-y-1">
-                                  <div>구독일: {new Date(subscription.subscribedAt).toLocaleDateString()}</div>
-                                  {subscription.lastSentAt && (
+                                  <div>구독일: {
+                                    subscription.subscribedAt && subscription.subscribedAt !== 'Invalid Date' 
+                                      ? new Date(subscription.subscribedAt).toLocaleDateString()
+                                      : subscription.createdAt && subscription.createdAt !== 'Invalid Date'
+                                        ? new Date(subscription.createdAt).toLocaleDateString()
+                                        : '정보 없음'
+                                  }</div>
+                                  {subscription.lastSentAt && subscription.lastSentAt !== 'Invalid Date' && (
                                     <div>마지막 발송: {new Date(subscription.lastSentAt).toLocaleDateString()}</div>
                                   )}
                                 </div>
@@ -1125,45 +1188,7 @@ export default function IntegratedNewsletterDashboard() {
                     </CardContent>
                   </Card>
 
-                  {/* 실시간 인기 키워드 */}
-                  <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.55s' }}>
-                    <CardHeader>
-                      <CardTitle className="flex items-center">
-                        <TrendingUp className="h-5 w-5 mr-2 text-red-500" />
-                        실시간 인기 키워드
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-1">
-                        {["인공지능", "경제정책", "환경보호", "디지털전환", "스타트업", "블록체인", "메타버스", "ESG"].map((keyword, index) => (
-                          <div
-                            key={keyword}
-                            className="flex items-center justify-between px-4 py-2 rounded-md hover:bg-blue-50 transition-colors duration-200 group cursor-pointer"
-                          >
-                            <span className="flex items-center space-x-2">
-                              <span
-                                className={`font-bold w-5 text-right ${
-                                  index === 0
-                                    ? "text-red-500"
-                                    : index === 1
-                                    ? "text-orange-500"
-                                    : index === 2
-                                    ? "text-yellow-500"
-                                    : "text-blue-600"
-                                }`}
-                              >
-                                {index + 1}
-                              </span>
-                              <span className="text-sm text-gray-800 group-hover:underline group-hover:text-blue-700 transition">
-                                {keyword}
-                              </span>
-                            </span>
-                            <span className="text-xs bg-red-500 text-white px-2 py-1 rounded-full shadow">HOT</span>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
+                
                 </div>
 
                 {/* 인기 콘텐츠 */}
@@ -1203,62 +1228,11 @@ export default function IntegratedNewsletterDashboard() {
 
               {/* Right Column */}
               <div className="space-y-6">
-                {/* 최근 활동 */}
-                <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.7s' }}>
-                  <CardHeader>
-                    <CardTitle className="text-lg">최근 활동</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {recentActivity.map((activity, index) => (
-                        <div key={index} className="flex items-center justify-between p-2 rounded-lg hover:bg-white/50 transition-all duration-300">
-                          <div className="flex items-center space-x-2">
-                            <div className={`w-2 h-2 rounded-full ${
-                              activity.type === "구독" ? "bg-green-500" :
-                              activity.type === "읽음" ? "bg-blue-500" :
-                              activity.type === "북마크" ? "bg-yellow-500" :
-                              "bg-purple-500"
-                            }`}></div>
-                            <div>
-                              <p className="text-sm font-medium">{activity.type}</p>
-                              <p className="text-xs text-gray-500">{activity.content}</p>
-                            </div>
-                          </div>
-                          <span className="text-xs text-gray-500">{activity.time}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+              
 
               
 
-                {/* 빠른 작업 */}
-                <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.9s' }}>
-                  <CardHeader>
-                    <CardTitle className="text-lg">빠른 작업</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <Button 
-                        variant="outline" 
-                        className="w-full justify-start hover-lift"
-                        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                      >
-                        <Mail className="h-4 w-4 mr-2" />
-                        새 뉴스레터 구독
-                      </Button>
-                      <Button variant="outline" className="w-full justify-start hover-lift">
-                        <Bookmark className="h-4 w-4 mr-2" />
-                        북마크 관리
-                      </Button>
-                      <Button variant="outline" className="w-full justify-start hover-lift">
-                        <Target className="h-4 w-4 mr-2" />
-                        관심사 설정
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+             
               </div>
             </div>
           </div>

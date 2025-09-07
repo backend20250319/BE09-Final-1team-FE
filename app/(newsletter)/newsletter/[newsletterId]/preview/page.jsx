@@ -37,6 +37,11 @@ export default function NewsletterPreviewPage() {
   const [emailText, setEmailText] = useState("")
   const [error, setError] = useState(null)
   const [viewMode, setViewMode] = useState('enhanced') // 'enhanced' 또는 'original'
+  
+  // 뉴스 데이터 상태
+  const [newsData, setNewsData] = useState([])
+  const [newsLoading, setNewsLoading] = useState(false)
+  const [newsError, setNewsError] = useState(null)
 
   // 카카오 공유 훅
   const { share: shareNewsletter, sendToFriends, isLoading: isSharing } = useKakaoShare(123798)
@@ -54,6 +59,32 @@ export default function NewsletterPreviewPage() {
       console.log('  - params:', params)
     }
   }, [params, rawNewsletterId, newsletterId])
+
+  // 뉴스 데이터 로드
+  const loadNews = async () => {
+    try {
+      setNewsLoading(true)
+      setNewsError(null)
+      
+      console.log('🔄 뉴스 데이터 로드 시작')
+      
+      const response = await fetch('/api/news?limit=10')
+      const data = await response.json()
+      
+      if (data.success && data.data) {
+        setNewsData(data.data)
+        console.log('✅ 뉴스 데이터 로드 성공:', data.data.length, '개')
+      } else {
+        setNewsError(data.error || '뉴스를 불러오는데 실패했습니다.')
+        console.error('❌ 뉴스 데이터 로드 실패:', data.error)
+      }
+    } catch (error) {
+      console.error('❌ 뉴스 데이터 로드 중 오류:', error)
+      setNewsError('뉴스를 불러오는 중 오류가 발생했습니다.')
+    } finally {
+      setNewsLoading(false)
+    }
+  }
 
   // 뉴스레터 데이터 로드
   const loadNewsletter = async () => {
@@ -256,6 +287,7 @@ export default function NewsletterPreviewPage() {
     
     if (newsletterId) {
       loadNewsletter()
+      loadNews() // 뉴스 데이터도 함께 로드
     } else {
       console.error('❌ newsletterId가 없음')
       setError('뉴스레터 ID가 제공되지 않았습니다.')
@@ -417,6 +449,10 @@ export default function NewsletterPreviewPage() {
               newsletterData={newsletterContent}
               userId={null} // 실제 사용자 ID로 교체 가능
               showPersonalization={true}
+              newsData={newsData}
+              newsLoading={newsLoading}
+              newsError={newsError}
+              onNewsRefresh={loadNews}
             />
           ) : (
             <div className="space-y-6">
@@ -461,6 +497,91 @@ export default function NewsletterPreviewPage() {
                 newsletter={newsletterContent} 
                 isPreview={true} 
               />
+
+              {/* 뉴스 섹션 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Eye className="h-5 w-5 mr-2 text-blue-500" />
+                    최신 뉴스
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {newsLoading ? (
+                    <div className="text-center py-8">
+                      <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2 text-blue-600" />
+                      <p className="text-sm text-gray-500">뉴스를 불러오는 중...</p>
+                    </div>
+                  ) : newsError ? (
+                    <div className="text-center py-8">
+                      <div className="text-red-500 mb-2">
+                        <FileText className="h-8 w-8 mx-auto" />
+                      </div>
+                      <p className="text-sm text-red-600">{newsError}</p>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={loadNews}
+                        className="mt-2"
+                      >
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        다시 시도
+                      </Button>
+                    </div>
+                  ) : newsData.length > 0 ? (
+                    <div className="space-y-4">
+                      {newsData.map((news, index) => (
+                        <div key={news.id || index} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h3 className="font-medium text-gray-900 mb-2 line-clamp-2">
+                                {news.title}
+                              </h3>
+                              {news.summary && (
+                                <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                                  {news.summary}
+                                </p>
+                              )}
+                              <div className="flex items-center gap-4 text-xs text-gray-500">
+                                {news.category && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {news.category}
+                                  </Badge>
+                                )}
+                                {news.publishedAt && (
+                                  <span>
+                                    {new Date(news.publishedAt).toLocaleDateString()}
+                                  </span>
+                                )}
+                                {news.source && (
+                                  <span>출처: {news.source}</span>
+                                )}
+                              </div>
+                            </div>
+                            {news.url && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => window.open(news.url, '_blank', 'noopener,noreferrer')}
+                                className="ml-4"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <div className="text-gray-400 mb-2">
+                        <FileText className="h-8 w-8 mx-auto" />
+                      </div>
+                      <p className="text-sm text-gray-500">표시할 뉴스가 없습니다.</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           )
         ) : (
