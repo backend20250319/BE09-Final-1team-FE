@@ -19,19 +19,24 @@ export async function GET(request) {
       },
     });
 
-    const backendData = await backendResponse.json();
+    const backendData = await backendResponse.json().catch(() => ({
+      success: false,
+      error: '백엔드 응답 파싱 실패'
+    }));
     
     console.log('백엔드 카카오 권한 확인 응답:', {
       status: backendResponse.status,
+      statusText: backendResponse.statusText,
       success: backendData.success,
-      hasPermission: backendData.hasPermission
+      hasPermission: backendData.hasPermission,
+      error: backendData.error
     });
 
     if (!backendResponse.ok || !backendData.success) {
       return NextResponse.json({
         success: false,
         hasPermission: false,
-        error: backendData.error || '카카오 권한 확인에 실패했습니다.'
+        error: backendData.error || `백엔드 API 오류 (${backendResponse.status}: ${backendResponse.statusText})`
       }, { status: backendResponse.status });
     }
 
@@ -44,14 +49,30 @@ export async function GET(request) {
     });
 
   } catch (error) {
-    console.error('카카오 권한 확인 서버 에러:', error);
+    console.error('카카오 권한 확인 서버 에러:', {
+      error: error.message || '알 수 없는 오류',
+      name: error.name,
+      code: error.code,
+      stack: error.stack
+    });
+    
+    // 백엔드 연결 실패인 경우 구체적인 메시지 제공
+    let errorMessage = '서버 내부 오류가 발생했습니다.';
+    if (error.code === 'ECONNREFUSED') {
+      errorMessage = '백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.';
+    } else if (error.code === 'ENOTFOUND') {
+      errorMessage = '백엔드 서버를 찾을 수 없습니다. API URL 설정을 확인해주세요.';
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
     
     return NextResponse.json(
       { 
         success: false, 
         hasPermission: false,
-        error: '서버 내부 오류가 발생했습니다.',
-        details: error.message 
+        error: errorMessage,
+        details: error.message,
+        code: error.code
       },
       { status: 500 }
     );

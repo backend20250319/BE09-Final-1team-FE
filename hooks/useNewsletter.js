@@ -206,6 +206,61 @@ export function useUpdateSubscriptionStatus() {
   })
 }
 
+// 구독 토글 훅 (카테고리별)
+export function useToggleSubscription() {
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+
+  return useMutation({
+    mutationFn: ({ category, isActive }) => 
+      newsletterService.toggleSubscription(category, isActive),
+    
+    onSuccess: (data, variables) => {
+      // fallback 모드가 아닌 경우에만 쿼리 무효화
+      if (!data.fallback) {
+        queryClient.invalidateQueries(['user-subscriptions'])
+        queryClient.invalidateQueries(['newsletter-stats-subscribers'])
+      }
+      
+      const action = variables.isActive ? '구독' : '구독 해제'
+      
+      // fallback 모드인 경우 다른 스타일의 토스트 표시
+      if (data.fallback) {
+        toast({
+          title: `${action} 완료 (로컬)`,
+          description: data.message || `${variables.category} 카테고리 ${action}이 로컬에서 처리되었습니다.`,
+          icon: <CheckCircle className="h-4 w-4 text-orange-500" />
+        })
+      } else {
+        toast({
+          title: `${action} 완료`,
+          description: data.message || `${variables.category} 카테고리 ${action}이 완료되었습니다.`,
+          icon: <CheckCircle className="h-4 w-4 text-green-500" />
+        })
+      }
+    },
+    
+    onError: (error) => {
+      // 구독 제한 오류 처리
+      if (error.message?.includes('CATEGORY_LIMIT_EXCEEDED')) {
+        toast({
+          title: "구독 제한",
+          description: "최대 3개 카테고리까지 구독할 수 있습니다. 다른 카테고리 구독을 해제한 후 다시 시도해주세요.",
+          variant: "destructive",
+          icon: <AlertCircle className="h-4 w-4 text-red-500" />
+        })
+      } else {
+        toast({
+          title: "구독 처리 실패",
+          description: error.message || "일시적인 오류가 발생했습니다.",
+          variant: "destructive",
+          icon: <AlertCircle className="h-4 w-4 text-red-500" />
+        })
+      }
+    }
+  })
+}
+
 // 카테고리별 기사 조회 훅
 export function useCategoryArticles(category, limit = 5) {
   return useQuery({

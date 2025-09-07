@@ -40,20 +40,47 @@ export function useKakaoPermission() {
         setHasPermission(hasPermission);
         return hasPermission;
       } else {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('서버 권한 확인 실패:', errorData);
+        const errorData = await response.json().catch(() => ({ 
+          error: '응답 파싱 실패',
+          status: response.status,
+          statusText: response.statusText 
+        }));
+        console.error('서버 권한 확인 실패:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData: errorData
+        });
         
-        // 백엔드 API가 없는 경우 임시로 권한이 있다고 가정
-        // (실제로는 카카오 OAuth 콜백에서 권한이 허용되었을 때만 true)
-        console.log('백엔드 API가 없어서 임시로 권한 확인을 우회합니다.');
+        // 백엔드 API가 없는 경우 임시로 권한이 없다고 가정
+        console.log('백엔드 API 응답 실패로 인해 권한 확인을 우회합니다.');
+        
+        // 사용자에게 친화적인 메시지 표시
+        toast({
+          title: "권한 확인 실패",
+          description: "서버 연결에 문제가 있습니다. 잠시 후 다시 시도해주세요.",
+          variant: "destructive"
+        });
+        
         setHasPermission(false);
         return false;
       }
     } catch (serverError) {
-      console.error('서버 사이드 권한 확인 실패:', serverError);
+      console.error('서버 사이드 권한 확인 실패:', {
+        error: serverError.message || '알 수 없는 오류',
+        name: serverError.name,
+        stack: serverError.stack
+      });
       
       // 네트워크 오류나 API가 없는 경우 임시로 권한이 없다고 가정
       console.log('서버 오류로 인해 권한 확인을 우회합니다.');
+      
+      // 사용자에게 친화적인 메시지 표시
+      toast({
+        title: "네트워크 오류",
+        description: "서버에 연결할 수 없습니다. 인터넷 연결을 확인해주세요.",
+        variant: "destructive"
+      });
+      
       setHasPermission(false);
       return false;
     }

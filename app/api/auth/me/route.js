@@ -32,18 +32,23 @@ export async function GET(request) {
 
     const userData = await response.json();
     
+    // 표준화된 응답 형식으로 반환
     return NextResponse.json({
-      id: userData.id,
-      name: userData.name,
-      email: userData.email,
-      loginMethod: userData.loginMethod, // 'kakao' | 'email'
-      provider: userData.provider,
-      preferences: {
-        categories: userData.preferences?.categories || [],
-        notifications: userData.preferences?.notifications || true,
-        personalizedContent: userData.preferences?.personalizedContent || true
-      },
-      createdAt: userData.createdAt
+      success: true,
+      data: {
+        id: userData.id,
+        name: userData.name,
+        email: userData.email,
+        role: userData.role || 'user', // role 필드 추가
+        loginMethod: userData.loginMethod, // 'kakao' | 'email'
+        provider: userData.provider,
+        preferences: {
+          categories: userData.preferences?.categories || [],
+          notifications: userData.preferences?.notifications || true,
+          personalizedContent: userData.preferences?.personalizedContent || true
+        },
+        createdAt: userData.createdAt
+      }
     });
   } catch (error) {
     console.error('사용자 정보 조회 실패:', error);

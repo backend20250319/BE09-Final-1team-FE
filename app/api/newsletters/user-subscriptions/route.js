@@ -3,7 +3,8 @@ import { cookies } from 'next/headers';
 // 백엔드 연결 상태 확인 함수
 async function checkBackendHealth() {
   try {
-    const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:8000'}/health`;
+    // 실제 작동하는 API 엔드포인트로 헬스 체크
+    const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/newsletter/stats/subscribers`;
     const response = await fetch(backendUrl, {
       method: 'GET',
       timeout: 5000 // 5초 타임아웃
