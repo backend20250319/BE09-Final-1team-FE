@@ -77,6 +77,11 @@ export default function IntegratedNewsletterDashboard() {
   })
   const [subscriberCount, setSubscriberCount] = useState(0)
 
+  // 뉴스 관련 상태
+  const [newsData, setNewsData] = useState([])
+  const [newsLoading, setNewsLoading] = useState(true)
+  const [newsError, setNewsError] = useState(null)
+
   // React Query 훅들
   const { 
     data: userSubscriptions = [], 
@@ -386,6 +391,30 @@ export default function IntegratedNewsletterDashboard() {
     }
   }, [])
 
+  // 뉴스 데이터 가져오기
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        setNewsLoading(true)
+        const response = await fetch('/api/news?limit=5')
+        const data = await response.json()
+        
+        if (data.success) {
+          setNewsData(data.data || [])
+        } else {
+          setNewsError(data.error || '뉴스를 불러오는데 실패했습니다.')
+        }
+      } catch (error) {
+        console.error('뉴스 조회 실패:', error)
+        setNewsError('뉴스를 불러오는 중 오류가 발생했습니다.')
+      } finally {
+        setNewsLoading(false)
+      }
+    }
+
+    fetchNews()
+  }, [])
+
   // 백엔드 카테고리명을 프론트엔드 카테고리명으로 변환하는 함수
   const mapBackendCategoryToFrontend = (backendCategory) => {
     const categoryMapping = {
@@ -673,14 +702,102 @@ export default function IntegratedNewsletterDashboard() {
                 
                 <div className="mt-4">
                   <h3 className="font-bold text-gray-900 mb-2">오늘의 뉴스</h3>
-                  <div className="text-center text-gray-500 py-8">
-                    <p>아직 뉴스가 없습니다.</p>
-                    <p className="text-sm">곧 새로운 뉴스를 가져올 예정입니다.</p>
-                  </div>
+                  
+                  {newsLoading ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+                      <p className="text-sm text-gray-500 mt-2">뉴스 로딩 중...</p>
+                    </div>
+                  ) : newsError ? (
+                    <div className="text-center text-gray-500 py-8">
+                      <AlertCircle className="h-8 w-8 mx-auto mb-2 text-red-500" />
+                      <p>{newsError}</p>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="mt-2"
+                        onClick={() => window.location.reload()}
+                      >
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        다시 시도
+                      </Button>
+                    </div>
+                  ) : newsData.length === 0 ? (
+                    <div className="text-center text-gray-500 py-8">
+                      <p>아직 뉴스가 없습니다.</p>
+                      <p className="text-sm">곧 새로운 뉴스를 가져올 예정입니다.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {newsData.slice(0, 3).map((news) => (
+                        <div key={news.id} className="border rounded-lg p-4 bg-white/50 hover:bg-white/70 transition-colors">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex-1">
+                              <h4 className="font-medium text-sm text-gray-900 line-clamp-2 mb-1">
+                                {news.title}
+                              </h4>
+                              <p className="text-xs text-gray-600 line-clamp-2">
+                                {news.description}
+                              </p>
+                            </div>
+                            {news.imageUrl && (
+                              <img 
+                                src={news.imageUrl} 
+                                alt={news.title}
+                                className="w-16 h-16 object-cover rounded ml-3 flex-shrink-0"
+                              />
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between text-xs text-gray-500">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary" className="text-xs">
+                                {news.categoryKo}
+                              </Badge>
+                              <span>{news.source}</span>
+                            </div>
+                            <span>
+                              {news.publishedAt ? new Date(news.publishedAt).toLocaleDateString('ko-KR') : '오늘'}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {newsData.length > 3 && (
+                        <div className="text-center">
+                          <Button variant="outline" size="sm" className="text-xs">
+                            더 많은 뉴스 보기 ({newsData.length - 3}개 더)
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   
                   <div className="mt-6">
                     <Label className="text-sm font-medium text-gray-700">태그:</Label>
-                    {/* 태그들이 들어갈 자리 */}
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {(() => {
+                        // 뉴스에서 카테고리 추출하여 태그로 표시
+                        const categories = [...new Set(newsData.map(news => news.categoryKo).filter(Boolean))];
+                        
+                        if (categories.length > 0) {
+                          return categories.slice(0, 5).map((category, index) => (
+                            <Badge key={index} variant="outline" className="text-xs">
+                              {category}
+                            </Badge>
+                          ));
+                        } else {
+                          return (
+                            <>
+                              <Badge variant="outline" className="text-xs">정치</Badge>
+                              <Badge variant="outline" className="text-xs">경제</Badge>
+                              <Badge variant="outline" className="text-xs">IT/과학</Badge>
+                              <Badge variant="outline" className="text-xs">사회</Badge>
+                              <Badge variant="outline" className="text-xs">생활</Badge>
+                            </>
+                          );
+                        }
+                      })()}
+                    </div>
                   </div>
                 </div>
               </div>
