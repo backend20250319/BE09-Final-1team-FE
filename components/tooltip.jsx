@@ -197,10 +197,10 @@ export default function TermTooltip({ term, definition, definitions, children, s
               transform: 'none', // 중앙 정렬 제거
             }}
           >
-            <Card className="glass shadow-xl border-blue-200 min-w-[280px] max-w-[400px]">
-              <CardContent className="p-3">
-                <div className="text-sm">
-                  <div className="font-semibold text-blue-800 mb-2 break-words leading-normal">
+            <Card className="glass shadow-xl border-blue-200 min-w-[320px] max-w-[450px]">
+              <CardContent className="p-4">
+                <div className="text-base">
+                  <div className="font-semibold text-blue-800 mb-3 break-words leading-normal text-lg">
                     {term}
                   </div>
 
@@ -211,7 +211,7 @@ export default function TermTooltip({ term, definition, definitions, children, s
                       {definitions.map((def, index) => (
                         <div
                           key={index}
-                          className="text-gray-600 text-xs leading-normal break-words"
+                          className="text-gray-600 text-sm leading-relaxed break-words"
                         >
                           <span className="font-medium text-blue-600">{index + 1}.</span>{' '}
                           {def.def || def.definition}
@@ -219,13 +219,12 @@ export default function TermTooltip({ term, definition, definitions, children, s
                       ))}
                     </div>
                   ) : definition ? (
-                    // 하드코딩된 단일 정의
-                    <div className="text-gray-600 text-xs leading-normal break-words">
+                    <div className="text-gray-600 text-sm leading-relaxed break-words">
                       {definition}
                     </div>
                   ) : apiCall ? (
                     // API 호출이 필요한 경우
-                    <div className="text-gray-600 text-xs leading-normal break-words">
+                    <div className="text-gray-600 text-sm leading-relaxed break-words">
                       {isLoading ? (
                         <div className="flex items-center space-x-2">
                           <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
@@ -237,7 +236,7 @@ export default function TermTooltip({ term, definition, definitions, children, s
                           {dynamicDefinitions.map((def, index) => (
                             <div
                               key={index}
-                              className="text-gray-600 text-xs leading-normal break-words"
+                              className="text-gray-600 text-sm leading-relaxed break-words"
                             >
                               <span className="font-medium text-blue-600">{index + 1}.</span>{' '}
                               {def.definition}
