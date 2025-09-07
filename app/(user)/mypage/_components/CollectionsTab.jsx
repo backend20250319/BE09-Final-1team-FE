@@ -270,7 +270,6 @@ const CollectionCard = ({ collection, onEdit, onDelete }) => {
         className="block cursor-pointer"
       >
         <div className="relative w-full aspect-video mb-3">
-          {/* Stacked Photos Effect - Pyramid Animation */}
           <div
             className="absolute w-[95%] h-[95%] bottom-0 right-0 rounded-lg shadow-md transition-transform duration-300 group-hover:-translate-y-3 group-hover:-translate-x-2 group-hover:rotate-[-6deg]"
             style={{

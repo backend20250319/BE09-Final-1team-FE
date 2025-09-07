@@ -1,4 +1,5 @@
-"use client";
+// 글자 크기를 선택하는 UI 컴포넌트
+'use client';
 
 import React, { useEffect, useRef } from 'react';
 
@@ -20,9 +21,7 @@ const FontSizeSelector = ({ currentValue, onSelect, onClose }) => {
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [selectorRef, onClose]);
 
   return (
@@ -58,19 +57,17 @@ const FontSizeSelector = ({ currentValue, onSelect, onClose }) => {
             })}
           </div>
           <div className="mt-3 flex w-full justify-between px-1">
-            {fontSizes.map((sizeOption) => {
-              const isSelected = currentValue === sizeOption.value;
-              return (
-                <div
-                  key={sizeOption.id}
-                  className={`w-10 text-center text-xs font-medium text-gray-500 whitespace-nowrap ${
-                    isSelected && "font-bold text-indigo-500"
-                  }`}
-                >
-                  {sizeOption.label}
-                </div>
-              );
-            })}
+            {fontSizes.map((sizeOption) => (
+              <div
+                key={sizeOption.id}
+                className={`w-10 text-center text-xs font-medium text-gray-500 whitespace-nowrap ${
+                  currentValue === sizeOption.value &&
+                  "font-bold text-indigo-500"
+                }`}
+              >
+                {sizeOption.label}
+              </div>
+            ))}
           </div>
         </div>
       </div>

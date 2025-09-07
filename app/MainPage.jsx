@@ -340,7 +340,6 @@ export default function MainPage({
     e.preventDefault();
     e.stopPropagation();
     if (!isAuthenticated()) {
-      // 수정된 부분
       setIsLoginModalOpen(true);
       return;
     }

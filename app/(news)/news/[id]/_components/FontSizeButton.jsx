@@ -1,4 +1,5 @@
-"use client";
+// 글자 크기 선택 UI를 여는 버튼 컴포넌트
+'use client';
 
 import React from 'react';
 
