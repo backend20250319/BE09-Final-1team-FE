@@ -1,17 +1,11 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import {
   Bookmark,
   Share,
@@ -22,9 +16,9 @@ import {
   ChevronsRight,
   LogIn,
   X,
-} from "lucide-react";
-import Link from "next/link";
-import { Label } from "@/components/ui/label";
+} from 'lucide-react';
+import Link from 'next/link';
+import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
@@ -32,28 +26,25 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/dialog";
-import { toast } from "sonner";
+} from '@/components/ui/dialog';
+import { toast } from 'sonner';
 
-import { TextWithTooltips } from "@/components/tooltip";
-import { getUserRole, isAuthenticated } from "@/lib/auth"; // isAuthenticated 임포트
-import dynamic from "next/dynamic";
-import useSWR from "swr";
-import { useScrap } from "@/contexts/ScrapContext";
+import { TextWithTooltips } from '@/components/tooltip';
+import { getUserRole, isAuthenticated } from '@/lib/auth'; // isAuthenticated 임포트
+import dynamic from 'next/dynamic';
+import useSWR from 'swr';
+import { useScrap } from '@/contexts/ScrapContext';
 
-const RealTimeKeywordWidget = dynamic(
-  () => import("@/components/RealTimeKeywordWidget"),
-  {
-    ssr: false,
-    loading: () => <div className="h-10 rounded bg-white/50 animate-pulse" />,
-  }
-);
+const RealTimeKeywordWidget = dynamic(() => import('@/components/RealTimeKeywordWidget'), {
+  ssr: false,
+  loading: () => <div className="h-10 rounded bg-white/50 animate-pulse" />,
+});
 
 const LoginConfirmModal = ({ isOpen, onClose }) => {
   const router = useRouter();
 
   const handleLoginRedirect = () => {
-    router.push("/auth");
+    router.push('/auth');
     onClose();
   };
 
@@ -66,8 +57,7 @@ const LoginConfirmModal = ({ isOpen, onClose }) => {
             로그인 필요
           </DialogTitle>
           <DialogDescription>
-            이 기능을 사용하려면 로그인이 필요합니다. 로그인 페이지로
-            이동하시겠습니까?
+            이 기능을 사용하려면 로그인이 필요합니다. 로그인 페이지로 이동하시겠습니까?
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -80,7 +70,7 @@ const LoginConfirmModal = ({ isOpen, onClose }) => {
             className="inline-flex h-10 items-center justify-center whitespace-nowrap rounded-md px-4 py-2 text-sm font-semibold text-white transition-all hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
             style={{
               background:
-                "linear-gradient(135deg, rgba(102, 126, 234, 1) 0%, rgba(118, 75, 162, 1) 50%, rgba(245, 87, 108, 1) 100%)",
+                'linear-gradient(135deg, rgba(102, 126, 234, 1) 0%, rgba(118, 75, 162, 1) 50%, rgba(245, 87, 108, 1) 100%)',
             }}
           >
             로그인
@@ -100,20 +90,20 @@ const ShareModal = ({ newsItem, onClose }) => {
     navigator.clipboard
       .writeText(newsUrl)
       .then(() => {
-        toast.success("URL이 복사되었습니다.");
+        toast.success('URL이 복사되었습니다.');
         onClose();
       })
       .catch(() => {
-        const textarea = document.createElement("textarea");
+        const textarea = document.createElement('textarea');
         textarea.value = newsUrl;
         document.body.appendChild(textarea);
         textarea.select();
         try {
-          document.execCommand("copy");
-          toast.success("URL이 복사되었습니다.");
+          document.execCommand('copy');
+          toast.success('URL이 복사되었습니다.');
           onClose();
         } catch (err) {
-          toast.error("URL 복사에 실패했습니다.");
+          toast.error('URL 복사에 실패했습니다.');
         } finally {
           document.body.removeChild(textarea);
         }
@@ -131,17 +121,12 @@ const ShareModal = ({ newsItem, onClose }) => {
       >
         <div className="p-6 border-b flex justify-between items-center">
           <h2 className="text-xl font-bold">기사 URL 복사</h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full"
-          >
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full">
             <X />
           </button>
         </div>
         <div className="p-6">
-          <p className="text-gray-600 mb-4">
-            아래 버튼을 눌러 기사 URL을 복사할 수 있습니다.
-          </p>
+          <p className="text-gray-600 mb-4">아래 버튼을 눌러 기사 URL을 복사할 수 있습니다.</p>
           <div className="flex items-center border rounded-lg p-2 bg-gray-50">
             <input
               type="text"
@@ -168,7 +153,7 @@ export default function MainPage({
   initialTotalPages,
   initialTotalElements,
 }) {
-  const [selectedCategory, setSelectedCategory] = useState("전체");
+  const [selectedCategory, setSelectedCategory] = useState('전체');
   const [isLoaded, setIsLoaded] = useState(true);
   const [userRole, setUserRole] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -180,14 +165,14 @@ export default function MainPage({
   const [popularNews, setPopularNews] = useState(
     initialTrending || {
       id: 1,
-      title: "뉴스를 불러오는 중...",
-      content: "잠시만 기다려주세요.",
-      source: "시스템",
+      title: '뉴스를 불러오는 중...',
+      content: '잠시만 기다려주세요.',
+      source: '시스템',
       publishedAt: new Date().toISOString(),
-      category: "GENERAL",
-      image: "/placeholder.jpg",
+      category: 'GENERAL',
+      image: '/placeholder.jpg',
       views: 0,
-    }
+    },
   );
   const [popularNewsLoading, setPopularNewsLoading] = useState(false);
   const [relatedNews, setRelatedNews] = useState([]);
@@ -200,9 +185,12 @@ export default function MainPage({
   const fetcher = (url) => fetch(url).then((r) => r.json());
 
   const backendPage = currentPage - 1;
-  const categoryParam =
-    selectedCategory === "전체" ? "" : `&category=${selectedCategory}`;
-  const listKey = `/api/news?page=${backendPage}&size=${itemsPerPage}${categoryParam}`;
+  const categoryParam = selectedCategory === '전체' ? '' : `&category=${selectedCategory}`;
+
+  // 추천 로직은 '전체' 카테고리에서만 적용
+  const isLoggedIn = isAuthenticated();
+  const baseUrl = selectedCategory === '전체' && isLoggedIn ? '/api/news/feed' : '/api/news';
+  const listKey = `${baseUrl}?page=${backendPage}&size=${itemsPerPage}${categoryParam}`;
 
   const { data: listData, isLoading: listLoading } = useSWR(listKey, fetcher, {
     fallbackData: {
@@ -216,19 +204,13 @@ export default function MainPage({
     dedupingInterval: 5000,
   });
 
-  const { data: trendingData } = useSWR(
-    "/api/news/trending?hours=24&limit=1",
-    fetcher,
-    {
-      fallbackData: initialTrending
-        ? { content: [initialTrending] }
-        : undefined,
-      revalidateOnMount: true,
-      revalidateOnFocus: false,
-      revalidateOnReconnect: true,
-      dedupingInterval: 10000,
-    }
-  );
+  const { data: trendingData } = useSWR('/api/news/trending?hours=24&limit=1', fetcher, {
+    fallbackData: initialTrending ? { content: [initialTrending] } : undefined,
+    revalidateOnMount: true,
+    revalidateOnFocus: false,
+    revalidateOnReconnect: true,
+    dedupingInterval: 10000,
+  });
 
   const { data: relatedData } = useSWR(
     popularNews?.id ? `/api/news/related/${popularNews.id}` : null,
@@ -238,7 +220,7 @@ export default function MainPage({
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
       dedupingInterval: 15000,
-    }
+    },
   );
 
   useEffect(() => {
@@ -279,16 +261,16 @@ export default function MainPage({
     const newPopularNews = {
       id: src.newsId ?? src.id,
       title: src.title,
-      content: src.content ?? src.summary ?? "",
-      source: src.press ?? src.source ?? "알 수 없음",
+      content: src.content ?? src.summary ?? '',
+      source: src.press ?? src.source ?? '알 수 없음',
       publishedAt: src.publishedAt,
       category: src.categoryName ?? src.category,
-      image: src.imageUrl ?? src.image ?? "/placeholder.jpg",
+      image: src.imageUrl ?? src.image ?? '/placeholder.jpg',
       views: src.viewCount ?? src.views ?? 0,
       newsId: src.newsId ?? src.id,
-      imageUrl: src.imageUrl ?? src.image ?? "/placeholder.jpg",
+      imageUrl: src.imageUrl ?? src.image ?? '/placeholder.jpg',
       reporterName: src.reporterName,
-      press: src.press ?? src.source ?? "알 수 없음",
+      press: src.press ?? src.source ?? '알 수 없음',
     };
 
     // 이전 데이터와 비교해서 실제로 변경된 경우에만 업데이트
@@ -308,14 +290,14 @@ export default function MainPage({
     const newMapped = relatedData.slice(0, 2).map((news) => ({
       id: news.newsId,
       title: news.title,
-      content: news.summary || "",
+      content: news.summary || '',
       source: news.press,
       publishedAt: news.publishedAt,
       category: news.categoryName,
-      image: news.imageUrl || "/placeholder.jpg",
+      image: news.imageUrl || '/placeholder.jpg',
       views: 0,
       newsId: news.newsId,
-      imageUrl: news.imageUrl || "/placeholder.jpg",
+      imageUrl: news.imageUrl || '/placeholder.jpg',
       reporterName: news.reporterName,
       press: news.press,
     }));
@@ -348,7 +330,7 @@ export default function MainPage({
       title: newsItem.title,
       imageUrl: newsItem.image,
       press: newsItem.source,
-      reporterName: newsItem.reporterName || "기자 정보 없음",
+      reporterName: newsItem.reporterName || '기자 정보 없음',
       publishedAt: newsItem.publishedAt,
       categoryName: newsItem.category,
     };
@@ -362,28 +344,28 @@ export default function MainPage({
   };
 
   const categories = [
-    "전체",
-    "POLITICS",
-    "ECONOMY",
-    "SOCIETY",
-    "LIFE",
-    "INTERNATIONAL",
-    "IT_SCIENCE",
-    "VEHICLE",
-    "TRAVEL_FOOD",
-    "ART",
+    '전체',
+    'POLITICS',
+    'ECONOMY',
+    'SOCIETY',
+    'LIFE',
+    'INTERNATIONAL',
+    'IT_SCIENCE',
+    'VEHICLE',
+    'TRAVEL_FOOD',
+    'ART',
   ];
   const categoryDisplayNames = {
-    전체: "전체",
-    POLITICS: "정치",
-    ECONOMY: "경제",
-    SOCIETY: "사회",
-    LIFE: "생활",
-    INTERNATIONAL: "세계",
-    IT_SCIENCE: "IT/과학",
-    VEHICLE: "자동차/교통",
-    TRAVEL_FOOD: "여행/음식",
-    ART: "예술",
+    전체: '전체',
+    POLITICS: '정치',
+    ECONOMY: '경제',
+    SOCIETY: '사회',
+    LIFE: '생활',
+    INTERNATIONAL: '세계',
+    IT_SCIENCE: 'IT/과학',
+    VEHICLE: '자동차/교통',
+    TRAVEL_FOOD: '여행/음식',
+    ART: '예술',
   };
   const filteredNewsItems = newsItems;
 
@@ -392,9 +374,7 @@ export default function MainPage({
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
         <Card className="glass hover-lift shadow-lg border-0 px-8 py-12 text-center max-w-md">
           <div className="text-6xl mb-4">⚠️</div>
-          <h3 className="text-2xl font-bold text-gray-800 mb-4 korean-text">
-            오류가 발생했습니다
-          </h3>
+          <h3 className="text-2xl font-bold text-gray-800 mb-4 korean-text">오류가 발생했습니다</h3>
           <p className="text-gray-600 mb-6 korean-text">{error}</p>
           <Button
             onClick={() => window.location.reload()}
@@ -417,13 +397,11 @@ export default function MainPage({
                 {categories.map((category, index) => (
                   <Button
                     key={`category-${category}-${index}`}
-                    variant={
-                      selectedCategory === category ? "default" : "outline"
-                    }
+                    variant={selectedCategory === category ? 'default' : 'outline'}
                     size="default"
                     onClick={() => setSelectedCategory(category)}
                     className={`whitespace-nowrap hover-lift text-base px-4 py-2 korean-text ${
-                      isLoaded ? "animate-slide-in" : "opacity-0"
+                      isLoaded ? 'animate-slide-in' : 'opacity-0'
                     }`}
                     style={{ animationDelay: `${index * 0.1}s` }}
                   >
@@ -452,7 +430,7 @@ export default function MainPage({
                         alt={popularNews.title}
                         className="w-full h-full object-cover"
                         loading="eager"
-                        onError={(e) => (e.target.src = "/placeholder.jpg")}
+                        onError={(e) => (e.target.src = '/placeholder.jpg')}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent p-4 md:p-6 flex flex-col justify-end text-white">
                         <Badge className="bg-red-600 text-white px-4 py-1 rounded-full shadow-lg font-bold tracking-wider mb-3 w-fit">
@@ -466,24 +444,21 @@ export default function MainPage({
                           <TextWithTooltips
                             text={
                               popularNews.content
-                                ? popularNews.content
-                                    .replace(/<[^>]*>?/gm, "")
-                                    .substring(0, 150) + "..."
-                                : "내용을 불러올 수 없습니다."
+                                ? popularNews.content.replace(/<[^>]*>?/gm, '').substring(0, 150) +
+                                  '...'
+                                : '내용을 불러올 수 없습니다.'
                             }
                           />
                         </p>
 
                         <div className="flex items-center justify-between text-xs text-gray-300">
                           <span>
-                            {popularNews.source} •{" "}
-                            {new Date(
-                              popularNews.publishedAt
-                            ).toLocaleDateString("ko-KR", {
-                              month: "short",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
+                            {popularNews.source} •{' '}
+                            {new Date(popularNews.publishedAt).toLocaleDateString('ko-KR', {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
                             })}
                           </span>
                           <div className="flex items-center space-x-2">
@@ -512,80 +487,72 @@ export default function MainPage({
               </Link>
             </div>
 
-            <div
-              className="lg:col-span-1 flex flex-col gap-6"
-              style={{ height: "780px" }}
-            >
-              {(relatedNews.length > 0
-                ? relatedNews
-                : filteredNewsItems.slice(0, 2)
-              ).map((item, index) => (
-                <Link
-                  key={`sidebar-news-${item.id || index}`}
-                  href={`/news/${item.id}`}
-                  className="block flex-1 min-h-0"
-                >
-                  <Card className="w-full flex flex-col glass hover-lift animate-slide-in cursor-pointer transition-all duration-300 hover:shadow-lg h-full rounded-xl">
-                    <div className="h-[160px] w-full relative">
-                      <img
-                        src={item.image || "/placeholder.jpg"}
-                        alt={item.title}
-                        className="w-full h-full object-cover rounded-t-xl"
-                        loading="eager"
-                        onError={(e) => {
-                          e.target.src = "/placeholder.jpg";
-                        }}
-                      />
-                    </div>
-                    <div className="flex flex-col justify-between flex-1 px-4 py-3 min-h-0">
-                      <div className="flex-1 flex flex-col min-h-0">
-                        <div className="flex justify-between items-center mb-2">
-                          <Badge className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full shadow">
-                            {categoryDisplayNames[item.category] ||
-                              item.category}
-                          </Badge>
-                          <span className="text-xs text-gray-500 flex items-center flex-shrink-0 ml-2">
-                            <Clock className="h-3 w-3 mr-1" />
-                            {new Date(item.publishedAt).toLocaleDateString(
-                              "ko-KR",
-                              {
-                                month: "short",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              }
-                            )}
+            <div className="lg:col-span-1 flex flex-col gap-6" style={{ height: '780px' }}>
+              {(relatedNews.length > 0 ? relatedNews : filteredNewsItems.slice(0, 2)).map(
+                (item, index) => (
+                  <Link
+                    key={`sidebar-news-${item.id || index}`}
+                    href={`/news/${item.id}`}
+                    className="block flex-1 min-h-0"
+                  >
+                    <Card className="w-full flex flex-col glass hover-lift animate-slide-in cursor-pointer transition-all duration-300 hover:shadow-lg h-full rounded-xl">
+                      <div className="h-[160px] w-full relative">
+                        <img
+                          src={item.image || '/placeholder.jpg'}
+                          alt={item.title}
+                          className="w-full h-full object-cover rounded-t-xl"
+                          loading="eager"
+                          onError={(e) => {
+                            e.target.src = '/placeholder.jpg';
+                          }}
+                        />
+                      </div>
+                      <div className="flex flex-col justify-between flex-1 px-4 py-3 min-h-0">
+                        <div className="flex-1 flex flex-col min-h-0">
+                          <div className="flex justify-between items-center mb-2">
+                            <Badge className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full shadow">
+                              {categoryDisplayNames[item.category] || item.category}
+                            </Badge>
+                            <span className="text-xs text-gray-500 flex items-center flex-shrink-0 ml-2">
+                              <Clock className="h-3 w-3 mr-1" />
+                              {new Date(item.publishedAt).toLocaleDateString('ko-KR', {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          </div>
+                          <div className="flex-1 mt-1 pb-3 border-b border-gray-100">
+                            <h3 className="text-lg font-bold hover:text-blue-600 transition-colors leading-relaxed korean-text line-clamp-3">
+                              <TextWithTooltips text={item.title} />
+                            </h3>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between pt-3 mt-2">
+                          <span className="text-sm text-gray-500 font-medium truncate mr-2">
+                            {item.source}
                           </span>
-                        </div>
-                        <div className="flex-1 mt-1 pb-3 border-b border-gray-100">
-                          <h3 className="text-lg font-bold hover:text-blue-600 transition-colors leading-relaxed korean-text line-clamp-3">
-                            <TextWithTooltips text={item.title} />
-                          </h3>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between pt-3 mt-2">
-                        <span className="text-sm text-gray-500 font-medium truncate mr-2">
-                          {item.source}
-                        </span>
-                        <div className="flex items-center space-x-1 flex-shrink-0">
-                          <button
-                            onClick={(e) => handleScrapClick(e, item)}
-                            className="p-2 hover:bg-gray-100 rounded-full transition-all duration-200"
-                          >
-                            <Bookmark className="w-4 h-4 text-gray-600" />
-                          </button>
-                          <button
-                            onClick={(e) => handleShareClick(e, item)}
-                            className="p-2 hover:bg-gray-100 rounded-full transition-all duration-200"
-                          >
-                            <Share className="w-4 h-4 text-gray-600" />
-                          </button>
+                          <div className="flex items-center space-x-1 flex-shrink-0">
+                            <button
+                              onClick={(e) => handleScrapClick(e, item)}
+                              className="p-2 hover:bg-gray-100 rounded-full transition-all duration-200"
+                            >
+                              <Bookmark className="w-4 h-4 text-gray-600" />
+                            </button>
+                            <button
+                              onClick={(e) => handleShareClick(e, item)}
+                              className="p-2 hover:bg-gray-100 rounded-full transition-all duration-200"
+                            >
+                              <Share className="w-4 h-4 text-gray-600" />
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </Card>
-                </Link>
-              ))}
+                    </Card>
+                  </Link>
+                ),
+              )}
             </div>
           </div>
 
@@ -599,18 +566,18 @@ export default function MainPage({
               >
                 <Card
                   className={`w-full flex flex-col glass hover-lift animate-slide-in cursor-pointer transition-all duration-300 hover:shadow-lg h-full rounded-xl ${
-                    isLoaded ? "opacity-100" : "opacity-0"
+                    isLoaded ? 'opacity-100' : 'opacity-0'
                   }`}
                   style={{ animationDelay: `${(index + 1) * 0.2}s` }}
                 >
                   <div className="h-[250px] w-full relative">
                     <img
-                      src={news.image || "/placeholder.jpg"}
+                      src={news.image || '/placeholder.jpg'}
                       alt={news.title}
                       className="w-full h-full object-cover rounded-t-xl"
                       loading="eager"
                       onError={(e) => {
-                        e.target.src = "/placeholder.jpg";
+                        e.target.src = '/placeholder.jpg';
                       }}
                     />
                   </div>
@@ -622,15 +589,12 @@ export default function MainPage({
                         </Badge>
                         <span className="text-xs text-gray-500 flex items-center flex-shrink-0 ml-2">
                           <Clock className="h-3 w-3 mr-1" />
-                          {new Date(news.publishedAt).toLocaleDateString(
-                            "ko-KR",
-                            {
-                              month: "short",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
-                          )}
+                          {new Date(news.publishedAt).toLocaleDateString('ko-KR', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
                         </span>
                       </div>
                       <div className="flex-1 mt-1 pb-3 border-b border-gray-100">
@@ -672,7 +636,7 @@ export default function MainPage({
                     {currentPage} / {totalPages} 페이지
                   </p>
                   <p className="text-base text-gray-600 mt-2 korean-text">
-                    총 {totalElements?.toLocaleString() || "0"}개의 뉴스
+                    총 {totalElements?.toLocaleString() || '0'}개의 뉴스
                   </p>
                 </div>
               </Card>
@@ -686,9 +650,7 @@ export default function MainPage({
                     className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-white/20 hover-lift transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <ChevronsLeft className="h-4 w-4" />
-                    <span className="hidden sm:inline text-base font-medium">
-                      첫 페이지
-                    </span>
+                    <span className="hidden sm:inline text-base font-medium">첫 페이지</span>
                   </Button>
                   <Button
                     variant="ghost"
@@ -698,30 +660,25 @@ export default function MainPage({
                     className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-white/20 hover-lift transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <ChevronLeft className="h-4 w-4" />
-                    <span className="hidden sm:inline text-base font-medium">
-                      이전
-                    </span>
+                    <span className="hidden sm:inline text-base font-medium">이전</span>
                   </Button>
                   <div className="flex items-center space-x-2">
                     {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                       let pageNum;
                       if (totalPages <= 5) pageNum = i + 1;
                       else if (currentPage <= 3) pageNum = i + 1;
-                      else if (currentPage >= totalPages - 2)
-                        pageNum = totalPages - 4 + i;
+                      else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
                       else pageNum = currentPage - 2 + i;
                       return (
                         <Button
                           key={`pagination-${pageNum}-${i}`}
-                          variant={
-                            currentPage === pageNum ? "default" : "ghost"
-                          }
+                          variant={currentPage === pageNum ? 'default' : 'ghost'}
                           size="sm"
                           onClick={() => setCurrentPage(pageNum)}
                           className={`w-14 h-14 px-0 rounded-lg font-bold text-lg transition-all duration-300 ${
                             currentPage === pageNum
-                              ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg hover:shadow-xl hover-lift"
-                              : "hover:bg-white/20 hover-lift hover:scale-105"
+                              ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg hover:shadow-xl hover-lift'
+                              : 'hover:bg-white/20 hover-lift hover:scale-105'
                           }`}
                         >
                           {pageNum}
@@ -732,15 +689,11 @@ export default function MainPage({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() =>
-                      setCurrentPage(Math.min(totalPages, currentPage + 1))
-                    }
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                     disabled={currentPage === totalPages}
                     className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-white/20 hover-lift transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <span className="hidden sm:inline text-base font-medium">
-                      다음
-                    </span>
+                    <span className="hidden sm:inline text-base font-medium">다음</span>
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                   <Button
@@ -750,18 +703,14 @@ export default function MainPage({
                     disabled={currentPage === totalPages}
                     className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-white/20 hover-lift transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <span className="hidden sm:inline text-base font-medium">
-                      마지막
-                    </span>
+                    <span className="hidden sm:inline text-base font-medium">마지막</span>
                     <ChevronsRight className="h-4 w-4" />
                   </Button>
                 </div>
               </Card>
               <Card className="glass hover-lift shadow-lg border-0 px-6 py-4">
                 <div className="flex items-center space-x-3 text-base">
-                  <span className="text-gray-700 font-semibold">
-                    페이지로 이동:
-                  </span>
+                  <span className="text-gray-700 font-semibold">페이지로 이동:</span>
                   <input
                     type="number"
                     min="1"
@@ -776,9 +725,7 @@ export default function MainPage({
                     className="w-20 px-3 py-2 bg-white/50 border border-white/30 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 backdrop-blur-sm transition-all duration-200"
                     placeholder="페이지"
                   />
-                  <span className="text-gray-600 font-medium">
-                    / {totalPages}
-                  </span>
+                  <span className="text-gray-600 font-medium">/ {totalPages}</span>
                 </div>
               </Card>
             </div>
@@ -786,16 +733,8 @@ export default function MainPage({
         </div>
       </div>
 
-      <LoginConfirmModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-      />
-      {newsToShare && (
-        <ShareModal
-          newsItem={newsToShare}
-          onClose={() => setNewsToShare(null)}
-        />
-      )}
+      <LoginConfirmModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
+      {newsToShare && <ShareModal newsItem={newsToShare} onClose={() => setNewsToShare(null)} />}
     </div>
   );
 }
