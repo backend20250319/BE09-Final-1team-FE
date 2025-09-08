@@ -142,7 +142,11 @@ const CollectionDetailPage = () => {
         throw new Error(errorText || "이름 변경에 실패했습니다.");
       }
     } catch (err) {
-      toast.error(err.message);
+      if (err.message.includes("이미 존재하는 컬렉션 이름입니다")) {
+        toast.error("이미 존재하는 컬렉션 이름입니다.");
+      } else {
+        toast.error(err.message || "이름 변경 중 오류가 발생했습니다.");
+      }
     }
   };
 

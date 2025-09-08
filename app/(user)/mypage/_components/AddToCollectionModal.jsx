@@ -181,7 +181,11 @@ const AddToCollectionModal = ({ isOpen, onClose, newsItems, onSuccess }) => {
       setCollections((prev) => [newCollection, ...prev]);
       setNewCollectionName("");
     } catch (err) {
-      toast.error(err.message);
+      if (err.message.includes("이미 존재하는 컬렉션 이름입니다")) {
+        toast.error("이미 존재하는 컬렉션 이름입니다.");
+      } else {
+        toast.error(err.message || "컬렉션 생성 중 오류가 발생했습니다.");
+      }
     } finally {
       setIsCreating(false);
     }
