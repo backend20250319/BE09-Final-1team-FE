@@ -1,56 +1,51 @@
-"use client";
+// 스크랩, 요약, 공유 등 뉴스 관련 액션 버튼 그룹 컴포넌트
+'use client';
 
-import React, { useState } from "react";
-import { Bookmark, Bot, Share, Siren } from "lucide-react";
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import { authenticatedFetch } from "@/lib/auth";
+import React, { useState } from 'react';
+import { useScrap } from '@/contexts/ScrapContext';
+import { isAuthenticated } from '@/lib/auth';
+import { Bookmark, Bot, Share, Siren } from 'lucide-react';
+import FontSizeButton from './FontSizeButton';
+import FontSizeSelector from './FontSizeSelector';
+import ReportModal from './ReportModal';
+import LoginConfirmModal from './LoginConfirmModal';
 
-import FontSizeButton from "./FontSizeButton";
-import FontSizeSelector from "./FontSizeSelector";
-import { useScrap } from "@/contexts/ScrapContext";
-import ReportModal from "./ReportModal";
-import LoginConfirmModal from "./LoginConfirmModal";
-
-const NewsActions = ({
-  newsData,
-  onSummaryOpen,
-  onShareOpen,
-  isFontSizeSelectorOpen,
-  onFontSizeSelectorToggle,
-  fontSize,
-  onFontSizeChange,
-}) => {
+const NewsActions = ({ newsData, onSummaryOpen, onShareOpen, fontSize, onFontSizeChange }) => {
   const { addScrap } = useScrap();
-  const router = useRouter();
-
   const [isScrapLoading, setIsScrapLoading] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isFontSizeOpen, setFontSizeOpen] = useState(false);
 
   const handleScrap = async () => {
+    if (!isAuthenticated()) {
+      setIsLoginModalOpen(true);
+      return;
+    }
     if (isScrapLoading) return;
 
     setIsScrapLoading(true);
     try {
       await addScrap(newsData);
-    } catch (error) {
-      // addScrap에서 인증 오류가 발생하면 로그인 모달을 표시
-      if (error.message === "Authentication required") {
-        setIsLoginModalOpen(true);
-      }
     } finally {
       setIsScrapLoading(false);
     }
   };
 
   const handleReportClick = () => {
-    // 신고 모달을 바로 열고, 모달 내부에서 인증 처리
-    setIsReportModalOpen(true);
+    if (!isAuthenticated()) {
+      setIsLoginModalOpen(true);
+    } else {
+      setIsReportModalOpen(true);
+    }
+  };
+
+  const handleFontSizeToggle = () => {
+    setFontSizeOpen((prev) => !prev);
   };
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2">
+    <div className="flex mb-7 flex-wrap items-center justify-between gap-2">
       <div className="flex items-center gap-2">
         <button
           onClick={handleScrap}
@@ -58,15 +53,14 @@ const NewsActions = ({
           className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg transition-colors text-sm disabled:opacity-50"
         >
           <Bookmark size={18} />
-          <span>{"스크랩"}</span>
+          <span>스크랩</span>
         </button>
-
         <button
           onClick={onSummaryOpen}
           className="flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors text-sm font-semibold text-white"
           style={{
             background:
-              "linear-gradient(135deg, rgba(102, 126, 234, 1) 0%, rgba(118, 75, 162, 1) 50%, rgba(245, 87, 108, 1) 100%)",
+              'linear-gradient(135deg, rgba(102, 126, 234, 1) 0%, rgba(118, 75, 162, 1) 50%, rgba(245, 87, 108, 1) 100%)',
           }}
         >
           <Bot size={18} />
@@ -75,12 +69,12 @@ const NewsActions = ({
       </div>
       <div className="flex items-center gap-2">
         <div className="relative">
-          <FontSizeButton onClick={onFontSizeSelectorToggle} />
-          {isFontSizeSelectorOpen && (
+          <FontSizeButton onClick={handleFontSizeToggle} />
+          {isFontSizeOpen && (
             <FontSizeSelector
               currentValue={fontSize}
               onSelect={onFontSizeChange}
-              onClose={() => onFontSizeSelectorToggle(false)}
+              onClose={() => setFontSizeOpen(false)}
             />
           )}
         </div>
@@ -90,7 +84,6 @@ const NewsActions = ({
         >
           <Share className="w-5 h-5 text-gray-600" />
         </button>
-
         <button
           onClick={handleReportClick}
           className="p-2 hover:bg-gray-100 rounded-full transition-all duration-200"
@@ -98,19 +91,12 @@ const NewsActions = ({
           <Siren className="w-6 h-6 text-red-500" />
         </button>
       </div>
-
-      {/* 신고 모달 렌더링 */}
       <ReportModal
         isOpen={isReportModalOpen}
         onClose={() => setIsReportModalOpen(false)}
         newsId={newsData.newsId}
       />
-
-      {/* 로그인 확인 모달 렌더링 */}
-      <LoginConfirmModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-      />
+      <LoginConfirmModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
     </div>
   );
 };

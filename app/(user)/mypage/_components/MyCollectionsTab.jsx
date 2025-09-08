@@ -27,7 +27,6 @@ import {
 import { toast } from "sonner";
 import { authenticatedFetch } from "@/lib/auth";
 
-// --- Hooks ---
 const useCollections = () => {
   const [collections, setCollections] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,7 +41,7 @@ const useCollections = () => {
         throw new Error(errorText || "컬렉션 목록을 불러오는데 실패했습니다.");
       }
       const data = await response.json();
-      setCollections(data || []); // .data 제거
+      setCollections(data || []);
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -68,7 +67,6 @@ const useCollections = () => {
   };
 };
 
-// --- Modals ---
 const CreateCollectionModal = ({ isOpen, onClose, onCollectionCreated }) => {
   const [name, setName] = useState("");
   const [isCreating, setIsCreating] = useState(false);

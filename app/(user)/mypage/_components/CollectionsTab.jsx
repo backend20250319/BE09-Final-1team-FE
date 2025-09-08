@@ -107,7 +107,11 @@ const CreateCollectionModal = ({ isOpen, onClose, onCollectionCreated }) => {
         throw new Error(errorText || "컬렉션 생성에 실패했습니다.");
       }
     } catch (err) {
-      toast.error(err.message);
+      if (err.message.includes("이미 존재하는 컬렉션 이름입니다")) {
+        toast.error("이미 존재하는 컬렉션 이름입니다.");
+      } else {
+        toast.error(err.message || "컬렉션 생성 중 오류가 발생했습니다.");
+      }
     } finally {
       setIsCreating(false);
     }
@@ -189,7 +193,11 @@ const EditCollectionModal = ({
         throw new Error(errorText || "이름 변경에 실패했습니다.");
       }
     } catch (err) {
-      toast.error(err.message);
+      if (err.message.includes("이미 존재하는 컬렉션 이름입니다")) {
+        toast.error("이미 존재하는 컬렉션 이름입니다.");
+      } else {
+        toast.error(err.message || "이름 변경 중 오류가 발생했습니다.");
+      }
     } finally {
       setIsSaving(false);
     }
@@ -270,7 +278,6 @@ const CollectionCard = ({ collection, onEdit, onDelete }) => {
         className="block cursor-pointer"
       >
         <div className="relative w-full aspect-video mb-3">
-          {/* Stacked Photos Effect - Pyramid Animation */}
           <div
             className="absolute w-[95%] h-[95%] bottom-0 right-0 rounded-lg shadow-md transition-transform duration-300 group-hover:-translate-y-3 group-hover:-translate-x-2 group-hover:rotate-[-6deg]"
             style={{
