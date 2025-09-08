@@ -137,17 +137,6 @@ export default function Header() {
 
             {/* Action Buttons */}
             <div className="flex items-center space-x-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative hover-glow text-white hover:bg-white/20"
-              >
-                <Bell className="h-5 w-5" />
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs floating-badge">
-                  3
-                </Badge>
-              </Button>
-
               {userRole ? (
                 <div className="flex items-center space-x-2">
                   {/* 사용자 이름 표시 (선택사항) */}
