@@ -23,7 +23,7 @@ async function handler(request, { params }) {
 
   const headers = {
     "Content-Type": "application/json",
-  };ㅋ
+  };
   if (accessToken) {
     headers["Authorization"] = `Bearer ${accessToken}`;
   }
