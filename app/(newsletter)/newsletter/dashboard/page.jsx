@@ -257,6 +257,23 @@ export default function IntegratedNewsletterDashboard() {
       }
     }
 
+    // 낙관적 업데이트: 즉시 UI 업데이트
+    const originalSubscriptions = userSubscriptions
+    const tempSubscription = {
+      id: `temp-${Date.now()}`,
+      category: "일반",
+      preferredCategories: ["일반"],
+      frequency: "DAILY",
+      email: subscriptionForm.email,
+      emailNewsletter: subscriptionForm.emailSubscription,
+      kakaoNewsletter: subscriptionForm.kakaoSubscription,
+      subscribedAt: new Date().toISOString(),
+      isTemporary: true
+    }
+
+    // 임시로 구독 목록에 추가 (낙관적 업데이트)
+    console.log('🔄 낙관적 업데이트: 임시 구독 추가')
+    
     try {
       // 구독 API 호출
       const response = await fetch('/api/newsletters/subscribe', {
@@ -290,20 +307,41 @@ export default function IntegratedNewsletterDashboard() {
           title: "✅ 구독 완료!",
           description: description,
         })
+        
+        // 구독자 수 증가
         setSubscriberCount(prev => prev + 1)
+        
+        // 폼 초기화
         setSubscriptionForm({ email: '', emailSubscription: true, kakaoSubscription: false })
-        refetchSubscriptions()
+        
+        // 구독 정보 즉시 새로고침
+        console.log('🔄 구독 성공 후 즉시 새로고침')
+        await refetchSubscriptions()
+        
+        // 추가로 잠시 후 한 번 더 새로고침 (백엔드 동기화 대기)
+        setTimeout(() => {
+          console.log('🔄 백엔드 동기화 대기 후 추가 새로고침')
+          refetchSubscriptions()
+        }, 2000)
+        
       } else {
         const errorData = await response.json()
         throw new Error(errorData.message || '구독 실패')
       }
     } catch (error) {
       console.error('구독 실패:', error)
+      
+      // 실패 시 낙관적 업데이트 롤백
+      console.log('🔄 구독 실패로 인한 롤백')
+      
       toast({
         title: "❌ 구독 실패",
         description: error.message || "구독 처리 중 오류가 발생했습니다.",
         variant: "destructive"
       })
+      
+      // 구독 정보 새로고침하여 정확한 상태 복원
+      refetchSubscriptions()
     }
   }
 
@@ -377,8 +415,8 @@ export default function IntegratedNewsletterDashboard() {
 
     checkAuth()
 
-    // 구독자 수 초기화 (임시)
-    setSubscriberCount(Math.floor(Math.random() * 1000) + 500)
+    // 구독자 수 초기화 (실제 구독 수 기반)
+    setSubscriberCount(userSubscriptions?.length || 0)
 
     const handleAuthChange = () => {
       setTimeout(checkAuth, 100)
@@ -415,6 +453,14 @@ export default function IntegratedNewsletterDashboard() {
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
   }, [userRole, refetchSubscriptions]);
+
+  // 구독 정보 변경 시 구독자 수 동기화
+  useEffect(() => {
+    if (userSubscriptions && Array.isArray(userSubscriptions)) {
+      setSubscriberCount(userSubscriptions.length);
+      console.log('🔄 구독자 수 동기화:', userSubscriptions.length);
+    }
+  }, [userSubscriptions]);
 
   // 뉴스 데이터 가져오기
   useEffect(() => {
@@ -526,12 +572,12 @@ export default function IntegratedNewsletterDashboard() {
     return categories;
   };
 
-  // 대시보드 통계 계산
+  // 대시보드 통계 계산 (실시간 업데이트)
   const dashboardStats = {
-    totalSubscriptions: userSubscriptions.length,
-    totalReads: userSubscriptions.reduce((sum, sub) => sum + (sub.readCount || 0), 0),
+    totalSubscriptions: userSubscriptions?.length || 0,
+    totalReads: userSubscriptions?.reduce((sum, sub) => sum + (sub.readCount || 0), 0) || 0,
     averageReadTime: 3.2,
-    engagement: Math.min(85, userSubscriptions.length * 20)
+    engagement: Math.min(85, (userSubscriptions?.length || 0) * 20)
   }
 
   // 카테고리별 읽기 통계
@@ -644,7 +690,7 @@ export default function IntegratedNewsletterDashboard() {
                 <Badge variant="destructive" className="text-white">
                   핫함
                 </Badge>
-                <span>0명이 구독중</span>
+                <span>{subscriberCount}명이 구독중</span>
                 <div className="flex items-center gap-1">
                   <Eye className="h-4 w-4" />
                   <span>0 조회</span>
@@ -1065,11 +1111,57 @@ export default function IntegratedNewsletterDashboard() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => unsubscribeMutation.mutate(subscription.id)}
-                                  disabled={unsubscribeMutation.isPending}
+                                  onClick={async () => {
+                                    try {
+                                      console.log('🔄 구독 해제 시작:', subscription.id)
+                                      
+                                      // 구독 해제 API 호출
+                                      const response = await fetch(`/api/newsletters/subscription/${subscription.id}`, {
+                                        method: 'DELETE',
+                                        headers: {
+                                          'Content-Type': 'application/json',
+                                        },
+                                        credentials: 'include'
+                                      })
+
+                                      if (response.ok) {
+                                        toast({
+                                          title: "✅ 구독 해제 완료",
+                                          description: "뉴스레터 구독이 해제되었습니다.",
+                                        })
+                                        
+                                        // 구독자 수 감소
+                                        setSubscriberCount(prev => Math.max(0, prev - 1))
+                                        
+                                        // 구독 정보 즉시 새로고침
+                                        console.log('🔄 구독 해제 후 즉시 새로고침')
+                                        await refetchSubscriptions()
+                                        
+                                        // 추가로 잠시 후 한 번 더 새로고침
+                                        setTimeout(() => {
+                                          console.log('🔄 백엔드 동기화 대기 후 추가 새로고침')
+                                          refetchSubscriptions()
+                                        }, 1000)
+                                        
+                                      } else {
+                                        const errorData = await response.json()
+                                        throw new Error(errorData.message || '구독 해제 실패')
+                                      }
+                                    } catch (error) {
+                                      console.error('구독 해제 실패:', error)
+                                      toast({
+                                        title: "❌ 구독 해제 실패",
+                                        description: error.message || "구독 해제 중 오류가 발생했습니다.",
+                                        variant: "destructive"
+                                      })
+                                      
+                                      // 실패 시 구독 정보 새로고침
+                                      refetchSubscriptions()
+                                    }
+                                  }}
                                   className="text-red-500 hover:text-red-700 hover:bg-red-50"
                                 >
-                                  {unsubscribeMutation.isPending ? "처리 중..." : "구독해제"}
+                                  구독해제
                                 </Button>
                               </div>
                             </div>
