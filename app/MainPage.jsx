@@ -404,6 +404,28 @@ export default function MainPage({
   };
   const filteredNewsItems = newsItems;
 
+  // 디버깅을 위한 로그 추가
+  console.log('MainPage 렌더링 상태:', {
+    isLoaded,
+    newsItemsCount: newsItems.length,
+    filteredNewsItemsCount: filteredNewsItems.length,
+    popularNews: popularNews?.title,
+    totalPages,
+    currentPage,
+    error,
+    listData: listData?.content?.length,
+    listLoading,
+    initialList: initialList?.length,
+    initialTrending: initialTrending?.title
+  });
+  
+  // 뉴스 아이템 상세 정보 로그
+  if (newsItems.length > 0) {
+    console.log('뉴스 아이템 샘플:', newsItems.slice(0, 2));
+  } else {
+    console.log('뉴스 아이템이 비어있음');
+  }
+
   if (error && !isLoaded) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
@@ -607,7 +629,18 @@ export default function MainPage({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
-            {filteredNewsItems.map((news, index) => (
+            {filteredNewsItems.length === 0 ? (
+              <div className="col-span-full text-center py-12">
+                <div className="text-6xl mb-4">📰</div>
+                <h3 className="text-2xl font-bold text-gray-800 mb-4 korean-text">
+                  뉴스를 불러오는 중입니다...
+                </h3>
+                <p className="text-gray-600 korean-text">
+                  잠시만 기다려주세요. 뉴스 데이터를 가져오고 있습니다.
+                </p>
+              </div>
+            ) : (
+              filteredNewsItems.map((news, index) => (
               <Link
                 key={`main-news-${news.id || index}`}
                 href={`/news/${news.id}`}
@@ -678,7 +711,8 @@ export default function MainPage({
                   </div>
                 </Card>
               </Link>
-            ))}
+              ))
+            )}
           </div>
 
           {totalPages > 1 && (

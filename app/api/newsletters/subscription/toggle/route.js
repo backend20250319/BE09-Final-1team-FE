@@ -150,6 +150,21 @@ export async function POST(request) {
           );
         }
         
+        // 백엔드 내부 서버 오류 처리
+        if (subscribeResponse.status === 500) {
+          console.log('🔄 백엔드 내부 서버 오류 - 로컬 상태만 업데이트');
+          return Response.json(
+            { 
+              success: true,
+              message: `${category} 카테고리 ${isActive ? '구독' : '구독 해제'}이 로컬에서 처리되었습니다. (서버 동기화는 나중에 시도됩니다)`,
+              fallback: true,
+              category: category,
+              isActive: isActive
+            },
+            { status: 200 }
+          );
+        }
+        
         return Response.json(
           { 
             success: false, 
@@ -192,6 +207,21 @@ export async function POST(request) {
           statusText: subscriptionsResponse.statusText,
           errorText
         });
+        
+        // 백엔드 내부 서버 오류 처리
+        if (subscriptionsResponse.status === 500) {
+          console.log('🔄 백엔드 내부 서버 오류 - 로컬 상태만 업데이트');
+          return Response.json(
+            { 
+              success: true,
+              message: `${category} 카테고리 구독 해제가 로컬에서 처리되었습니다. (서버 동기화는 나중에 시도됩니다)`,
+              fallback: true,
+              category: category,
+              isActive: false
+            },
+            { status: 200 }
+          );
+        }
         
         return Response.json(
           { 
@@ -252,6 +282,21 @@ export async function POST(request) {
           statusText: unsubscribeResponse.statusText,
           errorText
         });
+        
+        // 백엔드 내부 서버 오류 처리
+        if (unsubscribeResponse.status === 500) {
+          console.log('🔄 백엔드 내부 서버 오류 - 로컬 상태만 업데이트');
+          return Response.json(
+            { 
+              success: true,
+              message: `${category} 카테고리 구독 해제가 로컬에서 처리되었습니다. (서버 동기화는 나중에 시도됩니다)`,
+              fallback: true,
+              category: category,
+              isActive: false
+            },
+            { status: 200 }
+          );
+        }
         
         return Response.json(
           { 

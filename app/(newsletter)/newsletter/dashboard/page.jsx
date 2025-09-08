@@ -421,11 +421,28 @@ export default function IntegratedNewsletterDashboard() {
     const fetchNews = async () => {
       try {
         setNewsLoading(true)
+        setNewsError(null)
+        
+        console.log('🔄 뉴스 데이터 가져오기 시작')
         const response = await fetch('/api/news?limit=5')
         const data = await response.json()
         
+        console.log('📡 뉴스 API 응답:', {
+          success: data.success,
+          hasData: !!data.data,
+          dataLength: data.data?.length || 0,
+          fallback: data.metadata?.fallback,
+          message: data.metadata?.message
+        })
+        
         if (data.success) {
-          setNewsData(data.data || [])
+          const newsItems = data.data || data.content || []
+          setNewsData(newsItems)
+          
+          if (data.metadata?.fallback) {
+            console.log('⚠️ 폴백 뉴스 데이터 사용 중')
+            // 폴백 데이터 사용 시 사용자에게 알림 (선택사항)
+          }
         } else {
           setNewsError(data.error || '뉴스를 불러오는데 실패했습니다.')
         }
@@ -769,6 +786,18 @@ export default function IntegratedNewsletterDashboard() {
                     </div>
                   ) : (
                     <div className="space-y-4">
+                      {/* 폴백 데이터 알림 */}
+                      {newsData.some(news => news._backendData?.fallback) && (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                          <div className="flex items-center gap-2">
+                            <AlertCircle className="h-4 w-4 text-yellow-600" />
+                            <span className="text-sm text-yellow-800">
+                              백엔드 서버 연결 문제로 샘플 뉴스를 표시하고 있습니다.
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      
                       {newsData.slice(0, 3).map((news) => (
                         <div key={news.id} className="border rounded-lg p-4 bg-white/50 hover:bg-white/70 transition-colors">
                           <div className="flex items-start justify-between mb-2">

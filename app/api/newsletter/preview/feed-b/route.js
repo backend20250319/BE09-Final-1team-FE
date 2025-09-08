@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { getNewsletterServiceUrl } from '@/lib/config'
 
 export async function GET(request) {
   try {
@@ -8,7 +9,7 @@ export async function GET(request) {
     console.log('피드 B형 뉴스레터 미리보기 요청:', { type })
     
     // 백엔드 API로 프록시 요청
-    const backendUrl = `http://localhost:8085/api/newsletter/preview/feed-b?type=${type}`
+    const backendUrl = getNewsletterServiceUrl(`/api/newsletter/preview/feed-b?type=${type}`)
     
     const response = await fetch(backendUrl, {
       method: 'GET',
