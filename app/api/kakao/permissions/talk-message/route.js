@@ -53,7 +53,10 @@ export async function GET(request) {
       error: error.message || '알 수 없는 오류',
       name: error.name,
       code: error.code,
-      stack: error.stack
+      stack: error.stack,
+      url: '/api/kakao/permissions/talk-message',
+      timestamp: new Date().toISOString(),
+      errorType: error.constructor.name
     });
     
     // 백엔드 연결 실패인 경우 구체적인 메시지 제공

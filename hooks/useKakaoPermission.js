@@ -18,11 +18,44 @@ export function useKakaoPermission() {
   const { toast } = useToast();
 
   /**
+   * 백엔드 서버 연결 상태 확인
+   */
+  const checkBackendHealth = useCallback(async () => {
+    try {
+      const response = await fetch('/api/health', {
+        method: 'GET',
+        credentials: 'include'
+      });
+      return response.ok;
+    } catch (error) {
+      console.warn('백엔드 헬스체크 실패:', error.message);
+      return false;
+    }
+  }, []);
+
+  /**
    * 서버 사이드에서 권한 확인
    */
   const checkPermissionViaServer = useCallback(async () => {
     try {
       console.log('서버에서 카카오 권한 확인 API 호출');
+      
+      // 먼저 백엔드 서버 상태 확인
+      const isBackendHealthy = await checkBackendHealth();
+      if (!isBackendHealthy) {
+        console.warn('백엔드 서버가 응답하지 않습니다. 권한 확인을 건너뜁니다.');
+        
+        // 사용자에게 백엔드 서버 문제 알림
+        toast({
+          title: "서버 연결 실패",
+          description: "백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.",
+          variant: "destructive"
+        });
+        
+        setHasPermission(false);
+        return false;
+      }
+      
       const response = await fetch('/api/kakao/permissions/talk-message', {
         method: 'GET',
         credentials: 'include' // JWT 쿠키 포함
@@ -48,7 +81,9 @@ export function useKakaoPermission() {
         console.error('서버 권한 확인 실패:', {
           status: response.status,
           statusText: response.statusText,
-          errorData: errorData
+          errorData: errorData,
+          url: '/api/kakao/permissions/talk-message',
+          timestamp: new Date().toISOString()
         });
         
         // 백엔드 API가 없는 경우 임시로 권한이 없다고 가정
@@ -57,7 +92,7 @@ export function useKakaoPermission() {
         // 사용자에게 친화적인 메시지 표시
         toast({
           title: "권한 확인 실패",
-          description: "서버 연결에 문제가 있습니다. 잠시 후 다시 시도해주세요.",
+          description: `서버 연결에 문제가 있습니다. (상태: ${response.status}) 잠시 후 다시 시도해주세요.`,
           variant: "destructive"
         });
         
@@ -68,7 +103,10 @@ export function useKakaoPermission() {
       console.error('서버 사이드 권한 확인 실패:', {
         error: serverError.message || '알 수 없는 오류',
         name: serverError.name,
-        stack: serverError.stack
+        stack: serverError.stack,
+        url: '/api/kakao/permissions/talk-message',
+        timestamp: new Date().toISOString(),
+        errorType: serverError.constructor.name
       });
       
       // 네트워크 오류나 API가 없는 경우 임시로 권한이 없다고 가정
@@ -84,7 +122,7 @@ export function useKakaoPermission() {
       setHasPermission(false);
       return false;
     }
-  }, []);
+  }, [checkBackendHealth]);
 
   /**
    * 카카오톡 메시지 전송 권한 확인

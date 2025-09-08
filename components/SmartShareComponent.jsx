@@ -21,6 +21,7 @@ import { useToast } from '@/hooks/use-toast'
 import { useSmartShare } from '@/hooks/useSmartShare'
 import { loadKakaoSDK } from '@/utils/kakaoShare'
 import { isAuthenticated, getUserInfo } from '@/lib/auth'
+import { shareNewsletterAsKakaoFeed } from '@/lib/kakaoFeedTemplate'
 
 // 로그인 방식 감지 및 사용자 정보 관리
 const useUserAuth = () => {
@@ -131,20 +132,37 @@ export default function SmartShareComponent({
     }
 
     try {
-      const result = await shareViaKakao(newsletterData);
+      // 피드 B형 템플릿으로 공유
+      const result = await shareNewsletterAsKakaoFeed(newsletterData, {
+        showSocial: true,
+        baseUrl: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'
+      });
+      
       toast({
-        title: "✅ 카카오톡 공유 완료",
-        description: "뉴스레터가 카카오톡으로 공유되었습니다!",
+        title: "✅ 카카오톡 피드 공유 완료",
+        description: "뉴스레터가 카카오톡 피드 B형으로 공유되었습니다!",
       });
       onShareSuccess?.(result);
     } catch (error) {
-      console.error('카카오톡 공유 실패:', error);
-      onShareError?.(error);
-      toast({
-        title: "❌ 카카오톡 공유 실패",
-        description: "카카오톡 공유에 실패했습니다.",
-        variant: "destructive"
-      });
+      console.error('카카오톡 피드 공유 실패:', error);
+      
+      // 피드 공유 실패 시 기존 방식으로 폴백
+      try {
+        const fallbackResult = await shareViaKakao(newsletterData);
+        toast({
+          title: "✅ 카카오톡 공유 완료 (폴백)",
+          description: "뉴스레터가 카카오톡으로 공유되었습니다!",
+        });
+        onShareSuccess?.(fallbackResult);
+      } catch (fallbackError) {
+        console.error('카카오톡 공유 폴백 실패:', fallbackError);
+        onShareError?.(fallbackError);
+        toast({
+          title: "❌ 카카오톡 공유 실패",
+          description: "카카오톡 공유에 실패했습니다.",
+          variant: "destructive"
+        });
+      }
     }
   };
 
