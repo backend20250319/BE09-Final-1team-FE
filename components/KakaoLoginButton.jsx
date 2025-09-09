@@ -1,10 +1,11 @@
 'use client';
 import Image from "next/image";
 
+const kakaoApiUrl = process.env.NEXT_PUBLIC_API_URL;
 const KakaoLoginButton = () => {
   //env 파일에서 환경변수 가져오기
   const handleLogin = () => {
-    window.location.href = 'http://localhost:8000/api/auth/oauth2/kakao';
+    window.location.href = `${kakaoApiUrl}/api/auth/oauth2/kakao`;
   }
 
   return (
