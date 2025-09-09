@@ -451,7 +451,7 @@ export default function MainPage({
       <div className="max-w-7xl mx-auto px-4 py-10">
         <div className="lg:col-span-3">
           <div className="mb-6">
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col">
               <div className="w-full overflow-x-auto flex space-x-3 pb-2">
                 {categories.map((category, index) => (
                   <Button
@@ -471,7 +471,7 @@ export default function MainPage({
                 ))}
               </div>
               <div className="w-full">
-                <RealTimeKeywordWidget width="100%" />
+                {/* <RealTimeKeywordWidget width="100%" /> */}
               </div>
             </div>
           </div>
