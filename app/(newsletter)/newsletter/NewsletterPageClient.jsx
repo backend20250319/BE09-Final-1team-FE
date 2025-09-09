@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import { getUserRole, getUserInfo, isAuthenticated } from "@/lib/auth"
 
-import { useNewsletters, useUserSubscriptions, useSubscribeNewsletter, useUnsubscribeNewsletter, useToggleSubscription, useCategoryArticles, useTrendingKeywords, useCategoryHeadlines } from "@/hooks/useNewsletter"
+import { useNewsletters, useUserSubscriptions, useSubscribeNewsletter, useUnsubscribeNewsletter, useToggleSubscription, useCategoryArticles, useTrendingKeywords, useCategoryHeadlines, useEnhancedNewsletterData } from "@/hooks/useNewsletter"
 
 // 기사 클릭 추적 함수
 const trackNewsClick = async (newsId, newsletterId, category, articleTitle, articleUrl) => {
@@ -307,6 +307,14 @@ export default function NewsletterPageClient({ initialNewsletters }) {
   
   // 카테고리별 헤드라인 조회 (선택된 카테고리만)
   const headlinesQuery = useCategoryHeadlines(selectedCategory === "전체" ? null : selectedCategory, 5)
+
+  // Enhanced 뉴스레터 데이터 조회 (통합 API)
+  const enhancedDataQuery = useEnhancedNewsletterData({
+    headlinesPerCategory: 5,
+    trendingKeywordsLimit: 8,
+    category: selectedCategory === "전체" ? null : selectedCategory,
+    enabled: true
+  })
 
   // 카테고리별 구독자 수 조회
   const { counts: categorySubscriberCounts, loading: categoryCountsLoading } = useCategorySubscriberCounts(allCategories)
@@ -770,10 +778,10 @@ export default function NewsletterPageClient({ initialNewsletters }) {
     }));
   }, [filteredNewsletters]);
 
-  // 로딩 상태 메모이제이션
+  // 로딩 상태 메모이제이션 (Enhanced API 포함)
   const isLoading = useMemo(() => {
-    return newslettersLoading || (userRole && subscriptionsLoading);
-  }, [newslettersLoading, userRole, subscriptionsLoading]);
+    return newslettersLoading || (userRole && subscriptionsLoading) || enhancedDataQuery?.isLoading;
+  }, [newslettersLoading, userRole, subscriptionsLoading, enhancedDataQuery?.isLoading]);
 
   if (!isClient) {
     return (
@@ -816,6 +824,10 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                     refetchNewsletters()
                     if (userRole) {
                       refetchSubscriptions()
+                    }
+                    // Enhanced API 데이터 새로고침
+                    if (enhancedDataQuery?.refetch) {
+                      enhancedDataQuery.refetch()
                     }
                     // 구독자 통계도 새로고침
                     const queryClient = toggleSubscriptionMutation.queryClient;
@@ -888,19 +900,25 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                   // 카테고리별 구독자 수 조회
                   const categorySubscriberCount = categorySubscriberCounts[newsletter.category] || 0;
                   
-                  // 현재 뉴스레터 카테고리의 백엔드 데이터 조회
+                  // Enhanced API 데이터 우선 사용
+                  const enhancedData = enhancedDataQuery?.data?.data;
+                  const categoryEnhancedData = enhancedData?.[newsletter.category];
+                  
+                  // 현재 뉴스레터 카테고리의 백엔드 데이터 조회 (fallback)
                   const categoryData = categoryDataMap[newsletter.category];
                   
-                  // 실제 기사 데이터가 있으면 사용, 없으면 기본값 사용
-                  const articles = categoryData?.articles || [];
+                  // Enhanced API 데이터가 있으면 우선 사용, 없으면 개별 API 데이터 사용
+                  const articles = categoryEnhancedData?.articles || categoryData?.articles || [];
                   
-                  // 현재 뉴스레터 카테고리의 트렌딩 키워드 조회
-                  const trendingKeywordsData = categoryKeywordsMap[newsletter.category];
+                  // 현재 뉴스레터 카테고리의 트렌딩 키워드 조회 (Enhanced API 우선)
+                  const trendingKeywordsData = categoryEnhancedData?.trendingKeywords || categoryKeywordsMap[newsletter.category];
                   
-                  // 헤드라인 데이터 조회 (선택된 카테고리와 일치할 때만)
+                  // 헤드라인 데이터 조회 (Enhanced API 우선, 선택된 카테고리와 일치할 때만)
                   const isCurrentCategorySelected = selectedCategory === newsletter.category || selectedCategory === "전체";
-                  const headlinesData = isCurrentCategorySelected && headlinesQuery?.data ? headlinesQuery.data : null;
-                  const isHeadlinesLoading = isCurrentCategorySelected && headlinesQuery?.isLoading || false;
+                  const headlinesData = isCurrentCategorySelected ? 
+                    (categoryEnhancedData?.headlines || headlinesQuery?.data || null) : null;
+                  const isHeadlinesLoading = isCurrentCategorySelected && 
+                    (enhancedDataQuery?.isLoading || headlinesQuery?.isLoading || false);
                   
                   // 헤드라인 데이터 디버깅 (개발 환경에서만)
                   if (process.env.NODE_ENV === 'development') {
@@ -910,6 +928,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                       isSuccess: headlinesQuery?.isSuccess,
                       isError: headlinesQuery?.isError,
                       selectedCategory,
+                      
                       isCurrentCategorySelected
                     });
                   }
@@ -931,41 +950,51 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                   };
 
                   const mainTopics = (() => {
-                    // 1순위: API에서 받은 트렌딩 키워드
+                    // 1순위: Enhanced API에서 받은 메인 토픽
+                    if (categoryEnhancedData?.mainTopics && categoryEnhancedData.mainTopics.length > 0) {
+                      const extracted = extractKeywords(categoryEnhancedData.mainTopics);
+                      if (extracted.length > 0) return extracted;
+                    }
+                    
+                    // 2순위: Enhanced API에서 받은 트렌딩 키워드
                     if (trendingKeywordsData && trendingKeywordsData.length > 0) {
                       const extracted = extractKeywords(trendingKeywordsData);
                       if (extracted.length > 0) return extracted;
                     }
                     
-                    // 2순위: 카테고리 데이터의 트렌딩 키워드
+                    // 3순위: 카테고리 데이터의 트렌딩 키워드
                     if (categoryData?.trendingKeywords && categoryData.trendingKeywords.length > 0) {
                       const extracted = extractKeywords(categoryData.trendingKeywords);
                       if (extracted.length > 0) return extracted;
                     }
                     
-                    // 3순위: 카테고리 데이터의 메인 토픽
+                    // 4순위: 카테고리 데이터의 메인 토픽
                     if (categoryData?.mainTopics && categoryData.mainTopics.length > 0) {
                       const extracted = extractKeywords(categoryData.mainTopics);
                       if (extracted.length > 0) return extracted;
                     }
                     
-                    // 4순위: 기본값 생성
+                    // 5순위: 기본값 생성
                     return generateTopicsForCategory(newsletter.category);
                   })();
                   
                   // 디버깅용 로그 (개발 환경에서만)
                   if (process.env.NODE_ENV === 'development') {
-                    console.log(`🔍 주요 주제 데이터 (${newsletter.category}):`, {
-                      trendingKeywordsData: trendingKeywordsData?.length || 0,
-                      trendingKeywordsDataRaw: trendingKeywordsData,
-                      categoryDataTrendingKeywords: categoryData?.trendingKeywords?.length || 0,
-                      categoryDataMainTopics: categoryData?.mainTopics?.length || 0,
+                    console.log(`🔍 Enhanced API 데이터 (${newsletter.category}):`, {
+                      enhancedDataAvailable: !!categoryEnhancedData,
+                      enhancedMainTopics: categoryEnhancedData?.mainTopics?.length || 0,
+                      enhancedTrendingKeywords: categoryEnhancedData?.trendingKeywords?.length || 0,
+                      enhancedArticles: categoryEnhancedData?.articles?.length || 0,
+                      enhancedHeadlines: categoryEnhancedData?.headlines?.length || 0,
+                      enhancedTotalArticles: categoryEnhancedData?.totalArticles || 0,
+                      fallbackTrendingKeywords: trendingKeywordsData?.length || 0,
+                      fallbackCategoryData: categoryData?.trendingKeywords?.length || 0,
                       finalMainTopics: mainTopics?.length || 0,
                       mainTopics: mainTopics
                     });
                   }
                   
-                  const totalArticles = categoryData?.totalArticles || newsletter.stats?.totalArticles || 20;
+                  const totalArticles = categoryEnhancedData?.totalArticles || categoryData?.totalArticles || newsletter.stats?.totalArticles || 20;
                   
                   return (
                     <Card
@@ -1018,23 +1047,37 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                             </CardDescription>
                           </div>
 
-                          {/* 구독 토글 */}
-                          <div className="flex items-center space-x-2 ml-4">
-                            <Switch
-                              checked={isSubscribed}
-                              onCheckedChange={(checked) => handleToggleSubscribe(newsletter, checked)}
-                              disabled={toggleSubscriptionMutation.isPending}
-                              className="data-[state=checked]:bg-blue-600"
-                            />
-                            <Label
-                              className={`text-xs font-medium whitespace-nowrap ${
-                                isSubscribed ? "text-blue-600" : "text-gray-600"
-                              }`}
-                            >
-                              {toggleSubscriptionMutation.isPending ? "처리 중..." :
-                               isSubscribed ? "구독 중" : "구독"}
-                            </Label>
-                          </div>
+                          {/* 구독 토글 - 로그인한 사용자에게만 표시 */}
+                          {userRole && isClient ? (
+                            <div className="flex items-center space-x-2 ml-4">
+                              <Switch
+                                checked={isSubscribed}
+                                onCheckedChange={(checked) => handleToggleSubscribe(newsletter, checked)}
+                                disabled={toggleSubscriptionMutation.isPending}
+                                className="data-[state=checked]:bg-blue-600"
+                              />
+                              <Label
+                                className={`text-xs font-medium whitespace-nowrap ${
+                                  isSubscribed ? "text-blue-600" : "text-gray-600"
+                                }`}
+                              >
+                                {toggleSubscriptionMutation.isPending ? "처리 중..." :
+                                 isSubscribed ? "구독 중" : "구독"}
+                              </Label>
+                            </div>
+                          ) : (
+                            <div className="flex items-center space-x-2 ml-4">
+                              <Link href="/auth">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-xs hover-lift"
+                                >
+                                  로그인하여 구독
+                                </Button>
+                              </Link>
+                            </div>
+                          )}
                         </div>
                       </CardHeader>
 
