@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-import AdminDashboard from './_components/AdminDashboard';
 import UsersManagement from './_components/UsersManagement';
 import NewsletterManagement from './_components/NewsletterManagement';
 import AdminSettings from './_components/AdminSettings';
@@ -23,9 +22,9 @@ export default function AdminPage() {
           </TabsList>
 
           {/* Dashboard Tab */}
-          <TabsContent value="dashboard">
+          {/* <TabsContent value="dashboard">
             <AdminDashboard />
-          </TabsContent>
+          </TabsContent> */}
 
           {/* Users Management Tab */}
           <TabsContent value="users">
