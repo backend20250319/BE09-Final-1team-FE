@@ -52,7 +52,7 @@ const NewsActions = ({ newsData, onSummaryOpen, onShareOpen, fontSize, onFontSiz
           disabled={isScrapLoading}
           className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg transition-colors text-sm disabled:opacity-50"
         >
-          <Bookmark size={18} />
+          <Bookmark size={18} /> # 18로 맞추기
           <span>스크랩</span>
         </button>
         <button
