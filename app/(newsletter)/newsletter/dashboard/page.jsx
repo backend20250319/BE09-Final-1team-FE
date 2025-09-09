@@ -1276,7 +1276,7 @@ export default function IntegratedNewsletterDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Left Column */}
               <div className="lg:col-span-2 space-y-8">
-                {/* 카테고리별 읽기 통계와 실시간 인기 키워드를 나란히 배치 */}
+                {/* 카테고리별 읽기 통계와 인기 콘텐츠를 나란히 배치 */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* 카테고리별 읽기 통계 */}
                   <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.5s' }}>
@@ -1309,42 +1309,40 @@ export default function IntegratedNewsletterDashboard() {
                     </CardContent>
                   </Card>
 
-                
-                </div>
-
-                {/* 인기 콘텐츠 */}
-                <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.6s' }}>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <TrendingUp className="h-5 w-5 mr-2 text-green-500" />
-                      가장 많이 읽은 뉴스레터 기사들
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {popularContent.map((content, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-white/50 rounded-lg hover:bg-white/70 transition-all duration-300">
-                          <div className="flex-1">
-                            <h4 className="font-medium text-sm mb-1">
-                              <TextWithTooltips text={content.title} />
-                            </h4>
-                            <div className="flex items-center space-x-2 text-xs text-gray-500">
-                              <span>{content.source}</span>
-                              <span>•</span>
-                              <Badge variant="outline" className="text-xs">
-                                {content.category}
-                              </Badge>
+                  {/* 인기 콘텐츠 */}
+                  <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.6s' }}>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <TrendingUp className="h-5 w-5 mr-2 text-green-500" />
+                        가장 많이 읽은 뉴스레터 기사들
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {popularContent.map((content, index) => (
+                          <div key={index} className="flex items-center justify-between p-3 bg-white/50 rounded-lg hover:bg-white/70 transition-all duration-300">
+                            <div className="flex-1">
+                              <h4 className="font-medium text-sm mb-1">
+                                <TextWithTooltips text={content.title} />
+                              </h4>
+                              <div className="flex items-center space-x-2 text-xs text-gray-500">
+                                <span>{content.source}</span>
+                                <span>•</span>
+                                <Badge variant="outline" className="text-xs">
+                                  {content.category}
+                                </Badge>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-medium text-gray-900">{content.views?.toLocaleString() || "0"}</p>
+                              <p className="text-xs text-gray-500">조회수</p>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className="text-sm font-medium text-gray-900">{content.views?.toLocaleString() || "0"}</p>
-                            <p className="text-xs text-gray-500">조회수</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
 
               {/* Right Column */}

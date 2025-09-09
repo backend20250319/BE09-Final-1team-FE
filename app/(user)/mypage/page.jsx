@@ -12,7 +12,6 @@ import HistoryTab from "./_components/HistoryTab";
 import SettingsTab from "./_components/SettingsTab";
 import CollectionsTab from "./_components/CollectionsTab";
 import { MypageProvider } from "@/contexts/MypageContext";
-import { ScrapProvider } from "@/contexts/ScrapContext";
 
 function MyPageContent() {
   const searchParams = useSearchParams();
@@ -63,53 +62,51 @@ function MyPageContent() {
 
   return (
       <MypageProvider>
-        <ScrapProvider>
-          <div className="min-h-screen bg-gray-50">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                <div className="lg:col-span-1">
-                  <ProfileSidebar />
-                </div>
+        <div className="min-h-screen bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+              <div className="lg:col-span-1">
+                <ProfileSidebar />
+              </div>
 
-                <div className="lg:col-span-3">
-                  <Tabs
-                      value={activeTab}
-                      onValueChange={setActiveTab}
-                      className="w-full"
-                  >
-                    <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
-                      <TabsTrigger value="profile">프로필</TabsTrigger>
-                      <TabsTrigger value="scraps">스크랩</TabsTrigger>
-                      <TabsTrigger value="collections">컬렉션</TabsTrigger>
-                      <TabsTrigger value="history">읽기 기록</TabsTrigger>
-                      <TabsTrigger value="settings">설정</TabsTrigger>
-                    </TabsList>
+              <div className="lg:col-span-3">
+                <Tabs
+                    value={activeTab}
+                    onValueChange={setActiveTab}
+                    className="w-full"
+                >
+                  <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
+                    <TabsTrigger value="profile">프로필</TabsTrigger>
+                    <TabsTrigger value="scraps">스크랩</TabsTrigger>
+                    <TabsTrigger value="collections">컬렉션</TabsTrigger>
+                    <TabsTrigger value="history">읽기 기록</TabsTrigger>
+                    <TabsTrigger value="settings">설정</TabsTrigger>
+                  </TabsList>
 
-                    <TabsContent value="profile">
-                      <ProfileTab />
-                    </TabsContent>
+                  <TabsContent value="profile">
+                    <ProfileTab />
+                  </TabsContent>
 
-                    <TabsContent value="scraps">
-                      <ScrapsTab />
-                    </TabsContent>
+                  <TabsContent value="scraps">
+                    <ScrapsTab />
+                  </TabsContent>
 
-                    <TabsContent value="collections">
-                      <CollectionsTab />
-                    </TabsContent>
+                  <TabsContent value="collections">
+                    <CollectionsTab />
+                  </TabsContent>
 
-                    <TabsContent value="history">
-                      <HistoryTab />
-                    </TabsContent>
+                  <TabsContent value="history">
+                    <HistoryTab />
+                  </TabsContent>
 
-                    <TabsContent value="settings">
-                      <SettingsTab />
-                    </TabsContent>
-                  </Tabs>
-                </div>
+                  <TabsContent value="settings">
+                    <SettingsTab />
+                  </TabsContent>
+                </Tabs>
               </div>
             </div>
           </div>
-        </ScrapProvider>
+        </div>
       </MypageProvider>
   );
 }
