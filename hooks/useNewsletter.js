@@ -313,3 +313,32 @@ export function useCategoryHeadlines(category, limit = 5) {
     }
   })
 }
+
+// Enhanced 뉴스레터 데이터 조회 훅 (통합 API)
+export function useEnhancedNewsletterData(options = {}) {
+  const {
+    headlinesPerCategory = 5,
+    trendingKeywordsLimit = 8,
+    category = null,
+    enabled = true
+  } = options;
+
+  return useQuery({
+    queryKey: ['enhanced-newsletter-data', headlinesPerCategory, trendingKeywordsLimit, category],
+    queryFn: () => newsletterService.getEnhancedNewsletterData({
+      headlinesPerCategory,
+      trendingKeywordsLimit,
+      category
+    }),
+    enabled: enabled,
+    staleTime: 5 * 60 * 1000, // 5분간 fresh 상태 유지
+    cacheTime: 15 * 60 * 1000, // 15분간 캐시 유지
+    retry: 2, // 재시도 횟수
+    retryDelay: 2000, // 재시도 간격
+    refetchOnWindowFocus: false, // 윈도우 포커스 시 재요청 방지
+    refetchOnMount: false, // 컴포넌트 마운트 시 재요청 방지
+    onError: (error) => {
+      console.warn('Enhanced 뉴스레터 데이터 조회 실패:', error.message)
+    }
+  })
+}
