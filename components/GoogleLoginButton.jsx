@@ -3,9 +3,10 @@
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 
+const googleApiUrl = process.env.NEXT_PUBLIC_API_URL;
 const GoogleLoginButton = () => {
   const handleLogin = () => {
-    window.location.href = 'http://localhost:8000/api/auth/oauth2/google';
+    window.location.href = `${googleApiUrl}/api/auth/oauth2/google`;
   };
 
   return (
