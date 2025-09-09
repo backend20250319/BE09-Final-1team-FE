@@ -416,7 +416,7 @@ export default function IntegratedNewsletterDashboard() {
     checkAuth()
 
     // 구독자 수 초기화 (실제 구독 수 기반)
-    setSubscriberCount(userSubscriptions?.length || 0)
+    setSubscriberCount(Array.isArray(userSubscriptions) ? userSubscriptions.length : 0)
 
     const handleAuthChange = () => {
       setTimeout(checkAuth, 100)
@@ -574,10 +574,10 @@ export default function IntegratedNewsletterDashboard() {
 
   // 대시보드 통계 계산 (실시간 업데이트)
   const dashboardStats = {
-    totalSubscriptions: userSubscriptions?.length || 0,
-    totalReads: userSubscriptions?.reduce((sum, sub) => sum + (sub.readCount || 0), 0) || 0,
+    totalSubscriptions: Array.isArray(userSubscriptions) ? userSubscriptions.length : 0,
+    totalReads: Array.isArray(userSubscriptions) ? userSubscriptions.reduce((sum, sub) => sum + (sub.readCount || 0), 0) : 0,
     averageReadTime: 3.2,
-    engagement: Math.min(85, (userSubscriptions?.length || 0) * 20)
+    engagement: Math.min(85, (Array.isArray(userSubscriptions) ? userSubscriptions.length : 0) * 20)
   }
 
   // 카테고리별 읽기 통계
@@ -997,11 +997,11 @@ export default function IntegratedNewsletterDashboard() {
                         내 구독 정보
                       </CardTitle>
                       <CardDescription>
-                        현재 구독 중인 뉴스레터 ({userSubscriptions?.length || 0}/3개)
+                        현재 구독 중인 뉴스레터 ({Array.isArray(userSubscriptions) ? userSubscriptions.length : 0}/3개)
                         {subscriptionsError && (
                           <span className="text-red-500 ml-2">(오류 발생)</span>
                         )}
-                        {!subscriptionsLoading && !subscriptionsError && userSubscriptions?.length === 0 && (
+                        {!subscriptionsLoading && !subscriptionsError && (!Array.isArray(userSubscriptions) || userSubscriptions.length === 0) && (
                           <span className="text-gray-500 ml-2">(구독 정보 없음)</span>
                         )}
                       </CardDescription>
@@ -1027,7 +1027,7 @@ export default function IntegratedNewsletterDashboard() {
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
                       <p className="text-sm text-gray-500 mt-2">구독 정보 로딩 중...</p>
                     </div>
-                  ) : userSubscriptions && userSubscriptions.length > 0 ? (
+                  ) : Array.isArray(userSubscriptions) && userSubscriptions.length > 0 ? (
                     <div className="space-y-6">
                       {userSubscriptions.map((subscription) => {
                         const frontendCategories = getFrontendCategories(subscription);

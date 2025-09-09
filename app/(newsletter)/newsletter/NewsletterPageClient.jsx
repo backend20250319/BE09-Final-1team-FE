@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import { getUserRole, getUserInfo, isAuthenticated } from "@/lib/auth"
 
-import { useNewsletters, useUserSubscriptions, useSubscribeNewsletter, useUnsubscribeNewsletter, useToggleSubscription, useCategoryArticles, useTrendingKeywords, useCategoryHeadlines, useEnhancedNewsletterData } from "@/hooks/useNewsletter"
+import { useNewsletters, useUserSubscriptions, useSubscribeNewsletter, useUnsubscribeNewsletter, useToggleSubscription, useCategoryArticles, useTrendingKeywords, useCategoryHeadlines, useEnhancedNewsletterData, useCategorySubscriberCounts } from "@/hooks/useNewsletter"
 
 // 기사 클릭 추적 함수
 const trackNewsClick = async (newsId, newsletterId, category, articleTitle, articleUrl) => {
@@ -54,43 +54,11 @@ const trackNewsClick = async (newsId, newsletterId, category, articleTitle, arti
     console.warn('읽기 기록 전송 실패:', error);
   }
 };
-import { useQuery } from '@tanstack/react-query'
+// SWR import 추가
+import { mutate } from 'swr'
 import KakaoShare from '@/components/KakaoShare'
 
-// 카테고리별 구독자 수를 한 번에 가져오는 커스텀 훅
-const useCategorySubscriberCounts = (categories) => {
-  const { data: counts = {}, isLoading: loading } = useQuery({
-    queryKey: ['newsletter-stats-subscribers'],
-    queryFn: async () => {
-      console.log('🔄 카테고리별 구독자 수 로딩 시작');
-      
-      const response = await fetch('/api/newsletter/stats/subscribers');
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('📊 API 응답 데이터:', data);
-        
-        if (data.success && data.data) {
-          console.log('✅ 카테고리별 구독자 수 설정 완료:', data.data);
-          return data.data;
-        } else {
-          console.warn("전체 통계 API 응답 구조 오류:", data);
-          return {};
-        }
-      } else {
-        console.warn("전체 통계 API 호출 실패:", response.status);
-        return {};
-      }
-    },
-    staleTime: 30 * 1000, // 30초간 fresh 상태 유지
-    refetchOnWindowFocus: false,
-    refetchOnMount: true,
-    retry: 1,
-    retryDelay: 1000,
-  });
-
-  return { counts, loading };
-};
+// 카테고리별 구독자 수 훅은 hooks/useNewsletter.js에서 import하여 사용
 
 // 카테고리별 주제 생성 함수
 const generateTopicsForCategory = (category) => {
@@ -247,63 +215,22 @@ export default function NewsletterPageClient({ initialNewsletters }) {
     enabledCondition: !!userRole || typeof window !== 'undefined'
   });
 
-  // 카테고리별 기사 데이터 조회 - 실제로 필요한 카테고리만 조회 (백엔드 서버가 없을 때를 대비)
+  // 카테고리 목록
   const allCategories = ["정치", "경제", "사회", "생활", "세계", "IT/과학", "자동차/교통", "여행/음식", "예술"]
   const categories = ["전체", ...allCategories]
   
-  // 각 카테고리별 백엔드 데이터 조회 (개별 훅으로 분리)
-  const politicsData = useCategoryArticles("정치", 5);
-  const economyData = useCategoryArticles("경제", 5);
-  const societyData = useCategoryArticles("사회", 5);
-  const lifeData = useCategoryArticles("생활", 5);
-  const worldData = useCategoryArticles("세계", 5);
-  const itScienceData = useCategoryArticles("IT/과학", 5);
-  const vehicleData = useCategoryArticles("자동차/교통", 5);
-  const travelFoodData = useCategoryArticles("여행/음식", 5);
-  const artData = useCategoryArticles("예술", 5);
+  // 🚀 성능 최적화: 개별 카테고리 API 호출 제거하고 통합 API만 사용
+  // 선택된 카테고리의 데이터만 조회 (지연 로딩)
+  const selectedCategoryData = useCategoryArticles(
+    selectedCategory === "전체" ? null : selectedCategory, 
+    5
+  );
   
-  // 카테고리별 데이터 맵 생성
-  const categoryDataMap = {
-    "정치": politicsData.data,
-    "경제": economyData.data,
-    "사회": societyData.data,
-    "생활": lifeData.data,
-    "세계": worldData.data,
-    "IT/과학": itScienceData.data,
-    "자동차/교통": vehicleData.data,
-    "여행/음식": travelFoodData.data,
-    "예술": artData.data
-  };
-  
-  // 각 카테고리별 트렌딩 키워드 조회 (개별 훅으로 분리)
-  const politicsKeywords = useTrendingKeywords("정치", 8);
-  const economyKeywords = useTrendingKeywords("경제", 8);
-  const societyKeywords = useTrendingKeywords("사회", 8);
-  const lifeKeywords = useTrendingKeywords("생활", 8);
-  const worldKeywords = useTrendingKeywords("세계", 8);
-  const itScienceKeywords = useTrendingKeywords("IT/과학", 8);
-  const vehicleKeywords = useTrendingKeywords("자동차/교통", 8);
-  const travelFoodKeywords = useTrendingKeywords("여행/음식", 8);
-  const artKeywords = useTrendingKeywords("예술", 8);
-  
-  // 카테고리별 트렌딩 키워드 맵 생성
-  const categoryKeywordsMap = {
-    "정치": politicsKeywords.data,
-    "경제": economyKeywords.data,
-    "사회": societyKeywords.data,
-    "생활": lifeKeywords.data,
-    "세계": worldKeywords.data,
-    "IT/과학": itScienceKeywords.data,
-    "자동차/교통": vehicleKeywords.data,
-    "여행/음식": travelFoodKeywords.data,
-    "예술": artKeywords.data
-  };
-  
-  // 선택된 카테고리의 데이터 (현재 선택된 카테고리용)
-  const selectedCategoryData = selectedCategory === "전체" ? null : categoryDataMap[selectedCategory];
-  
-  // 선택된 카테고리의 트렌딩 키워드 (현재 선택된 카테고리용)
-  const selectedCategoryKeywords = selectedCategory === "전체" ? null : categoryKeywordsMap[selectedCategory];
+  // 선택된 카테고리의 트렌딩 키워드만 조회 (지연 로딩)
+  const selectedCategoryKeywords = useTrendingKeywords(
+    selectedCategory === "전체" ? null : selectedCategory, 
+    8
+  );
   
   // 카테고리별 헤드라인 조회 (선택된 카테고리만)
   const headlinesQuery = useCategoryHeadlines(selectedCategory === "전체" ? null : selectedCategory, 5)
@@ -316,7 +243,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
     enabled: true
   })
 
-  // 카테고리별 구독자 수 조회
+  // 카테고리별 구독자 수 조회 (SWR)
   const { counts: categorySubscriberCounts, loading: categoryCountsLoading } = useCategorySubscriberCounts(allCategories)
   
   // 디버깅용 로그
@@ -326,18 +253,13 @@ export default function NewsletterPageClient({ initialNewsletters }) {
     hasData: Object.keys(categorySubscriberCounts).length > 0
   });
 
-  // 트렌딩 키워드 상태 디버깅
+  // 트렌딩 키워드 상태 디버깅 (최적화됨)
   if (process.env.NODE_ENV === 'development') {
-    console.log('🔍 트렌딩 키워드 상태:', {
-      politics: { data: politicsKeywords.data, isLoading: politicsKeywords.isLoading, isError: politicsKeywords.isError },
-      economy: { data: economyKeywords.data, isLoading: economyKeywords.isLoading, isError: economyKeywords.isError },
-      society: { data: societyKeywords.data, isLoading: societyKeywords.isLoading, isError: societyKeywords.isError },
-      life: { data: lifeKeywords.data, isLoading: lifeKeywords.isLoading, isError: lifeKeywords.isError },
-      world: { data: worldKeywords.data, isLoading: worldKeywords.isLoading, isError: worldKeywords.isError },
-      itScience: { data: itScienceKeywords.data, isLoading: itScienceKeywords.isLoading, isError: itScienceKeywords.isError },
-      vehicle: { data: vehicleKeywords.data, isLoading: vehicleKeywords.isLoading, isError: vehicleKeywords.isError },
-      travelFood: { data: travelFoodKeywords.data, isLoading: travelFoodKeywords.isLoading, isError: travelFoodKeywords.isError },
-      art: { data: artKeywords.data, isLoading: artKeywords.isLoading, isError: artKeywords.isError }
+    console.log('🔍 선택된 카테고리 트렌딩 키워드 상태:', {
+      selectedCategory,
+      data: selectedCategoryKeywords.data,
+      isLoading: selectedCategoryKeywords.isLoading,
+      isError: selectedCategoryKeywords.isError
     });
   }
 
@@ -638,7 +560,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
     return false;
   };
 
-  // 구독/해제 처리 (새로운 토글 API 사용)
+  // 구독/해제 처리 (SWR 방식)
   const handleToggleSubscribe = async (newsletter, checked) => {
     if (!userRole) {
       toast({
@@ -696,62 +618,59 @@ export default function NewsletterPageClient({ initialNewsletters }) {
       refetchSubscriptions();
     }, 100);
     
-    // 새로운 토글 API 사용
-    toggleSubscriptionMutation.mutate(
-      { category: newsletter.category, isActive: checked },
-      {
-        onSuccess: (data) => {
-          // 항상 서버에서 최신 구독 정보를 가져옴 (fallback 모드에서도)
-          refetchSubscriptions();
-          
-          // 구독자 통계 즉시 업데이트 (fallback 모드에서도 로컬 통계는 업데이트)
-          const queryClient = toggleSubscriptionMutation.queryClient;
-          if (queryClient) {
-            queryClient.setQueryData(['newsletter-stats-subscribers'], (oldData) => {
-              if (oldData && typeof oldData === 'object') {
-                const newData = { ...oldData };
-                if (checked) {
-                  // 새로 구독한 카테고리 +1
-                  newData[newsletter.category] = (newData[newsletter.category] || 0) + 1;
-                } else {
-                  // 구독 해제한 카테고리 -1
-                  newData[newsletter.category] = Math.max(0, (newData[newsletter.category] || 0) - 1);
-                }
-                return newData;
-              }
-              return oldData;
-            });
-          }
-        },
-        onError: (error) => {
-          // 실패 시 로컬 상태 복원
+    // SWR 방식으로 토글 API 사용
+    try {
+      const result = await toggleSubscriptionMutation.mutate({ 
+        category: newsletter.category, 
+        isActive: checked 
+      });
+      
+      // 항상 서버에서 최신 구독 정보를 가져옴 (fallback 모드에서도)
+      refetchSubscriptions();
+      
+      // 구독자 통계 즉시 업데이트 (SWR 캐시 직접 업데이트)
+      mutate('/api/newsletter/stats/subscribers', (oldData) => {
+        if (oldData && typeof oldData === 'object') {
+          const newData = { ...oldData };
           if (checked) {
-            setLocalSubscriptions(prev => {
-              const newSet = new Set(prev);
-              newSet.delete(newsletter.category);
-              return newSet;
-            });
+            // 새로 구독한 카테고리 +1
+            newData[newsletter.category] = (newData[newsletter.category] || 0) + 1;
           } else {
-            setLocalSubscriptions(prev => new Set([...prev, newsletter.category]));
+            // 구독 해제한 카테고리 -1
+            newData[newsletter.category] = Math.max(0, (newData[newsletter.category] || 0) - 1);
           }
-          
-          // 구독 제한 오류는 훅에서 처리됨
-          if (!error.message?.includes('CATEGORY_LIMIT_EXCEEDED')) {
-            toast({
-              title: checked ? "구독 실패" : "구독 해제 실패",
-              description: error.message || "처리 중 오류가 발생했습니다.",
-              variant: "destructive",
-              icon: <AlertCircle className="h-4 w-4 text-red-500" />
-            });
-          }
-          
-          // 실패 시에도 구독 정보 새로고침
-          setTimeout(() => {
-            refetchSubscriptions();
-          }, 100);
+          return newData;
         }
+        return oldData;
+      }, false); // revalidate: false로 즉시 업데이트
+      
+    } catch (error) {
+      // 실패 시 로컬 상태 복원
+      if (checked) {
+        setLocalSubscriptions(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(newsletter.category);
+          return newSet;
+        });
+      } else {
+        setLocalSubscriptions(prev => new Set([...prev, newsletter.category]));
       }
-    );
+      
+      // 구독 제한 오류는 훅에서 처리됨
+      if (!error.message?.includes('CATEGORY_LIMIT_EXCEEDED')) {
+        toast({
+          title: checked ? "구독 실패" : "구독 해제 실패",
+          description: error.message || "처리 중 오류가 발생했습니다.",
+          variant: "destructive",
+          icon: <AlertCircle className="h-4 w-4 text-red-500" />
+        });
+      }
+      
+      // 실패 시에도 구독 정보 새로고침
+      setTimeout(() => {
+        refetchSubscriptions();
+      }, 100);
+    }
   };
 
   // 필터링된 뉴스레터
@@ -820,20 +739,15 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    // 선택적으로 필요한 데이터만 새로고침
-                    refetchNewsletters()
+                    // SWR 캐시 무효화로 선택적 새로고침
+                    mutate('/api/newsletters')
                     if (userRole) {
-                      refetchSubscriptions()
+                      mutate('/api/newsletters/user-subscriptions')
                     }
                     // Enhanced API 데이터 새로고침
-                    if (enhancedDataQuery?.refetch) {
-                      enhancedDataQuery.refetch()
-                    }
+                    mutate('/api/newsletter/enhanced-data')
                     // 구독자 통계도 새로고침
-                    const queryClient = toggleSubscriptionMutation.queryClient;
-                    if (queryClient) {
-                      queryClient.invalidateQueries(['newsletter-stats-subscribers']);
-                    }
+                    mutate('/api/newsletter/stats/subscribers')
                   }}
                   disabled={isLoading}
                   className="hover-lift"
@@ -901,17 +815,18 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                   const categorySubscriberCount = categorySubscriberCounts[newsletter.category] || 0;
                   
                   // Enhanced API 데이터 우선 사용
-                  const enhancedData = enhancedDataQuery?.data?.data;
+                  const enhancedData = enhancedDataQuery?.data;
                   const categoryEnhancedData = enhancedData?.[newsletter.category];
                   
                   // 현재 뉴스레터 카테고리의 백엔드 데이터 조회 (fallback)
-                  const categoryData = categoryDataMap[newsletter.category];
+                  const categoryData = selectedCategory === newsletter.category ? selectedCategoryData.data : null;
                   
                   // Enhanced API 데이터가 있으면 우선 사용, 없으면 개별 API 데이터 사용
                   const articles = categoryEnhancedData?.articles || categoryData?.articles || [];
                   
                   // 현재 뉴스레터 카테고리의 트렌딩 키워드 조회 (Enhanced API 우선)
-                  const trendingKeywordsData = categoryEnhancedData?.trendingKeywords || categoryKeywordsMap[newsletter.category];
+                  const trendingKeywordsData = categoryEnhancedData?.trendingKeywords || 
+                    (selectedCategory === newsletter.category ? selectedCategoryKeywords.data : null);
                   
                   // 헤드라인 데이터 조회 (Enhanced API 우선, 선택된 카테고리와 일치할 때만)
                   const isCurrentCategorySelected = selectedCategory === newsletter.category || selectedCategory === "전체";
@@ -1444,7 +1359,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                             </Button>
                           </div>
                         </div>
-                      ) : userSubscriptions.length > 0 ? (
+                      ) : Array.isArray(userSubscriptions) && userSubscriptions.length > 0 ? (
                         userSubscriptions.map((subscription) => {
                           // 구독 정보에서 카테고리 추출
                           const categories = subscription.preferredCategories || [];
@@ -1478,7 +1393,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => {
+                                onClick={async () => {
                                   // 구독 해제 시 로컬 상태에서도 제거
                                   const categories = subscription.preferredCategories || [];
                                   categories.forEach(cat => {
@@ -1520,28 +1435,28 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                                     const frontendCategory = categoryMapping[firstCategory];
                                     
                                     if (frontendCategory) {
-                                      unsubscribeMutation.mutate(frontendCategory, {
-                                        onError: () => {
-                                          // 실패 시 로컬 상태 복원
-                                          categories.forEach(cat => {
-                                            const categoryMapping = {
-                                              'POLITICS': '정치',
-                                              'ECONOMY': '경제',
-                                              'SOCIETY': '사회',
-                                              'LIFE': '생활',
-                                              'INTERNATIONAL': '세계',
-                                              'IT_SCIENCE': 'IT/과학',
-                                              'VEHICLE': '자동차/교통',
-                                              'TRAVEL_FOOD': '여행/음식',
-                                              'ART': '예술'
-                                            };
-                                            const frontendCategory = categoryMapping[cat];
-                                            if (frontendCategory) {
-                                              setLocalSubscriptions(prev => new Set([...prev, frontendCategory]));
-                                            }
-                                          });
-                                        }
-                                      });
+                                      try {
+                                        await unsubscribeMutation.mutate(frontendCategory);
+                                      } catch (error) {
+                                        // 실패 시 로컬 상태 복원
+                                        categories.forEach(cat => {
+                                          const categoryMapping = {
+                                            'POLITICS': '정치',
+                                            'ECONOMY': '경제',
+                                            'SOCIETY': '사회',
+                                            'LIFE': '생활',
+                                            'INTERNATIONAL': '세계',
+                                            'IT_SCIENCE': 'IT/과학',
+                                            'VEHICLE': '자동차/교통',
+                                            'TRAVEL_FOOD': '여행/음식',
+                                            'ART': '예술'
+                                          };
+                                          const frontendCategory = categoryMapping[cat];
+                                          if (frontendCategory) {
+                                            setLocalSubscriptions(prev => new Set([...prev, frontendCategory]));
+                                          }
+                                        });
+                                      }
                                     }
                                   }
                                 }}
