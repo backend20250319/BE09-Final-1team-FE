@@ -19,12 +19,47 @@ import {
   Users,
   Eye
 } from "lucide-react"
-import SubscribeForm from "./SubscribeForm"
+import EnhancedSubscribeForm from "./EnhancedSubscribeForm"
 import SubscriberCount from "./SubscriberCount"
 import { useKakaoShare } from "../hooks/useKakaoShare"
+import { getUserInfo } from "@/lib/auth"
 
 // 카카오 공유 관련 상수
 const KAKAO_TEMPLATE_ID = 123798; // 템플릿 빌더에서 생성한 템플릿 ID
+
+// 기사 클릭 추적 함수
+const trackNewsClick = async (newsId, newsletterId, category, articleTitle, articleUrl) => {
+  try {
+    const userInfo = getUserInfo();
+    if (!userInfo) {
+      console.warn('사용자 정보가 없어 클릭 추적을 건너뜁니다.');
+      return;
+    }
+
+    const response = await fetch('/api/newsletter/track-click', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        newsId,
+        newsletterId,
+        category,
+        articleTitle,
+        articleUrl
+      })
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log('✅ 기사 클릭 추적 성공:', result);
+    } else {
+      console.warn('⚠️ 기사 클릭 추적 실패:', response.status);
+    }
+  } catch (error) {
+    console.warn('읽기 기록 전송 실패:', error);
+  }
+};
 
 export default function NewsletterTemplate({ 
   newsletter = null,
@@ -48,7 +83,7 @@ export default function NewsletterTemplate({
   };
 
   // 새로운 DTO 구조와 기존 구조 모두 지원
-  const newsletterData = newsletter || {
+  const newsletterData = {
     id: 0,
     title: "뉴스레터 제목",
     description: "뉴스레터 설명",
@@ -66,10 +101,17 @@ export default function NewsletterTemplate({
       unsubscribe: "구독 해지",
       preferences: "설정 변경",
       contact: "문의하기"
-    }
+    },
+    // newsletter prop이 있으면 병합
+    ...newsletter
   }
 
   const formatNumber = (num) => {
+    // undefined, null, NaN 체크
+    if (num == null || isNaN(num)) {
+      return '0'
+    }
+    
     if (num >= 10000) {
       return (num / 10000).toFixed(1) + '만'
     } else if (num >= 1000) {
@@ -101,16 +143,16 @@ export default function NewsletterTemplate({
                 {section.heading}
               </h3>
               <div className="space-y-4">
-                {section.items && section.items.map((article, articleIndex) => (
+                {section.items && section.items.length > 0 ? section.items.map((article, articleIndex) => (
                   <div key={articleIndex} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                     <div className="flex items-start gap-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <Badge variant="outline" className="text-xs">
-                            {article.category}
+                            {article.source || newsletterData.category}
                           </Badge>
                           <span className="text-sm text-gray-500">
-                            읽는 시간 {article.readTime || "3분"}
+                            {article.publishedAt ? new Date(article.publishedAt).toLocaleDateString('ko-KR') : '오늘'}
                           </span>
                         </div>
                         <h4 className="text-lg font-semibold text-gray-900 mb-2">
@@ -122,16 +164,35 @@ export default function NewsletterTemplate({
                           </p>
                         )}
                         <div className="flex items-center gap-2 mt-3">
-                          <Button variant="ghost" size="sm" className="text-blue-600">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-blue-600"
+                            onClick={() => {
+                              // 기사 클릭 추적
+                              trackNewsClick(
+                                article.id || `article-${articleIndex}`,
+                                newsletterData.id,
+                                newsletterData.category,
+                                article.title,
+                                article.url || article.link
+                              );
+                              
+                              // 기사 링크로 이동 (URL이 있는 경우)
+                              if (article.url || article.link) {
+                                window.open(article.url || article.link, '_blank', 'noopener,noreferrer');
+                              }
+                            }}
+                          >
                             자세히 보기
                             <ArrowRight className="h-3 w-3 ml-1" />
                           </Button>
                         </div>
                       </div>
-                      {article.image && (
+                      {article.imageUrl && (
                         <div className="w-24 h-24 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                           <img
-                            src={article.image}
+                            src={article.imageUrl}
                             alt={article.title}
                             className="w-full h-full object-cover"
                           />
@@ -139,7 +200,12 @@ export default function NewsletterTemplate({
                       )}
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>아직 뉴스가 없습니다.</p>
+                    <p className="text-sm">곧 새로운 뉴스를 가져올 예정입니다.</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -179,7 +245,26 @@ export default function NewsletterTemplate({
                     {item.summary}
                   </p>
                   <div className="flex items-center gap-2 mt-3">
-                    <Button variant="ghost" size="sm" className="text-blue-600">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-blue-600"
+                      onClick={() => {
+                        // 기사 클릭 추적
+                        trackNewsClick(
+                          item.id || `item-${index}`,
+                          newsletterData.id,
+                          newsletterData.category,
+                          item.title,
+                          item.url || item.link
+                        );
+                        
+                        // 기사 링크로 이동 (URL이 있는 경우)
+                        if (item.url || item.link) {
+                          window.open(item.url || item.link, '_blank', 'noopener,noreferrer');
+                        }
+                      }}
+                    >
                       자세히 보기
                       <ArrowRight className="h-3 w-3 ml-1" />
                     </Button>
@@ -244,13 +329,14 @@ export default function NewsletterTemplate({
 
       {/* 구독 폼 */}
       <div className="mb-6">
-        <SubscribeForm 
-          onSubscribeSuccess={(email) => {
+        <EnhancedSubscribeForm 
+          category={newsletterData.category}
+          onSubscribeSuccess={(email, subscriptionData) => {
             // 구독 성공 시 구독자 수 업데이트
             if (updateCountFunction) {
               updateCountFunction(1)
             }
-            console.log('🎉 새로운 구독자:', email)
+            console.log('🎉 새로운 구독자:', email, subscriptionData)
           }}
         />
       </div>

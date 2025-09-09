@@ -86,7 +86,7 @@ export function mapBackendNewsletter(backendData: any) {
 // app/(api)/api/newsletters/route.js
 export async function GET() {
   try {
-    const backendUrl = process.env.BACKEND_API_URL || 'http://localhost:8080';
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
     
     const response = await fetch(`${backendUrl}/api/newsletters`, {
       method: 'GET',
@@ -132,7 +132,7 @@ export async function GET() {
 
 ```bash
 # 백엔드 API 설정
-BACKEND_API_URL=http://localhost:8080
+BACKEND_URL=http://localhost:8000
 
 # 기타 환경변수들
 NEXT_PUBLIC_APP_URL=http://localhost:3000

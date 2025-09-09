@@ -17,9 +17,43 @@ import {
 import { TextWithTooltips } from "@/components/tooltip"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
-import { getUserRole, getUserInfo } from "@/lib/auth"
+import { getUserRole, getUserInfo, isAuthenticated } from "@/lib/auth"
 
-import { useNewsletters, useUserSubscriptions, useSubscribeNewsletter, useUnsubscribeNewsletter, useCategoryArticles, useTrendingKeywords, useCategoryHeadlines } from "@/hooks/useNewsletter"
+import { useNewsletters, useUserSubscriptions, useSubscribeNewsletter, useUnsubscribeNewsletter, useToggleSubscription, useCategoryArticles, useTrendingKeywords, useCategoryHeadlines } from "@/hooks/useNewsletter"
+
+// 기사 클릭 추적 함수
+const trackNewsClick = async (newsId, newsletterId, category, articleTitle, articleUrl) => {
+  try {
+    const userInfo = getUserInfo();
+    if (!userInfo) {
+      console.warn('사용자 정보가 없어 클릭 추적을 건너뜁니다.');
+      return;
+    }
+
+    const response = await fetch('/api/newsletter/track-click', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        newsId,
+        newsletterId,
+        category,
+        articleTitle,
+        articleUrl
+      })
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log('✅ 기사 클릭 추적 성공:', result);
+    } else {
+      console.warn('⚠️ 기사 클릭 추적 실패:', response.status);
+    }
+  } catch (error) {
+    console.warn('읽기 기록 전송 실패:', error);
+  }
+};
 import { useQuery } from '@tanstack/react-query'
 import KakaoShare from '@/components/KakaoShare'
 
@@ -194,7 +228,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
     error: subscriptionsError,
     refetch: refetchSubscriptions 
   } = useUserSubscriptions({
-    enabled: !!userRole && isClient, // 사용자 역할이 있고 클라이언트에서만 활성화
+    enabled: !!userRole && isClient, // 사용자 역할이 설정되고 클라이언트에서 실행될 때 활성화
     retry: 1,
     retryDelay: 1000,
     staleTime: 5 * 60 * 1000, // 5분간 fresh 상태 유지
@@ -284,9 +318,25 @@ export default function NewsletterPageClient({ initialNewsletters }) {
     hasData: Object.keys(categorySubscriberCounts).length > 0
   });
 
+  // 트렌딩 키워드 상태 디버깅
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔍 트렌딩 키워드 상태:', {
+      politics: { data: politicsKeywords.data, isLoading: politicsKeywords.isLoading, isError: politicsKeywords.isError },
+      economy: { data: economyKeywords.data, isLoading: economyKeywords.isLoading, isError: economyKeywords.isError },
+      society: { data: societyKeywords.data, isLoading: societyKeywords.isLoading, isError: societyKeywords.isError },
+      life: { data: lifeKeywords.data, isLoading: lifeKeywords.isLoading, isError: lifeKeywords.isError },
+      world: { data: worldKeywords.data, isLoading: worldKeywords.isLoading, isError: worldKeywords.isError },
+      itScience: { data: itScienceKeywords.data, isLoading: itScienceKeywords.isLoading, isError: itScienceKeywords.isError },
+      vehicle: { data: vehicleKeywords.data, isLoading: vehicleKeywords.isLoading, isError: vehicleKeywords.isError },
+      travelFood: { data: travelFoodKeywords.data, isLoading: travelFoodKeywords.isLoading, isError: travelFoodKeywords.isError },
+      art: { data: artKeywords.data, isLoading: artKeywords.isLoading, isError: artKeywords.isError }
+    });
+  }
+
   // 뮤테이션 훅들
   const subscribeMutation = useSubscribeNewsletter()
   const unsubscribeMutation = useUnsubscribeNewsletter()
+  const toggleSubscriptionMutation = useToggleSubscription()
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -308,12 +358,107 @@ export default function NewsletterPageClient({ initialNewsletters }) {
     return () => clearTimeout(timer)
   }, [])
 
+  // 세션 만료 및 서비스 오류 처리
+  useEffect(() => {
+    if (subscriptionsError?.message?.includes('세션이 만료되었습니다')) {
+      console.log('🔔 세션 만료 감지 - 구독 목록 조회 실패');
+      // 세션 만료 시 조용히 처리하고, 사용자에게는 별도 알림을 표시하지 않음
+      // authenticatedFetch에서 이미 로그아웃 처리를 했으므로 여기서는 추가 처리 불필요
+    }
+    
+    // 503 Service Unavailable 오류 처리
+    if (subscriptionsError?.message?.includes('서비스가 일시적으로 사용할 수 없습니다')) {
+      console.log('🔔 서비스 일시 중단 감지 - 구독 목록 조회 실패');
+      // 사용자에게 친화적인 알림 표시
+      toast({
+        title: "서비스 일시 중단",
+        description: "뉴스레터 서비스가 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해주세요.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    }
+  }, [subscriptionsError, toast])
+
   // 사용자 역할이 설정되면 구독 정보 새로고침
   useEffect(() => {
     if (userRole && isClient && refetchSubscriptions) {
       console.log('🔄 사용자 역할 설정됨, 구독 정보 새로고침 시작');
       refetchSubscriptions();
     }
+  }, [userRole, isClient, refetchSubscriptions]);
+
+  // 페이지 로드 시 구독 상태 복원
+  useEffect(() => {
+    const initializeSubscriptions = async () => {
+      if (userRole && isClient && !subscriptionsLoading) {
+        console.log('🔄 페이지 로드 시 구독 상태 복원 시작');
+        
+        // 로그인 상태 확인
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (token) {
+          try {
+            // 서버에서 구독 정보 조회
+            const response = await fetch('/api/newsletters/user-subscriptions', {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              credentials: 'include'
+            });
+            
+            if (response.ok) {
+              const result = await response.json();
+              if (result.success && result.data) {
+                console.log('✅ 페이지 로드 시 구독 정보 복원 성공:', result.data);
+                // 구독 정보가 있으면 refetchSubscriptions를 호출하여 상태 동기화
+                if (result.data.length > 0) {
+                  refetchSubscriptions();
+                }
+              }
+            } else {
+              console.warn('⚠️ 페이지 로드 시 구독 정보 조회 실패:', response.status);
+            }
+          } catch (error) {
+            console.warn('⚠️ 페이지 로드 시 구독 정보 조회 중 오류:', error);
+          }
+        }
+      }
+    };
+
+    // 컴포넌트 마운트 시 한 번만 실행
+    if (isClient && userRole) {
+      initializeSubscriptions();
+    }
+  }, [isClient, userRole]); // userRole이 설정되면 실행
+
+  // 백엔드 서비스 복구 시 자동 동기화 (5분마다 체크)
+  useEffect(() => {
+    if (!userRole || !isClient) return;
+
+    const syncInterval = setInterval(async () => {
+      try {
+        // 백엔드 헬스 체크
+        const healthResponse = await fetch('/api/newsletters/user-subscriptions', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
+        });
+
+        if (healthResponse.ok) {
+          const result = await healthResponse.json();
+          // 백엔드가 정상이고 fallback이 아닌 경우에만 동기화
+          if (result.success && !result.metadata?.fallback) {
+            console.log('🔄 백엔드 서비스 복구 감지 - 구독 정보 동기화');
+            refetchSubscriptions();
+          }
+        }
+      } catch (error) {
+        // 백엔드가 아직 복구되지 않았으면 조용히 넘어감
+        console.log('🔄 백엔드 서비스 아직 복구되지 않음');
+      }
+    }, 5 * 60 * 1000); // 5분마다 체크
+
+    return () => clearInterval(syncInterval);
   }, [userRole, isClient, refetchSubscriptions]);
 
   // 서버 구독 목록이 업데이트되면 로컬 상태 동기화
@@ -432,9 +577,15 @@ export default function NewsletterPageClient({ initialNewsletters }) {
     });
   };
 
-  // 구독 여부 판단
+  // 구독 여부 판단 (로컬 상태 우선, 서버 상태 보조)
   const isSubscribedByCategory = (category) => {
-    // 서버 구독 목록에서 먼저 확인 (더 정확함)
+    // 로컬 상태에서 먼저 확인 (즉시 반영)
+    if (localSubscriptions.has(category)) {
+      console.log(`✅ ${category}: 로컬 상태에서 구독 중`);
+      return true;
+    }
+    
+    // 서버 구독 목록에서 확인 (백업)
     if (Array.isArray(userSubscriptions)) {
       const isSubscribed = userSubscriptions.some(sub => {
         // 매핑된 카테고리 직접 매칭
@@ -475,33 +626,16 @@ export default function NewsletterPageClient({ initialNewsletters }) {
       }
     }
     
-    // 로컬 상태에서 확인 (서버 상태가 없을 때 fallback)
-    if (localSubscriptions.has(category)) {
-      console.log(`✅ ${category}: 로컬 상태에서 구독 중 (서버 상태 없음)`);
-      return true;
-    }
-    
     console.log(`❌ ${category}: 구독하지 않음`);
     return false;
   };
 
-  // 구독/해제 처리
+  // 구독/해제 처리 (새로운 토글 API 사용)
   const handleToggleSubscribe = async (newsletter, checked) => {
     if (!userRole) {
       toast({
         title: "로그인이 필요합니다",
         description: "뉴스레터를 구독하려면 먼저 로그인해주세요.",
-        variant: "destructive",
-        icon: <AlertCircle className="h-4 w-4 text-red-500" />
-      });
-      return;
-    }
-
-    const userInfo = getUserInfo();
-    if (!userInfo?.email) {
-      toast({
-        title: "사용자 정보 오류",
-        description: "사용자 이메일 정보를 찾을 수 없습니다. 다시 로그인해주세요.",
         variant: "destructive",
         icon: <AlertCircle className="h-4 w-4 text-red-500" />
       });
@@ -536,114 +670,80 @@ export default function NewsletterPageClient({ initialNewsletters }) {
         });
         return;
       }
+    }
 
-      // 로컬 상태 업데이트 (낙관적 업데이트)
+    // 로컬 상태 즉시 업데이트 (낙관적 업데이트)
+    if (checked) {
       setLocalSubscriptions(prev => new Set([...prev, newsletter.category]));
-      
-      subscribeMutation.mutate(
-        { category: newsletter.category, email: userInfo.email },
-        {
-          onSuccess: () => {
-            // 성공 시 서버에서 최신 구독 정보를 가져옴
-            refetchSubscriptions();
-            
-            // 구독자 통계 즉시 업데이트
-            const queryClient = subscribeMutation.queryClient;
-            if (queryClient) {
-              queryClient.setQueryData(['newsletter-stats-subscribers'], (oldData) => {
-                if (oldData && typeof oldData === 'object') {
-                  const newData = { ...oldData };
-                  // 새로 구독한 카테고리 +1
-                  newData[newsletter.category] = (newData[newsletter.category] || 0) + 1;
-                  return newData;
-                }
-                return oldData;
-              });
-            }
-            
-            toast({
-              title: "구독 완료",
-              description: `${newsletter.category} 카테고리를 구독했습니다. (${Array.from(localSubscriptions).length}/3)`,
-              icon: <CheckCircle className="h-4 w-4 text-green-500" />
-            });
-          },
-          onError: (error) => {
-            // 실패 시 로컬 상태에서 제거
-            setLocalSubscriptions(prev => {
-              const newSet = new Set(prev);
-              newSet.delete(newsletter.category);
-              return newSet;
-            });
-            
-            // 구독 제한 오류 처리
-            if (error.message?.includes('CATEGORY_LIMIT_EXCEEDED')) {
-              toast({
-                title: "구독 제한",
-                description: "최대 3개 카테고리까지 구독할 수 있습니다. 다른 카테고리 구독을 해제한 후 다시 시도해주세요.",
-                variant: "destructive",
-                icon: <AlertCircle className="h-4 w-4 text-red-500" />
-              });
-            } else {
-              toast({
-                title: "구독 실패",
-                description: error.message || "구독 처리 중 오류가 발생했습니다.",
-                variant: "destructive",
-                icon: <AlertCircle className="h-4 w-4 text-red-500" />
-              });
-            }
-          }
-        }
-      );
     } else {
-      // 구독 해제 시 로컬 상태에서 제거
       setLocalSubscriptions(prev => {
         const newSet = new Set(prev);
         newSet.delete(newsletter.category);
         return newSet;
       });
-      
-      // 구독 해제 시 카테고리명을 직접 전달
-      unsubscribeMutation.mutate(newsletter.category, {
-        onSuccess: () => {
-          // 성공 시 로컬 상태에서 즉시 제거하고 서버에서 최신 구독 정보를 가져옴
-          setLocalSubscriptions(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(newsletter.category);
-            return newSet;
-          });
+    }
+    
+    // 즉시 UI 업데이트를 위한 강제 리렌더링
+    setTimeout(() => {
+      refetchSubscriptions();
+    }, 100);
+    
+    // 새로운 토글 API 사용
+    toggleSubscriptionMutation.mutate(
+      { category: newsletter.category, isActive: checked },
+      {
+        onSuccess: (data) => {
+          // 항상 서버에서 최신 구독 정보를 가져옴 (fallback 모드에서도)
           refetchSubscriptions();
           
-          // 구독자 통계 즉시 업데이트
-          const queryClient = unsubscribeMutation.queryClient;
+          // 구독자 통계 즉시 업데이트 (fallback 모드에서도 로컬 통계는 업데이트)
+          const queryClient = toggleSubscriptionMutation.queryClient;
           if (queryClient) {
             queryClient.setQueryData(['newsletter-stats-subscribers'], (oldData) => {
               if (oldData && typeof oldData === 'object') {
                 const newData = { ...oldData };
-                newData[newsletter.category] = Math.max(0, (newData[newsletter.category] || 0) - 1);
+                if (checked) {
+                  // 새로 구독한 카테고리 +1
+                  newData[newsletter.category] = (newData[newsletter.category] || 0) + 1;
+                } else {
+                  // 구독 해제한 카테고리 -1
+                  newData[newsletter.category] = Math.max(0, (newData[newsletter.category] || 0) - 1);
+                }
                 return newData;
               }
               return oldData;
             });
           }
-          
-          toast({
-            title: "구독 해제",
-            description: `${newsletter.category} 카테고리 구독을 해제했습니다.`,
-            icon: <CheckCircle className="h-4 w-4 text-blue-500" />
-          });
         },
         onError: (error) => {
           // 실패 시 로컬 상태 복원
-          setLocalSubscriptions(prev => new Set([...prev, newsletter.category]));
-          toast({
-            title: "구독 해제 실패",
-            description: error.message || "구독 해제 중 오류가 발생했습니다.",
-            variant: "destructive",
-            icon: <AlertCircle className="h-4 w-4 text-red-500" />
-          });
+          if (checked) {
+            setLocalSubscriptions(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(newsletter.category);
+              return newSet;
+            });
+          } else {
+            setLocalSubscriptions(prev => new Set([...prev, newsletter.category]));
+          }
+          
+          // 구독 제한 오류는 훅에서 처리됨
+          if (!error.message?.includes('CATEGORY_LIMIT_EXCEEDED')) {
+            toast({
+              title: checked ? "구독 실패" : "구독 해제 실패",
+              description: error.message || "처리 중 오류가 발생했습니다.",
+              variant: "destructive",
+              icon: <AlertCircle className="h-4 w-4 text-red-500" />
+            });
+          }
+          
+          // 실패 시에도 구독 정보 새로고침
+          setTimeout(() => {
+            refetchSubscriptions();
+          }, 100);
         }
-      });
-    }
+      }
+    );
   };
 
   // 필터링된 뉴스레터
@@ -717,6 +817,11 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                     if (userRole) {
                       refetchSubscriptions()
                     }
+                    // 구독자 통계도 새로고침
+                    const queryClient = toggleSubscriptionMutation.queryClient;
+                    if (queryClient) {
+                      queryClient.invalidateQueries(['newsletter-stats-subscribers']);
+                    }
                   }}
                   disabled={isLoading}
                   className="hover-lift"
@@ -728,19 +833,6 @@ export default function NewsletterPageClient({ initialNewsletters }) {
               <p className="text-gray-600">관심 있는 주제의 뉴스레터를 구독하고 최신 정보를 받아보세요</p>
             </div>
 
-
-
-            {/* Error Display */}
-            {(newslettersError || subscriptionsError) && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <div className="flex items-center">
-                  <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
-                  <span className="text-red-700">
-                    데이터를 불러오는 중 오류가 발생했습니다. 새로고침 버튼을 클릭해주세요.
-                  </span>
-                </div>
-              </div>
-            )}
 
             {/* Category Tabs */}
             <div className="mb-6">
@@ -823,18 +915,49 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                   }
                   
                   // 백엔드에서 트렌드 키워드를 우선 사용, 없으면 기본값 사용
-                  const mainTopics = (trendingKeywordsData && trendingKeywordsData.length > 0) 
-                    ? trendingKeywordsData.map(item => item.keyword) 
-                    : (categoryData?.trendingKeywords && categoryData.trendingKeywords.length > 0)
-                    ? categoryData.trendingKeywords
-                    : (categoryData?.mainTopics && categoryData.mainTopics.length > 0)
-                    ? categoryData.mainTopics
-                    : generateTopicsForCategory(newsletter.category);
+                  const extractKeywords = (data) => {
+                    if (!data || !Array.isArray(data) || data.length === 0) return [];
+                    
+                    return data.map(item => {
+                      // 다양한 응답 구조에 대응
+                      if (typeof item === 'string') return item;
+                      if (item.keyword) return item.keyword;
+                      if (item.name) return item.name;
+                      if (item.title) return item.title;
+                      if (item.text) return item.text;
+                      if (item.value) return item.value;
+                      return String(item);
+                    }).filter(keyword => keyword && keyword.trim().length > 0);
+                  };
+
+                  const mainTopics = (() => {
+                    // 1순위: API에서 받은 트렌딩 키워드
+                    if (trendingKeywordsData && trendingKeywordsData.length > 0) {
+                      const extracted = extractKeywords(trendingKeywordsData);
+                      if (extracted.length > 0) return extracted;
+                    }
+                    
+                    // 2순위: 카테고리 데이터의 트렌딩 키워드
+                    if (categoryData?.trendingKeywords && categoryData.trendingKeywords.length > 0) {
+                      const extracted = extractKeywords(categoryData.trendingKeywords);
+                      if (extracted.length > 0) return extracted;
+                    }
+                    
+                    // 3순위: 카테고리 데이터의 메인 토픽
+                    if (categoryData?.mainTopics && categoryData.mainTopics.length > 0) {
+                      const extracted = extractKeywords(categoryData.mainTopics);
+                      if (extracted.length > 0) return extracted;
+                    }
+                    
+                    // 4순위: 기본값 생성
+                    return generateTopicsForCategory(newsletter.category);
+                  })();
                   
                   // 디버깅용 로그 (개발 환경에서만)
                   if (process.env.NODE_ENV === 'development') {
                     console.log(`🔍 주요 주제 데이터 (${newsletter.category}):`, {
                       trendingKeywordsData: trendingKeywordsData?.length || 0,
+                      trendingKeywordsDataRaw: trendingKeywordsData,
                       categoryDataTrendingKeywords: categoryData?.trendingKeywords?.length || 0,
                       categoryDataMainTopics: categoryData?.mainTopics?.length || 0,
                       finalMainTopics: mainTopics?.length || 0,
@@ -865,7 +988,8 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                                 {newsletter.frequency}
                               </Badge>
                               {isSubscribed && (
-                                <Badge className="bg-purple-600 text-white text-xs px-3 py-1 rounded-full shadow animate-pulse">
+                                <Badge className="bg-purple-600 text-white text-xs px-3 py-1 rounded-full shadow animate-pulse flex items-center">
+                                  <CheckCircle className="h-3 w-3 mr-1" />
                                   구독 중
                                 </Badge>
                               )}
@@ -899,7 +1023,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                             <Switch
                               checked={isSubscribed}
                               onCheckedChange={(checked) => handleToggleSubscribe(newsletter, checked)}
-                              disabled={subscribeMutation.isPending || unsubscribeMutation.isPending}
+                              disabled={toggleSubscriptionMutation.isPending}
                               className="data-[state=checked]:bg-blue-600"
                             />
                             <Label
@@ -907,7 +1031,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                                 isSubscribed ? "text-blue-600" : "text-gray-600"
                               }`}
                             >
-                              {subscribeMutation.isPending || unsubscribeMutation.isPending ? "처리 중..." :
+                              {toggleSubscriptionMutation.isPending ? "처리 중..." :
                                isSubscribed ? "구독 중" : "구독"}
                             </Label>
                           </div>
@@ -1008,7 +1132,25 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                                   ))
                                 ) : (headlinesData && headlinesData.length > 0) ? (
                                   headlinesData.map((headline, idx) => (
-                                    <div key={idx} className="flex items-start space-x-2 text-xs">
+                                    <div 
+                                      key={idx} 
+                                      className="flex items-start space-x-2 text-xs cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors"
+                                      onClick={() => {
+                                        // 헤드라인 클릭 추적
+                                        trackNewsClick(
+                                          headline.id || `headline-${idx}`,
+                                          newsletter.id,
+                                          newsletter.category,
+                                          headline.title,
+                                          headline.url || headline.link
+                                        );
+                                        
+                                        // 헤드라인 링크로 이동 (URL이 있는 경우)
+                                        if (headline.url || headline.link) {
+                                          window.open(headline.url || headline.link, '_blank', 'noopener,noreferrer');
+                                        }
+                                      }}
+                                    >
                                       <div className="w-1 h-1 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
                                       <div className="flex-1">
                                         <p className="text-gray-700 leading-relaxed">{headline.title}</p>
@@ -1030,7 +1172,25 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                                   ))
                                 ) : articles.length > 0 ? (
                                   articles.map((article, idx) => (
-                                    <div key={article.id || idx} className="flex items-start space-x-2 text-xs">
+                                    <div 
+                                      key={article.id || idx} 
+                                      className="flex items-start space-x-2 text-xs cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors"
+                                      onClick={() => {
+                                        // 기사 클릭 추적
+                                        trackNewsClick(
+                                          article.id || `article-${idx}`,
+                                          newsletter.id,
+                                          newsletter.category,
+                                          article.title,
+                                          article.url || article.link
+                                        );
+                                        
+                                        // 기사 링크로 이동 (URL이 있는 경우)
+                                        if (article.url || article.link) {
+                                          window.open(article.url || article.link, '_blank', 'noopener,noreferrer');
+                                        }
+                                      }}
+                                    >
                                       <div className="w-1 h-1 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
                                       <div className="flex-1">
                                         <p className="text-gray-700 leading-relaxed">{article.title}</p>
@@ -1049,7 +1209,25 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                                   ))
                                 ) : (
                                   newsletter.recentHeadlines?.map((headline, idx) => (
-                                    <div key={idx} className="flex items-start space-x-2 text-xs">
+                                    <div 
+                                      key={idx} 
+                                      className="flex items-start space-x-2 text-xs cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors"
+                                      onClick={() => {
+                                        // 기본 헤드라인 클릭 추적
+                                        trackNewsClick(
+                                          `default-headline-${idx}`,
+                                          newsletter.id,
+                                          newsletter.category,
+                                          headline.title,
+                                          headline.url || headline.link
+                                        );
+                                        
+                                        // 헤드라인 링크로 이동 (URL이 있는 경우)
+                                        if (headline.url || headline.link) {
+                                          window.open(headline.url || headline.link, '_blank', 'noopener,noreferrer');
+                                        }
+                                      }}
+                                    >
                                       <div className="w-1 h-1 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
                                       <div className="flex-1">
                                         <p className="text-gray-700 leading-relaxed">{headline.title}</p>
@@ -1111,19 +1289,29 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                         </div>
 
                         {/* 구독 상태 안내 */}
-                        <div className="mt-3 p-2 bg-blue-50/50 rounded text-xs text-gray-600">
+                        <div className={`mt-3 p-3 rounded text-xs ${
+                          isSubscribed 
+                            ? 'bg-green-50/80 border border-green-200' 
+                            : 'bg-blue-50/50 border border-blue-200'
+                        }`}>
                           {isSubscribed ? (
-                            <div>
-                              <span className="font-medium text-blue-600">'{newsletter.category}' 카테고리를 구독하고 있습니다.</span>
-                              <div className="mt-1 text-gray-500">
-                                현재 구독: {Array.from(localSubscriptions).length}/3개 카테고리
+                            <div className="flex items-center">
+                              <CheckCircle className="h-4 w-4 text-green-600 mr-2 flex-shrink-0" />
+                              <div>
+                                <span className="font-medium text-green-700">'{newsletter.category}' 카테고리를 구독하고 있습니다.</span>
+                                <div className="mt-1 text-green-600">
+                                  현재 구독: {Array.from(localSubscriptions).length}/3개 카테고리
+                                </div>
                               </div>
                             </div>
                           ) : (
-                            <div>
-                              <span>이 토글은 <span className="font-medium">'{newsletter.category}'</span> 카테고리 구독을 전환합니다.</span>
-                              <div className="mt-1 text-gray-500">
-                                현재 구독: {Array.from(localSubscriptions).length}/3개 카테고리
+                            <div className="flex items-center">
+                              <Bell className="h-4 w-4 text-blue-600 mr-2 flex-shrink-0" />
+                              <div>
+                                <span className="text-blue-700">이 토글은 <span className="font-medium">'{newsletter.category}'</span> 카테고리 구독을 전환합니다.</span>
+                                <div className="mt-1 text-blue-600">
+                                  현재 구독: {Array.from(localSubscriptions).length}/3개 카테고리
+                                </div>
                               </div>
                             </div>
                           )}
@@ -1191,6 +1379,27 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                         <div className="text-center py-4">
                           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"></div>
                           <p className="text-sm text-gray-500 mt-2">구독 정보 로딩 중...</p>
+                        </div>
+                      ) : subscriptionsError?.message?.includes('서비스가 일시적으로 사용할 수 없습니다') ? (
+                        <div className="text-center py-4">
+                          <div className="flex flex-col items-center space-y-3">
+                            <AlertCircle className="h-8 w-8 text-orange-500" />
+                            <div className="text-sm text-gray-600">
+                              <p className="font-medium">서비스 일시 중단</p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                뉴스레터 서비스가 일시적으로 사용할 수 없습니다.
+                              </p>
+                            </div>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => refetchSubscriptions()}
+                              className="text-xs"
+                            >
+                              <RefreshCw className="h-3 w-3 mr-1" />
+                              다시 시도
+                            </Button>
+                          </div>
                         </div>
                       ) : userSubscriptions.length > 0 ? (
                         userSubscriptions.map((subscription) => {
@@ -1345,36 +1554,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                 </Card>
               )}
 
-              {/* Newsletter Preferences */}
-              {userRole && (
-                <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.4s' }}>
-                  <CardHeader>
-                    <CardTitle className="text-lg">알림 설정</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="email-notifications" className="text-sm">
-                          이메일 알림
-                        </Label>
-                        <Switch id="email-notifications" defaultChecked />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="push-notifications" className="text-sm">
-                          푸시 알림
-                        </Label>
-                        <Switch id="push-notifications" defaultChecked />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="weekly-digest" className="text-sm">
-                          주간 요약
-                        </Label>
-                        <Switch id="weekly-digest" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+  
 
               {/* 뉴스레터 공유 섹션 */}
               <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.5s' }}>

@@ -72,22 +72,15 @@ export async function GET(request, { params }) {
   }
 }
 
-// 구독 해지 API
+// 구독 해지 API (GET과 DELETE 모두 지원)
 export async function DELETE(request, { params }) {
   try {
     const { subscriptionId } = params;
     // 쿠키에서 액세스 토큰 가져오기
-    const accessToken = cookies().get('access-token')?.value;
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get('access-token')?.value;
     
     console.log('🗑️ 구독 해지 요청:', { subscriptionId, hasAuth: !!accessToken });
-
-    if (!accessToken) {
-      console.log('❌ 인증 토큰 누락');
-      return Response.json(
-        { success: false, error: '인증이 필요합니다.' },
-        { status: 401 }
-      );
-    }
 
     if (!subscriptionId) {
       console.log('❌ 구독 ID 누락');
@@ -98,12 +91,19 @@ export async function DELETE(request, { params }) {
     }
 
     // 백엔드 API 호출
-    const response = await fetch(`${process.env.BACKEND_URL || 'http://localhost:8000'}/api/newsletter/subscription/${subscriptionId}`, {
+    const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/newsletter/subscription/${subscriptionId}`;
+    
+    const headers = {
+      'Content-Type': 'application/json'
+    };
+    
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`;
+    }
+
+    const response = await fetch(backendUrl, {
       method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      }
+      headers
     });
 
     if (!response.ok) {
@@ -129,15 +129,25 @@ export async function DELETE(request, { params }) {
         );
       }
       
-      throw new Error(`HTTP error! status: ${response.status}`);
+      return Response.json(
+        { 
+          success: false, 
+          error: errorText || `백엔드 API 오류 (${response.status})`,
+          status: response.status 
+        },
+        { status: response.status }
+      );
     }
 
     const data = await response.json();
     console.log('✅ 구독 해지 성공:', { subscriptionId });
     
+    // 성공 응답에 추가 정보 포함
     return Response.json({
       ...data,
-      message: '구독이 성공적으로 해지되었습니다.'
+      success: true,
+      message: '뉴스레터 구독이 해제되었습니다.',
+      timestamp: new Date().toISOString()
     });
 
   } catch (error) {
@@ -145,7 +155,7 @@ export async function DELETE(request, { params }) {
     return Response.json(
       { 
         success: false,
-        error: '구독 해지에 실패했습니다.',
+        error: '뉴스레터 구독 해제에 실패했습니다.',
         details: error.message 
       },
       { status: 500 }

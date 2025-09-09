@@ -79,26 +79,45 @@ export class NewsletterKakaoShare {
 
     // 템플릿 인자 구성 (카카오 템플릿 변수명에 맞게 수정)
     buildTemplateArgs(data) {
+        // 뉴스레터 미리보기 URL 생성 (실제 newsletterId 사용)
+        const newsletterPreviewUrl = data.id 
+            ? `${typeof window !== 'undefined' ? window.location.origin : ''}/newsletter/${data.id}/preview`
+            : (typeof window !== 'undefined' ? window.location.href : '');
+        
+        console.log('🔗 생성된 뉴스레터 URL:', newsletterPreviewUrl);
+        console.log('📊 뉴스레터 데이터:', data);
+        
         // 카카오 개발자 콘솔 템플릿에서 정의한 실제 변수명을 사용해야 합니다
         // 이미지에서 확인된 변수명들을 기반으로 수정
         return {
-            // 기본 정보
-            '${REGI_WEB_DOMAIN}': typeof window !== 'undefined' ? window.location.origin : '',
-            '${IMAGE_URL}': data.imageUrl || data.authorAvatar || data.thumbnail || 'https://via.placeholder.com/400x300',
-            
-            // 추가로 필요한 변수들 (실제 템플릿에서 사용하는 변수명으로 교체 필요)
+            // 카카오 템플릿 변수명 (${} 제거, 변수명만 사용)
             // 카카오 개발자 콘솔에서 템플릿을 확인하고 정확한 변수명을 사용하세요
-            'title': data.title || '뉴스레터',
-            'description': data.description || '',
-            'webUrl': data.url || (typeof window !== 'undefined' ? window.location.href : ''),
-            'mobileUrl': data.url || (typeof window !== 'undefined' ? window.location.href : ''),
-            'publishedDate': this.formatDate(data.date || data.publishedDate),
-            'category': data.category || 'News',
-            'author': data.author || 'Newsphere',
-            'summary1': data.sections?.[0]?.items?.[0]?.title || data.content?.[0]?.title || '',
-            'summary2': data.sections?.[0]?.items?.[1]?.title || data.content?.[1]?.title || '',
-            'summary3': data.sections?.[0]?.items?.[2]?.title || data.content?.[2]?.title || '',
-            'articleCount': String(data.sections?.[0]?.items?.length || data.content?.length || 0)
+            TITLE: data.title || '뉴스레터',
+            DESCRIPTION: data.description || '흥미로운 뉴스를 확인해보세요',
+            IMAGE_URL: data.imageUrl || data.authorAvatar || data.thumbnail || 'https://via.placeholder.com/400x300',
+            WEB_URL: newsletterPreviewUrl,
+            MOBILE_URL: newsletterPreviewUrl,
+            NEWSLETTER_ID: String(data.id || '1'),
+            DOMAIN: typeof window !== 'undefined' ? window.location.origin : '',
+            REGI_WEB_DOMAIN: typeof window !== 'undefined' ? window.location.origin : '',
+            
+            // 추가 변수들 (실제 템플릿에 따라 수정 필요)
+            PUBLISHED_DATE: this.formatDate(data.date || data.publishedDate),
+            CATEGORY: data.category || 'News',
+            AUTHOR: data.author || 'Newsphere',
+            SUMMARY1: data.sections?.[0]?.items?.[0]?.title || data.content?.[0]?.title || '',
+            SUMMARY2: data.sections?.[0]?.items?.[1]?.title || data.content?.[1]?.title || '',
+            SUMMARY3: data.sections?.[0]?.items?.[2]?.title || data.content?.[2]?.title || '',
+            ARTICLE_COUNT: String(data.sections?.[0]?.items?.length || data.content?.length || 0),
+            
+            // 추가 가능한 변수명들 (템플릿에 따라 다를 수 있음)
+            CONTENT_TITLE: data.title || '뉴스레터',
+            CONTENT_DESC: data.description || '',
+            LINK_URL: newsletterPreviewUrl,
+            BUTTON_TITLE: '뉴스레터 보기',
+            USER_NAME: '구독자',
+            READ_TIME: '5분',
+            TOTAL_ARTICLES: String(data.sections?.[0]?.items?.length || data.content?.length || 0)
         };
     }
 
@@ -145,13 +164,28 @@ export class NewsletterKakaoShare {
 export function debugTemplateVariables(data) {
     console.log('=== 카카오 템플릿 변수 디버깅 ===');
     
+    // 뉴스레터 미리보기 URL 생성
+    const newsletterPreviewUrl = data.id 
+        ? `${typeof window !== 'undefined' ? window.location.origin : ''}/newsletter/${data.id}/preview`
+        : (typeof window !== 'undefined' ? window.location.href : '');
+    
     const templateArgs = {
-        '${REGI_WEB_DOMAIN}': typeof window !== 'undefined' ? window.location.origin : '',
-        '${IMAGE_URL}': data.imageUrl || 'https://via.placeholder.com/400x300'
+        // 카카오 템플릿 변수명 (${} 제거, 변수명만 사용)
+        REGI_WEB_DOMAIN: typeof window !== 'undefined' ? window.location.origin : '',
+        IMAGE_URL: data.imageUrl || 'https://via.placeholder.com/400x300',
+        NEWSLETTER_URL: newsletterPreviewUrl,
+        NEWSLETTER_ID: String(data.id || '1'),
+        TITLE: data.title || '뉴스레터',
+        DESCRIPTION: data.description || '',
+        WEB_URL: newsletterPreviewUrl,
+        MOBILE_URL: newsletterPreviewUrl,
+        CATEGORY: data.category || 'News',
+        AUTHOR: data.author || 'Newsphere'
     };
     
     console.log('Template Args:', templateArgs);
     console.log('Current Domain:', typeof window !== 'undefined' ? window.location.origin : 'N/A');
+    console.log('Newsletter Preview URL:', newsletterPreviewUrl);
     
     // 실제 템플릿 변수명을 찾기 위한 테스트
     if (typeof window !== 'undefined' && window.Kakao) {

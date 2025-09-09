@@ -7,6 +7,9 @@ export function useKakaoShare(templateId = 123798, appKey = null) {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
 
+
+
+    
     useEffect(() => {
         const initKakao = async () => {
             try {

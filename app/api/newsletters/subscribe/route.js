@@ -150,7 +150,13 @@ export async function POST(request) {
     const data = await response.json();
     console.log('✅ 뉴스레터 구독 성공:', data);
     
-    return Response.json(data);
+    // 성공 응답에 추가 정보 포함
+    return Response.json({
+      ...data,
+      success: true,
+      message: '뉴스레터 구독이 완료되었습니다.',
+      timestamp: new Date().toISOString()
+    });
 
   } catch (error) {
     console.error('❌ 뉴스레터 구독 실패:', error);

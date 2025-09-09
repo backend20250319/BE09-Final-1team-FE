@@ -9,11 +9,20 @@ async function fetchJSON(url, init) {
 
 export default async function Page() {
   try {
+    console.log('🔄 서버 사이드에서 초기 데이터 가져오기 시작');
+    
     // 내부 프록시를 사용하여 초기 데이터 가져오기
     const [trending, list] = await Promise.all([
       fetchJSON(siteUrl(`/api/news/trending?hours=24&limit=1`)),
       fetchJSON(siteUrl(`/api/news?page=0&size=21`)),
     ]);
+    
+    console.log('📡 서버 사이드 데이터 수신:', {
+      trending: trending?.content?.length || 0,
+      list: list?.content?.length || 0,
+      trendingData: trending,
+      listData: list
+    });
 
     // 백엔드 응답에 맞춰 매핑
     const initialTrending = (() => {
@@ -42,6 +51,14 @@ export default async function Page() {
       views: news.viewCount ?? 0,
     }));
 
+    console.log('📋 매핑된 데이터:', {
+      initialTrending: initialTrending?.title,
+      mappedCount: mapped.length,
+      mappedSample: mapped.slice(0, 2),
+      totalPages: list.totalPages,
+      totalElements: list.totalElements
+    });
+
     return (
       <MainPage
         initialTrending={initialTrending}
@@ -51,7 +68,7 @@ export default async function Page() {
       />
     );
   } catch (error) {
-    console.error('Failed to fetch initial data:', error);
+    console.error('❌ 서버 사이드 데이터 가져오기 실패:', error);
 
     // 에러 시 기본 데이터 사용
     const initialTrending = {

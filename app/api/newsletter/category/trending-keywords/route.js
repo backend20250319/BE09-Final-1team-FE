@@ -37,9 +37,13 @@ export async function GET(request) {
 
     const backendCategory = categoryMapping[category] || category.toUpperCase();
 
-    // 백엔드 실제 API URL 사용
-    const backendUrl = getApiUrl(`/api/trending/trending-keywords/category/${backendCategory}`);
-    const urlWithQuery = `${backendUrl}?limit=${limit}&hours=24`;
+    // 백엔드 API 경로들을 순차적으로 시도
+    const possiblePaths = [
+      `/api/newsletter/category/${backendCategory}/trending-keywords`,
+      `/api/trending/category/${backendCategory}/keywords`,
+      `/api/newsletter/trending-keywords/${backendCategory}`,
+      `/api/trending/trending-keywords/category/${backendCategory}`
+    ];
 
     // 헤더 설정 (인증은 선택사항)
     const headers = {
@@ -50,13 +54,36 @@ export async function GET(request) {
       headers['Authorization'] = `Bearer ${accessToken}`;
     }
 
-    const response = await fetch(urlWithQuery, {
-      method: 'GET',
-      headers,
-    });
+    let response = null;
+    let successfulUrl = null;
 
-    if (!response.ok) {
-      console.error(`백엔드 API 에러: ${response.status} ${response.statusText}`);
+    // 각 경로를 순차적으로 시도
+    for (const path of possiblePaths) {
+      const backendUrl = getApiUrl(path);
+      const urlWithQuery = `${backendUrl}?limit=${limit}`;
+      
+      console.log(`트렌딩 키워드 API 시도: ${urlWithQuery}`);
+      
+      try {
+        response = await fetch(urlWithQuery, {
+          method: 'GET',
+          headers,
+        });
+        
+        if (response.ok) {
+          successfulUrl = urlWithQuery;
+          console.log(`✅ 트렌딩 키워드 API 성공: ${urlWithQuery}`);
+          break;
+        } else {
+          console.log(`❌ 트렌딩 키워드 API 실패 (${response.status}): ${urlWithQuery}`);
+        }
+      } catch (error) {
+        console.log(`❌ 트렌딩 키워드 API 에러: ${urlWithQuery} - ${error.message}`);
+      }
+    }
+
+    if (!response || !response.ok) {
+      console.warn(`모든 트렌딩 키워드 API 경로 실패 - 카테고리: ${category}`);
       
       // 기본 빈 데이터 반환 (에러 대신)
       return NextResponse.json({
@@ -66,7 +93,8 @@ export async function GET(request) {
           category: category,
           limit: parseInt(limit),
           error: 'trending_keywords_unavailable',
-          fallback: true
+          fallback: true,
+          attempted_paths: possiblePaths
         }
       });
     }
@@ -81,7 +109,8 @@ export async function GET(request) {
         category: category,
         limit: parseInt(limit),
         personalized: personalized && !!accessToken,
-        authenticated: !!accessToken
+        authenticated: !!accessToken,
+        successful_url: successfulUrl
       }
     });
 
