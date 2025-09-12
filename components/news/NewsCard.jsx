@@ -88,39 +88,60 @@ const NewsCard = memo(
     dedupStateDescription,
     className = '',
     compact = false,
+    news, // news 객체도 받을 수 있도록 추가
   }) => {
+    // news 객체가 전달된 경우 해당 속성들을 사용
+    const actualNewsId = newsId || news?.newsId || news?.id;
+    const actualTitle = title || news?.title;
+    const actualContent = content || news?.content || news?.summary;
+    const actualCategory = category || news?.category || news?.categoryName;
+    const actualSource = source || news?.source || news?.press;
+    const actualSourceLogo = sourceLogo || news?.sourceLogo;
+    const actualUrl = url || news?.url;
+    const actualImageUrl = imageUrl || news?.imageUrl || news?.image;
+    const actualPublishedAt = publishedAt || news?.publishedAt;
+    const actualViews = views || news?.views;
+    const actualTags = tags.length > 0 ? tags : (news?.tags || []);
+    const actualReporter = reporter || news?.reporter;
+    const actualDedupState = dedupState || news?.dedupState;
+    const actualDedupStateDescription = dedupStateDescription || news?.dedupStateDescription;
+
+    // 디버깅을 위한 로그
+    if (!actualNewsId) {
+      console.warn('NewsCard: newsId가 없습니다.', { newsId, news });
+    }
     // 이미지 지연 로딩
-    const { imageSrc, isLoading: imageLoading } = useLazyImage(imageUrl, '/placeholder.svg');
+    const { imageSrc, isLoading: imageLoading } = useLazyImage(actualImageUrl, '/placeholder.svg');
 
     // 메모이제이션된 값들
-    const formattedDate = useMemo(() => formatDate(publishedAt), [publishedAt]);
-    const formattedViews = useMemo(() => formatViews(views), [views]);
-    const categoryColor = useMemo(() => getCategoryColor(category), [category]);
-    const categoryName = useMemo(() => getCategoryName(category), [category]);
+    const formattedDate = useMemo(() => formatDate(actualPublishedAt), [actualPublishedAt]);
+    const formattedViews = useMemo(() => formatViews(actualViews), [actualViews]);
+    const categoryColor = useMemo(() => getCategoryColor(actualCategory), [actualCategory]);
+    const categoryName = useMemo(() => getCategoryName(actualCategory), [actualCategory]);
 
     // 제목과 내용 길이 제한
     const truncatedTitle = useMemo(() => {
       if (compact) {
-        return title.length > 50 ? title.substring(0, 50) + '...' : title;
+        return actualTitle.length > 50 ? actualTitle.substring(0, 50) + '...' : actualTitle;
       }
-      return title.length > 80 ? title.substring(0, 80) + '...' : title;
-    }, [title, compact]);
+      return actualTitle.length > 80 ? actualTitle.substring(0, 80) + '...' : actualTitle;
+    }, [actualTitle, compact]);
 
     const truncatedContent = useMemo(() => {
-      if (!content) return '';
+      if (!actualContent) return '';
       const maxLength = compact ? 60 : 120;
-      return content.length > maxLength ? content.substring(0, maxLength) + '...' : content;
-    }, [content, compact]);
+      return actualContent.length > maxLength ? actualContent.substring(0, maxLength) + '...' : actualContent;
+    }, [actualContent, compact]);
 
     return (
       <Card className={`overflow-hidden transition-all duration-300 hover:shadow-lg ${className}`}>
-        <Link href={`/news/${newsId}`} className="block">
+        <Link href={`/news/${actualNewsId}`} className="block">
           <div className="relative">
             {/* 이미지 */}
             <div className={`relative overflow-hidden ${compact ? 'h-32' : 'h-48'}`}>
               <img
                 src={imageSrc}
-                alt={title}
+                alt={actualTitle}
                 className={`w-full h-full object-cover transition-opacity duration-300 ${
                   imageLoading ? 'opacity-0' : 'opacity-100'
                 }`}
@@ -133,9 +154,9 @@ const NewsCard = memo(
               )}
 
               {/* 중복 상태 표시 */}
-              {dedupState && dedupState !== 'NORMAL' && (
+              {actualDedupState && actualDedupState !== 'NORMAL' && (
                 <Badge variant="secondary" className="absolute top-2 right-2 text-xs">
-                  {dedupStateDescription || dedupState}
+                  {actualDedupStateDescription || actualDedupState}
                 </Badge>
               )}
             </div>
@@ -170,37 +191,37 @@ const NewsCard = memo(
             </div>
 
             {/* 기자 정보 */}
-            {reporter && (
+            {actualReporter && (
               <div className="flex items-center gap-2 mb-3">
                 <Avatar className="h-6 w-6">
-                  <AvatarImage src={reporter.avatar} alt={reporter.name} />
-                  <AvatarFallback className="text-xs">{reporter.name.charAt(0)}</AvatarFallback>
+                  <AvatarImage src={actualReporter.avatar} alt={actualReporter.name} />
+                  <AvatarFallback className="text-xs">{actualReporter.name.charAt(0)}</AvatarFallback>
                 </Avatar>
-                <span className="text-xs text-gray-600">{reporter.name}</span>
+                <span className="text-xs text-gray-600">{actualReporter.name}</span>
               </div>
             )}
 
             {/* 출처 정보 */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                {sourceLogo && (
+                {actualSourceLogo && (
                   <img
-                    src={sourceLogo}
-                    alt={source}
+                    src={actualSourceLogo}
+                    alt={actualSource}
                     className="h-4 w-4 object-contain"
                     loading="lazy"
                   />
                 )}
-                <span className="text-xs text-gray-500">{source}</span>
+                <span className="text-xs text-gray-500">{actualSource}</span>
               </div>
 
-              {url && <ExternalLink className="h-3 w-3 text-gray-400" />}
+              {actualUrl && <ExternalLink className="h-3 w-3 text-gray-400" />}
             </div>
 
             {/* 태그 */}
-            {tags.length > 0 && !compact && (
+            {actualTags.length > 0 && !compact && (
               <div className="flex flex-wrap gap-1 mt-2">
-                {tags.slice(0, 3).map((tag, index) => (
+                {actualTags.slice(0, 3).map((tag, index) => (
                   <Badge key={index} variant="outline" className="text-xs">
                     {tag}
                   </Badge>

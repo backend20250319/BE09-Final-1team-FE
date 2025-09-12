@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Eye, EyeOff, Download, Share2, Copy } from "lucide-react"
-import NewsletterTemplate from "@/components/NewsletterTemplate"
+import NewsletterTemplate from "@/components/newsletter/NewsletterTemplate"
 
 export default function NewsletterTemplatePage() {
   const [isPreview, setIsPreview] = useState(true)

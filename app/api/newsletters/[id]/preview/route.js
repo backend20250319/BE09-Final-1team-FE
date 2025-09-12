@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { getApiUrl } from "@/lib/config";
+import { getApiUrl } from "@/lib/utils/config";
 
 // /api/newsletters/[id]/preview - 뉴스레터 미리보기 (개인화 적용)
 export async function GET(request, { params }) {

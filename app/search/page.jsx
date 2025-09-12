@@ -1,6 +1,6 @@
 'use client';
 
-import Header from '@/components/header';
+import Header from '@/components/layout/Header';
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

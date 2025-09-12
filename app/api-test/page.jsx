@@ -4,8 +4,8 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { getApiUrl } from "@/lib/config"
-import { diagnoseCorsIssue, checkBackendHealth, checkNetworkConnectivity } from "@/lib/api-utils"
+import { getApiUrl } from "@/lib/utils/config"
+import { diagnoseCorsIssue, checkBackendHealth, checkNetworkConnectivity } from "@/lib/api/api-utils"
 
 
 export default function ApiTestPage() {

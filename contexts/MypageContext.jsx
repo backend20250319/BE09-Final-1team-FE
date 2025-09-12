@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect } from "react";
-import { authenticatedFetch } from "@/lib/auth";
+import { authenticatedFetch } from "@/lib/auth/auth";
 
 const MypageContext = createContext();
 

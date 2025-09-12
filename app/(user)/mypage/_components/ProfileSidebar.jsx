@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { authenticatedFetch } from "@/lib/auth";
+import { authenticatedFetch } from "@/lib/auth/auth";
 import { useMypageContext } from "@/contexts/MypageContext";
 import { useScrap } from "@/contexts/ScrapContext";
 

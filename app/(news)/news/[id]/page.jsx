@@ -6,8 +6,8 @@ import { useParams } from "next/navigation";
 import AiSummaryModal from "@/components/aisummarybot/AiSummaryModal";
 import { Toaster } from "sonner";
 import { ShieldAlert } from "lucide-react";
-import { newsService } from "@/lib/newsService";
-import useSummary from "../../../../hooks/useSummary";
+import { newsService } from "@/lib/api/newsService";
+import useSummary from "@/lib/hooks/useSummary";
 
 import NewsHeader from "./_components/NewsHeader";
 import NewsActions from "./_components/NewsActions";
@@ -222,7 +222,7 @@ export default function NewsPage() {
         error={summaryError}
         onRegenerate={regenerateSummary}
       />
-      <ShareModal isOpen={isShareModalOpen} onClose={() => setShareModalOpen(false)} />
+      <ShareModal isOpen={isShareModalOpen} onClose={() => setShareModalOpen(false)} newsData={newsData} />
     </>
   );
 }

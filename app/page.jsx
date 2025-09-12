@@ -1,5 +1,5 @@
 import MainPage from './MainPage';
-import { siteUrl } from '../lib/api-url';
+import { siteUrl } from '@/lib/api/api-url';
 
 async function fetchJSON(url, init) {
   const res = await fetch(url, { ...init, next: { revalidate: 30 } });

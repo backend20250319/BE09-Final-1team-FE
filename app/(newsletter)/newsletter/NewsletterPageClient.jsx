@@ -15,11 +15,11 @@ import {
   Hash, Eye, ChevronDown, ChevronUp
 } from "lucide-react"
 import { TextWithTooltips } from "@/components/tooltip"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 import Link from "next/link"
-import { getUserRole, getUserInfo, isAuthenticated } from "@/lib/auth"
+import { getUserRole, getUserInfo, isAuthenticated } from "@/lib/auth/auth"
 
-import { useNewsletters, useUserSubscriptions, useSubscribeNewsletter, useUnsubscribeNewsletter, useToggleSubscription, useCategoryArticles, useTrendingKeywords, useCategoryHeadlines, useEnhancedNewsletterData, useCategorySubscriberCounts } from "@/hooks/useNewsletter"
+import { useNewsletters, useUserSubscriptions, useSubscribeNewsletter, useUnsubscribeNewsletter, useToggleSubscription, useCategoryArticles, useTrendingKeywords, useCategoryHeadlines, useEnhancedNewsletterData, useCategorySubscriberCounts } from "@/lib/hooks/useNewsletter"
 
 // 기사 클릭 추적 함수
 const trackNewsClick = async (newsId, newsletterId, category, articleTitle, articleUrl) => {

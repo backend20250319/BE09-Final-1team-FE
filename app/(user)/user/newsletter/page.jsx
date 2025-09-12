@@ -22,7 +22,7 @@ import {
   CheckCircle
 } from "lucide-react"
 
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 
 export default function UserNewsletter() {
   const [activeTab, setActiveTab] = useState("subscriptions")

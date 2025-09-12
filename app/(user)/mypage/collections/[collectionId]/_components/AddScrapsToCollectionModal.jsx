@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Loader2, Search, Plus, ChevronLeft, ChevronRight } from "lucide-react";
-import { authenticatedFetch } from "@/lib/auth";
+import { authenticatedFetch } from "@/lib/auth/auth";
 
 const categories = [
   "전체",

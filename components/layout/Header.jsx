@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import SearchAutocomplete from '@/components/SearchAutocomplete';
+import SearchAutocomplete from '@/components/news/SearchAutocomplete';
 import {
   Bell,
   Search,
@@ -19,7 +19,7 @@ import {
   Shield,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import { getUserInfo, logout } from '@/lib/auth';
+import { getUserInfo, logout } from '@/lib/auth/auth';
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

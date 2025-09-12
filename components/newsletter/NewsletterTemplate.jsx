@@ -20,9 +20,9 @@ import {
   Eye
 } from "lucide-react"
 import EnhancedSubscribeForm from "./EnhancedSubscribeForm"
-import SubscriberCount from "./SubscriberCount"
-import { useKakaoShare } from "../hooks/useKakaoShare"
-import { getUserInfo } from "@/lib/auth"
+import SubscriberCount from "../SubscriberCount"
+import { useKakaoShare } from "@/lib/hooks/useKakaoShare"
+import { getUserInfo } from "@/lib/auth/auth"
 
 // 카카오 공유 관련 상수
 const KAKAO_TEMPLATE_ID = 123798; // 템플릿 빌더에서 생성한 템플릿 ID

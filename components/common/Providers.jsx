@@ -1,6 +1,6 @@
 "use client"
 
-import { ThemeProvider } from "@/components/theme-provider"
+import { ThemeProvider } from "@/components/common/ThemeProvider"
 import { ScrapProvider } from "@/contexts/ScrapContext"
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState } from 'react'

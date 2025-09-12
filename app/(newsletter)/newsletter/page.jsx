@@ -1,4 +1,4 @@
-import { newsletterService } from '@/lib/newsletterService'
+import { newsletterService } from '@/lib/api/newsletter'
 import NewsletterPageClient from './NewsletterPageClient'
 
 // SEO를 위한 메타데이터

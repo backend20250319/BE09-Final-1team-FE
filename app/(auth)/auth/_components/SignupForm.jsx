@@ -30,9 +30,9 @@ import {
   NewsletterSubscriptionSchema,
   NewsletterSubscriptionResponseSchema,
   AdditionalInfoRequestSchema,
-} from "@/lib/schemas";
-import { getDeviceId } from "@/lib/auth";
-import { useInterests } from "@/hooks/useInterests";
+} from "@/lib/utils/schemas";
+import { getDeviceId } from "@/lib/auth/auth";
+import { useInterests } from "@/lib/hooks/useInterests";
 
 export default function SignupForm({ mode = "signup", onSignupSuccess }) {
   const router = useRouter();

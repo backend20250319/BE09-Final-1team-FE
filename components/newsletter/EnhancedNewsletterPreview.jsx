@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { ExternalLink, Clock, Calendar, Tag, Share2, User, Eye, TrendingUp, Users, BookOpen } from 'lucide-react';
-import SmartShareComponent from './SmartShareComponent';
+import SmartShareComponent from '../SmartShareComponent';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 

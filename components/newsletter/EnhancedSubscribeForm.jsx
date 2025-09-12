@@ -5,10 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
-import { useAsyncLoading } from "@/hooks/useLoading";
-import { useKakaoPermission, useKakaoPermissionModal } from "@/hooks/useKakaoPermission";
-import KakaoPermissionModal from "./KakaoPermissionModal";
+import { useToast } from "@/components/ui/use-toast";
+import { useAsyncLoading } from "@/lib/hooks/useLoading";
+import { useKakaoPermission, useKakaoPermissionModal } from "@/lib/hooks/useKakaoPermission";
+import KakaoPermissionModal from "../KakaoPermissionModal";
 import { 
   Mail, 
   MessageCircle, 

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { useAsyncLoading } from "@/hooks/useLoading";
+import { useAsyncLoading } from "@/lib/hooks/useLoading";
 import { LoadingButton } from "@/components/ui/loading";
 
 // 이메일 검증 함수

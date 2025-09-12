@@ -17,11 +17,11 @@ import {
   CheckCircle,
   AlertCircle
 } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
-import { useSmartShare } from '@/hooks/useSmartShare'
+import { useToast } from '@/components/ui/use-toast'
+import { useSmartShare } from '@/lib/hooks/useSmartShare'
 import { loadKakaoSDK } from '@/utils/kakaoShare'
-import { isAuthenticated, getUserInfo } from '@/lib/auth'
-import { shareNewsletterAsKakaoFeed } from '@/lib/kakaoFeedTemplate'
+import { isAuthenticated, getUserInfo } from '@/lib/auth/auth'
+import { shareNewsletterAsKakaoFeed } from '@/lib/utils/kakaoFeedTemplate'
 
 // 로그인 방식 감지 및 사용자 정보 관리
 const useUserAuth = () => {

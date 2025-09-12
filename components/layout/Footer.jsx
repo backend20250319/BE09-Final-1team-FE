@@ -4,7 +4,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Zap } from "lucide-react"
-import SubscribeForm from "@/components/SubscribeForm"
+import SubscribeForm from "@/components/newsletter/SubscribeForm"
 import SubscriberCount from "@/components/SubscriberCount"
 
 export default function Footer() {

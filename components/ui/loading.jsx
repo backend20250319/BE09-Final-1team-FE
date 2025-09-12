@@ -1,5 +1,5 @@
 import React from 'react'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/utils'
 import { Card, CardContent } from './card'
 
 // 1. 스피너 컴포넌트 (단순 처리 중 표시)

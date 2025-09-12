@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Loader2, Search, Plus } from "lucide-react";
-import { authenticatedFetch } from "@/lib/auth";
+import { authenticatedFetch } from "@/lib/auth/auth";
 
 const truncateTitle = (title, maxLength = 20) => {
   if (title.length > maxLength) {

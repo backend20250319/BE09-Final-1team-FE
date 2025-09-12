@@ -29,31 +29,29 @@ const RelatedNewsCard = ({ news }) => {
   const convertedCategory = backendToFrontendCategory[rawCategory] || rawCategory;
 
   return (
-      <Link href={`/news/${news.newsId}`} passHref legacyBehavior>
-        <a className="block h-full transition-all duration-200 hover:shadow-lg rounded-xl overflow-hidden">
-          <div className="flex flex-col h-full bg-white border border-gray-200 rounded-xl">
-            <div className="relative w-full h-60 flex-shrink-0">
-              <Image
-                  src={news.imageUrl || '/placeholder.svg'}
-                  alt={news.title}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-              />
-            </div>
-            <div className="p-4 flex flex-col flex-grow">
-              <h4 className="font-semibold text-base line-clamp-2 mb-2">
-                {news.title}
-              </h4>
-              <div className="flex items-center gap-2 text-sm text-gray-600 mt-auto">
-                <span className="text-sm text-gray-500">{news.press || news.source}</span>
-                <span className="bg-gray-100 text-gray-800 text-xs font-medium px-2 py-0.5 rounded-full">
-                                {convertedCategory}
-                            </span>
-              </div>
+      <Link href={`/news/${news.newsId}`} className="block h-full transition-all duration-200 hover:shadow-lg rounded-xl overflow-hidden">
+        <div className="flex flex-col h-full bg-white border border-gray-200 rounded-xl">
+          <div className="relative w-full h-60 flex-shrink-0">
+            <Image
+                src={news.imageUrl || '/placeholder.svg'}
+                alt={news.title}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+            />
+          </div>
+          <div className="p-4 flex flex-col flex-grow">
+            <h4 className="font-semibold text-base line-clamp-2 mb-2">
+              {news.title}
+            </h4>
+            <div className="flex items-center gap-2 text-sm text-gray-600 mt-auto">
+              <span className="text-sm text-gray-500">{news.press || news.source}</span>
+              <span className="bg-gray-100 text-gray-800 text-xs font-medium px-2 py-0.5 rounded-full">
+                              {convertedCategory}
+                          </span>
             </div>
           </div>
-        </a>
+        </div>
       </Link>
   );
 };

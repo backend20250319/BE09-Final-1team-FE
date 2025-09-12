@@ -21,7 +21,7 @@ import {
   Clock,
   RefreshCw
 } from "lucide-react"
-import { getApiUrl } from "@/lib/config"
+import { getApiUrl } from "@/lib/utils/config"
 
 export default function NewsletterDashboard() {
   const [activeTab, setActiveTab] = useState("overview")

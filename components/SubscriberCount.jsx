@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { authenticatedFetch } from '@/lib/auth';
+import { authenticatedFetch } from '@/lib/auth/auth';
 
 export default function SubscriberCount({ 
   darkTheme = false, 

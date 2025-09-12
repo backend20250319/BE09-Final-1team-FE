@@ -12,7 +12,7 @@ import {
   CheckCircle,
   Loader2
 } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '@/components/ui/use-toast'
 
 // 카카오 SDK 로드 함수
 const loadKakaoSDK = () => {

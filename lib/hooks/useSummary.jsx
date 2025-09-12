@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { authenticatedFetch } from "@/lib/auth";
+import { authenticatedFetch } from "@/lib/auth/auth";
 
 /**
  * 요약 훅 (항상 POST /api/news/summary)
@@ -47,10 +47,11 @@ export default function useSummary() {
               : `${base}/api/news/summary`;
         try {
             // useSummary.jsx 요청부만 교체
-            const res = await fetch(`${base}/api/news/${encodeURIComponent(newsId)}/summary`, {
+            const res = await fetch(url, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "Accept":"application/json" },
-                body: JSON.stringify({ type: type || "DEFAULT", lines, ...(prompt?{prompt}:{}), force }),
+                body: JSON.stringify(body),
+                credentials: "include", // 쿠키를 포함하여 인증 정보 전달
                 signal: controller.signal,
             });
 

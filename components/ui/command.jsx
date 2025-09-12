@@ -3,7 +3,7 @@ import * as React from "react";
 import { Command as CommandPrimitive } from "cmdk";
 import { Search } from "lucide-react";
 import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 // Command base wrapper

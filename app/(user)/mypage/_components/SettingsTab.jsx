@@ -15,7 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Mail, Bell, Settings, AlertCircle } from "lucide-react";
-import { authenticatedFetch } from "@/lib/auth";
+import { authenticatedFetch } from "@/lib/auth/auth";
 
 export default function SettingsTab() {
   const [newsletterEnabled, setNewsletterEnabled] = useState(true);
