@@ -37,6 +37,7 @@ class ApiClient {
     
     const config: RequestInit = {
       ...options,
+      credentials: 'include', // 쿠키 자동 전송
       headers: {
         ...this.defaultHeaders,
         ...options.headers,

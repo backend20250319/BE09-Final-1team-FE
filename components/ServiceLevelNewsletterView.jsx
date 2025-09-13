@@ -94,6 +94,7 @@ function PublicNewsletterView({ data, onUpgrade }) {
             category={category} 
             data={categoryData}
             showSubscription={false}
+            itemsLimit={5}
           />
         ))}
       </div>
@@ -151,6 +152,7 @@ function AuthenticatedNewsletterView({ data, userInfo, onUpgrade }) {
             data={categoryData}
             showSubscription={true}
             userInfo={userInfo}
+            itemsLimit={7}
           />
         ))}
       </div>
@@ -235,26 +237,31 @@ function PersonalizedNewsletterView({ data, userInfo }) {
 /**
  * 카테고리 섹션 컴포넌트
  */
-function CategorySection({ category, data, showSubscription = false, userInfo = null }) {
+function CategorySection({ category, data, showSubscription = false, userInfo = null, itemsLimit = 5 }) {
   const [isSubscribed, setIsSubscribed] = useState(data?.isSubscribed || false);
 
   const toggleSubscription = async () => {
+    // Optimistic update for snappy UX
+    const prev = isSubscribed;
+    setIsSubscribed(!prev);
     try {
       const response = await fetch(
         `/api/newsletter/category/${category}/subscribe`,
         {
-          method: isSubscribed ? 'DELETE' : 'POST',
+          method: prev ? 'DELETE' : 'POST',
           headers: {
             'Content-Type': 'application/json'
           }
         }
       );
-      
-      if (response.ok) {
-        setIsSubscribed(!isSubscribed);
+      if (!response.ok) {
+        // rollback on failure
+        setIsSubscribed(prev);
       }
     } catch (error) {
       console.error('구독 상태 변경 실패:', error);
+      // rollback on exception
+      setIsSubscribed(prev);
     }
   };
 
@@ -281,7 +288,7 @@ function CategorySection({ category, data, showSubscription = false, userInfo = 
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {data?.articles?.slice(0, 5).map((article, index) => (
+          {data?.articles?.slice(0, itemsLimit).map((article, index) => (
             <NewsItem key={index} article={article} />
           ))}
         </div>

@@ -17,6 +17,7 @@ import {
   Zap
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { newsletterService } from "@/lib/api/newsletterService";
 
 /**
  * 카테고리별 구독 관리 컴포넌트
@@ -30,6 +31,14 @@ export default function CategorySubscriptionManager({
   const [updating, setUpdating] = useState(new Set());
   const { toast } = useToast();
 
+  // 구독 상태 확인 헬퍼 함수
+  const isCategorySubscribed = (category) => {
+    return subscriptions.some(sub => 
+      (sub.categoryNameKo === category || sub.category === category) && 
+      sub.isActive === true
+    );
+  };
+
   // 구독 목록 로드
   useEffect(() => {
     loadSubscriptions();
@@ -38,12 +47,74 @@ export default function CategorySubscriptionManager({
   const loadSubscriptions = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/newsletters/user-subscriptions');
-      const data = await response.json();
       
-      if (data.success) {
-        setSubscriptions(data.data || []);
+      // 먼저 로컬 상태를 로드하여 기본값 설정
+      let subs = [];
+      try {
+        const local = JSON.parse(localStorage.getItem('localSubscriptions') || '{}');
+        if (local && typeof local === 'object') {
+          const categories = [
+            '정치','경제','사회','IT/과학','세계','생활','자동차/교통','여행/음식','예술'
+          ];
+          categories.forEach(cat => {
+            if (cat in local) {
+              subs.push({ 
+                id: `local-${cat}`, 
+                category: cat, 
+                categoryNameKo: cat,
+                isActive: !!local[cat], 
+                status: local[cat] ? 'ACTIVE' : 'INACTIVE' 
+              });
+            }
+          });
+        }
+      } catch (e) {
+        console.warn('로컬 구독 상태 로드 실패:', e);
       }
+
+      // 서버에서 구독 정보 가져오기 시도
+      try {
+        const subscriptionInfo = await newsletterService.getUserSubscriptionInfo();
+        
+        if (subscriptionInfo && subscriptionInfo.subscriptions) {
+          console.log('✅ 서버 구독 목록 로드 완료:', subscriptionInfo.subscriptions);
+          
+          // 서버 데이터로 로컬 데이터 덮어쓰기 (서버가 우선)
+          const serverSubs = subscriptionInfo.subscriptions;
+          const mergedSubs = [];
+          
+          // 모든 카테고리에 대해 서버 데이터 우선, 없으면 로컬 데이터 사용
+          const categories = [
+            '정치','경제','사회','IT/과학','세계','생활','자동차/교통','여행/음식','예술'
+          ];
+          
+          categories.forEach(cat => {
+            const serverSub = serverSubs.find(s => (s.categoryNameKo === cat || s.category === cat));
+            if (serverSub) {
+              mergedSubs.push({
+                ...serverSub,
+                category: cat,
+                categoryNameKo: cat,
+                isActive: serverSub.isActive || serverSub.status === 'ACTIVE'
+              });
+            } else {
+              // 서버에 없으면 로컬 데이터 사용
+              const localSub = subs.find(s => s.category === cat);
+              if (localSub) {
+                mergedSubs.push(localSub);
+              }
+            }
+          });
+          
+          subs = mergedSubs;
+        }
+      } catch (error) {
+        console.warn('서버 구독 목록 로드 실패, 로컬 상태 유지:', error);
+        // 서버 로드 실패 시 로컬 상태만 사용 (이미 subs에 로컬 데이터가 있음)
+      }
+
+      setSubscriptions(subs);
+      console.log('📋 최종 구독 목록:', subs);
     } catch (error) {
       console.error('구독 목록 로드 실패:', error);
       toast({
@@ -51,6 +122,7 @@ export default function CategorySubscriptionManager({
         description: "구독 목록을 불러오는데 실패했습니다.",
         variant: "destructive"
       });
+      setSubscriptions([]);
     } finally {
       setLoading(false);
     }
@@ -58,60 +130,70 @@ export default function CategorySubscriptionManager({
 
   // 구독 상태 토글
   const toggleSubscription = async (category, currentStatus) => {
-    const subscriptionId = `${category}_${Date.now()}`;
     setUpdating(prev => new Set([...prev, category]));
 
-    try {
-      const response = await fetch(
-        `/api/newsletter/category/${category}/subscribe`,
-        {
-          method: currentStatus ? 'DELETE' : 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            category,
-            userId: userInfo?.id
-          })
-        }
-      );
-
-      if (response.ok) {
-        const newStatus = !currentStatus;
-        
-        // 로컬 상태 업데이트
-        setSubscriptions(prev => {
-          const existing = prev.find(sub => sub.category === category);
-          if (existing) {
-            return prev.map(sub => 
-              sub.category === category 
-                ? { ...sub, status: newStatus ? 'ACTIVE' : 'INACTIVE' }
-                : sub
-            );
-          } else {
-            return [...prev, {
-              id: subscriptionId,
-              category,
-              status: newStatus ? 'ACTIVE' : 'INACTIVE',
-              createdAt: new Date().toISOString()
-            }];
-          }
-        });
-
-        toast({
-          title: newStatus ? "구독 완료" : "구독 해제",
-          description: `${category} 카테고리를 ${newStatus ? '구독' : '구독 해제'}했습니다.`,
-        });
-
-        // 부모 컴포넌트에 변경사항 알림
-        if (onSubscriptionChange) {
-          onSubscriptionChange(category, newStatus);
-        }
-      } else {
-        throw new Error('구독 상태 변경 실패');
+    // Optimistic update for instant UI feedback
+    const prevSubs = subscriptions;
+    const nextStatus = !currentStatus;
+    setSubscriptions(prev => {
+      const idx = prev.findIndex(sub => (sub.categoryNameKo === category || sub.category === category));
+      if (idx >= 0) {
+        const copy = [...prev];
+        copy[idx] = { ...copy[idx], isActive: nextStatus, status: nextStatus ? 'ACTIVE' : 'INACTIVE' };
+        return copy;
       }
+      return [...prev, { id: `local-${category}`, category, isActive: nextStatus, status: nextStatus ? 'ACTIVE' : 'INACTIVE' }];
+    });
+
+    try {
+      const result = await newsletterService.toggleSubscription(category, nextStatus);
+      
+      // fallback 응답인 경우 로컬 상태만 유지
+      if (result?.fallback) {
+        console.log('🔄 Fallback 모드 - 로컬 상태 유지');
+        toast({
+          title: nextStatus ? "구독 완료" : "구독 해제",
+          description: `${category} 카테고리를 ${nextStatus ? '구독' : '구독 해제'}했습니다. (로컬 처리)`,
+        });
+        if (onSubscriptionChange) onSubscriptionChange(category, nextStatus);
+        return; // 서버 동기화 시도하지 않음
+      }
+      
+      if (!result?.success) throw new Error('구독 상태 변경 실패');
+
+      // 성공한 경우에만 서버에서 최신 상태 동기화
+      try {
+        await loadSubscriptions();
+      } catch (syncError) {
+        console.warn('서버 동기화 실패, 로컬 상태 유지:', syncError);
+        // 동기화 실패해도 UI는 이미 업데이트되었으므로 그대로 유지
+      }
+
+      toast({
+        title: nextStatus ? "구독 완료" : "구독 해제",
+        description: `${category} 카테고리를 ${nextStatus ? '구독' : '구독 해제'}했습니다.`,
+      });
+
+      if (onSubscriptionChange) onSubscriptionChange(category, nextStatus);
     } catch (error) {
       console.error('구독 상태 변경 실패:', error);
+      
+      // 네트워크 오류나 백엔드 연결 실패인 경우 로컬 상태 유지
+      if (error.message.includes('백엔드 서비스') || 
+          error.message.includes('ECONNREFUSED') || 
+          error.message.includes('ENOTFOUND') ||
+          error.message.includes('fetch')) {
+        console.log('🔄 네트워크 오류 - 로컬 상태 유지');
+        toast({
+          title: nextStatus ? "구독 완료" : "구독 해제",
+          description: `${category} 카테고리를 ${nextStatus ? '구독' : '구독 해제'}했습니다. (로컬 처리)`,
+        });
+        if (onSubscriptionChange) onSubscriptionChange(category, nextStatus);
+        return; // rollback하지 않음
+      }
+      
+      // 기타 오류인 경우에만 rollback
+      setSubscriptions(prevSubs);
       toast({
         title: "오류",
         description: "구독 상태를 변경하는데 실패했습니다.",
@@ -170,7 +252,7 @@ export default function CategorySubscriptionManager({
         <Card className="text-center">
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-blue-600">
-              {subscriptions.filter(sub => sub.status === 'ACTIVE').length}
+              {subscriptions.filter(sub => sub.isActive === true).length}
             </div>
             <div className="text-sm text-gray-600">구독 중인 카테고리</div>
           </CardContent>
@@ -179,7 +261,7 @@ export default function CategorySubscriptionManager({
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-green-600">
               {subscriptions.reduce((total, sub) => 
-                total + (sub.status === 'ACTIVE' ? getSubscriberCount(sub.category) : 0), 0
+                total + (sub.isActive === true ? (sub.subscriberCount || getSubscriberCount(sub.categoryNameKo || sub.category)) : 0), 0
               )}
             </div>
             <div className="text-sm text-gray-600">총 구독자 수</div>
@@ -201,7 +283,7 @@ export default function CategorySubscriptionManager({
           '정치', '경제', '사회', 'IT/과학', '세계', 
           '생활', '자동차/교통', '여행/음식', '예술'
         ].map((category) => {
-          const subscribed = isSubscribed(category);
+          const subscribed = isCategorySubscribed(category);
           const subscriberCount = getSubscriberCount(category);
           const isUpdating = updating.has(category);
 

@@ -29,6 +29,7 @@ import ServiceLevelIndicator, { SimpleServiceLevelBadge } from "@/components/Ser
 // import HybridNewsletter from "@/components/HybridNewsletter"
 import NewsletterErrorBoundary, { NetworkStatusIndicator } from "@/components/NewsletterErrorBoundary"
 import { useRealtimeNewsletter } from "@/lib/hooks/useRealtimeNewsletter"
+import SubscriptionLimitIndicator from "@/components/SubscriptionLimitIndicator"
 
 // 기사 클릭 추적 함수
 const trackNewsClick = async (newsId, newsletterId, category, articleTitle, articleUrl) => {
@@ -1366,6 +1367,11 @@ export default function NewsletterPageClient({ initialNewsletters }) {
           {/* Sidebar - 기존 사이드바 유지 */}
           <div className="lg:col-span-1">
             <div className="space-y-6">
+              {/* 구독 제한 표시기 */}
+              {userRole && (
+                <SubscriptionLimitIndicator showUpgradePrompt={true} />
+              )}
+
               {/* My Subscriptions */}
               {userRole && (
                 <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.3s' }}>

@@ -135,10 +135,13 @@ class NewsletterService {
   }
 
   /**
-   * 구독 상태 토글
+   * 구독 상태 토글 (카테고리별)
    */
-  async toggleSubscription(newsletterId: string): Promise<{ success: boolean; isSubscribed: boolean; message: string }> {
-    return apiClient.post<{ success: boolean; isSubscribed: boolean; message: string }>(`/api/newsletters/${newsletterId}/toggle-subscription`);
+  async toggleSubscription(category: string, isActive: boolean): Promise<{ success: boolean; isSubscribed: boolean; message: string }> {
+    return apiClient.post<{ success: boolean; isSubscribed: boolean; message: string }>('/api/newsletters/subscription/toggle', {
+      category,
+      isActive
+    });
   }
 
   /**

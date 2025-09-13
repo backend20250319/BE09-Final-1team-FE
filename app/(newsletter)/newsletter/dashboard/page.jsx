@@ -38,6 +38,7 @@ import NewsletterTemplate from "@/components/newsletter/NewsletterTemplate"
 import { newsletterService } from "@/lib/api/newsletter"
 import { useKakaoPermission } from "@/lib/hooks/useKakaoPermission"
 import KakaoPermissionModal from "@/components/KakaoPermissionModal"
+import SubscriptionLimitIndicator from "@/components/SubscriptionLimitIndicator"
 
 // 쿠키에서 특정 값을 가져오는 유틸리티 함수
 const getCookie = (name) => {
@@ -1045,6 +1046,11 @@ export default function IntegratedNewsletterDashboard() {
                 </div>
               </div>
             )}
+
+            {/* 구독 제한 표시기 */}
+            <div className="mb-6">
+              <SubscriptionLimitIndicator showUpgradePrompt={true} />
+            </div>
 
             {/* My Subscriptions Section */}
             <div className="mb-8">
