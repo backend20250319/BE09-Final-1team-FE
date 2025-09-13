@@ -50,7 +50,7 @@ export default function KakaoFriendMessage({
   const { toast } = useToast();
 
   // 환경변수에서 카카오 JavaScript 키 가져오기
-  const KAKAO_JS_KEY = process.env.NEXT_PUBLIC_KAKAO_JS_KEY;
+  const KAKAO_JS_KEY = process.env.NEXT_PUBLIC_KAKAO_JS_KEY || '58255a3390abb537df22b14097e5265e';
   const REDIRECT_URI = process.env.NEXT_PUBLIC_KAKAO_REDIRECT_URI || window.location.origin + '/auth/oauth/kakao';
 
   useEffect(() => {
