@@ -4,8 +4,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { isAuthenticated, authenticatedFetch } from "@/lib/auth";
-import { newsService } from "@/lib/newsService";
+import { isAuthenticated, authenticatedFetch } from "@/lib/auth/auth";
+import { newsService } from "@/lib/api/newsService";
 import { Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 

@@ -1,4 +1,4 @@
-import { mapBackendNewsletter, processBackendResponse } from '@/lib/utils';
+import { mapBackendNewsletter, processBackendResponse } from '@/lib/utils/utils';
 
 // 뉴스레터 목록 API
 export async function GET() {

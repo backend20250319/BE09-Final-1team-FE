@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
-import { setUserInfo } from '@/lib/auth'
+import { setUserInfo } from '@/lib/auth/auth'
 
 export default function KakaoOAuthCallback() {
   const router = useRouter()

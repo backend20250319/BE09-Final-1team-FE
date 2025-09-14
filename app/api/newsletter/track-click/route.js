@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUserInfo } from '@/lib/auth';
+import { getUserInfo } from '@/lib/auth/auth';
 
 /**
  * 뉴스레터 기사 클릭 추적 API

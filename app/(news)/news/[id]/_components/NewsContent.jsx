@@ -124,7 +124,6 @@ const NewsContent = ({ newsData, fontSize }) => {
 
   return (
     <>
-      {/* ㄴㄴ */}
       <article
         className="prose prose-lg max-w-none text-lg leading-relaxed text-gray-800"
         style={{ fontSize: `${fontSize}px` }}

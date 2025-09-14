@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,11 +13,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Eye, EyeOff, Mail, Lock, ArrowLeft } from "lucide-react";
-import { login } from "@/lib/auth";
+import { Eye, EyeOff, Mail, Lock, ArrowLeft, Loader2 } from "lucide-react";
+import { login, getUserInfo } from "@/lib/auth/auth";
 import Link from "next/link";
-import KakaoLoginButton from "@/components/KakaoLoginButton";
-import GoogleLoginButton from "@/components/GoogleLoginButton";
+import KakaoLoginButton from "@/components/auth/KakaoLoginButton";
+import GoogleLoginButton from "@/components/auth/GoogleLoginButton";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
@@ -27,6 +27,35 @@ export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const [showEmailLogin, setShowEmailLogin] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  // 인증 상태 확인
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      try {
+        const userInfo = getUserInfo();
+        if (userInfo) {
+          console.log('🔍 이미 로그인된 사용자 감지:', userInfo);
+          
+          // 유효한 사용자면 리다이렉트
+          if (userInfo.role === 'admin') {
+            router.replace('/admin');
+          } else {
+            router.replace('/');
+          }
+          return; // 리다이렉트하므로 여기서 끝
+        }
+      } catch (error) {
+        console.warn('⚠️ 인증 상태 확인 실패:', error);
+        // 에러 발생 시 localStorage 정리
+        localStorage.clear();
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAuthStatus();
+  }, [router]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -49,9 +78,9 @@ export default function LoginForm() {
         }
 
         if (result.role === "admin") {
-          router.push("/admin");
+          router.replace("/admin");
         } else {
-          router.push("/");
+          router.replace("/");
         }
       } else {
         console.log("로그인 실패:", result.message);
@@ -65,6 +94,20 @@ export default function LoginForm() {
     }
   };
 
+  // 인증 확인 중 로딩 화면
+  if (isCheckingAuth) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center p-8">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
+            <p className="text-sm text-gray-600">인증 확인 중...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   // 이메일 로그인 선택 시 폼 렌더링
   if (showEmailLogin) {
     return (
@@ -76,7 +119,11 @@ export default function LoginForm() {
               variant="ghost"
               size="sm"
               className="absolute left-0"
-              onClick={() => setShowEmailLogin(false)}
+              onClick={() => {
+                setShowEmailLogin(false);
+                setError(""); // 에러 상태 초기화
+              }}
+              disabled={isLoading}
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -104,6 +151,7 @@ export default function LoginForm() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
+                  disabled={isLoading}
                   required
                 />
               </div>
@@ -119,6 +167,7 @@ export default function LoginForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10 pr-10"
+                  disabled={isLoading}
                   required
                 />
                 <Button
@@ -127,6 +176,7 @@ export default function LoginForm() {
                   size="sm"
                   className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
+                  disabled={isLoading}
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -145,7 +195,14 @@ export default function LoginForm() {
               </Link>
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "로그인 중..." : "로그인"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  로그인 중...
+                </>
+              ) : (
+                "로그인"
+              )}
             </Button>
           </form>
         </CardContent>
@@ -181,7 +238,7 @@ export default function LoginForm() {
           </div>
         </div>
         {/* 소셜 로그인 */}
-        <div className="relative w-full h-23">
+        <div className="space-y-3">
           <KakaoLoginButton />
           <GoogleLoginButton />
         </div>

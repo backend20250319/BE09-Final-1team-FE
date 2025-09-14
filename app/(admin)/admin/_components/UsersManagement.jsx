@@ -19,7 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AlertTriangle } from "lucide-react";
-import { authenticatedFetch } from "@/lib/auth"; // 인증 토큰/리프레시를 처리해주는 fetch 래퍼
+import { authenticatedFetch } from "@/lib/auth/auth"; // 인증 토큰/리프레시를 처리해주는 fetch 래퍼
 
 /** YYYY.MM.DD 형태로 한국형 날짜 포맷팅 */
 function formatDateKR(value) {

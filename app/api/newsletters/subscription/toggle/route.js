@@ -41,7 +41,7 @@ export async function POST(request) {
                        cookieStore.get('accessToken')?.value;
     
     // 프론트엔드에서 전송한 이메일 사용
-    const userEmail = email;
+    let userEmail = email;
     
     console.log('🔄 구독 토글 요청:', { 
       category,
@@ -69,12 +69,33 @@ export async function POST(request) {
       }
     }
 
+    // 이메일이 없으면 JWT 토큰에서 사용자 정보 추출 시도
+    if (!userEmail && accessToken) {
+      try {
+        // JWT 토큰에서 사용자 정보 추출 (간단한 방법)
+        const tokenParts = accessToken.split('.');
+        if (tokenParts.length === 3) {
+          const payload = JSON.parse(atob(tokenParts[1]));
+          userEmail = payload.email || payload.sub || payload.userId;
+          console.log('📧 JWT 토큰에서 이메일 추출:', userEmail);
+        }
+      } catch (error) {
+        console.warn('⚠️ JWT 토큰 파싱 실패:', error);
+      }
+    }
+
+    // 여전히 이메일이 없으면 기본값 사용 (개발 환경)
     if (!userEmail) {
-      console.log('❌ 사용자 이메일 정보 누락');
-      return Response.json(
-        { success: false, error: '사용자 이메일 정보를 가져올 수 없습니다.' },
-        { status: 400 }
-      );
+      if (process.env.NODE_ENV === 'development') {
+        userEmail = 'test@example.com';
+        console.log('📧 개발 환경 기본 이메일 사용:', userEmail);
+      } else {
+        console.log('❌ 사용자 이메일 정보 누락');
+        return Response.json(
+          { success: false, error: '사용자 이메일 정보를 가져올 수 없습니다.' },
+          { status: 400 }
+        );
+      }
     }
 
     if (!category) {
@@ -100,8 +121,8 @@ export async function POST(request) {
     const backendCategory = categoryMapping[category] || category;
 
     if (isActive) {
-      // 구독 요청 - 기존 구독 API와 동일한 방식 사용
-      const subscribeUrl = `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/newsletter/subscribe`;
+      // 구독 요청 - 올바른 API 엔드포인트 사용
+      const subscribeUrl = `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/newsletter/subscription/toggle`;
       console.log('🔄 구독 요청:', {
         url: subscribeUrl,
         category: backendCategory,
@@ -109,19 +130,20 @@ export async function POST(request) {
         hasToken: !!accessToken
       });
 
+      const requestBody = {
+        category: category,  // 프론트엔드 카테고리명 사용
+        isActive: true
+      };
+      
+      console.log('📤 백엔드 구독 요청 본문:', requestBody);
+
       const subscribeResponse = await fetch(subscribeUrl, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken || 'dev-token-for-testing'}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          email: userEmail,
-          preferredCategories: [backendCategory],
-          frequency: 'DAILY',
-          emailNewsletter: true,
-          kakaoNewsletter: false
-        })
+        body: JSON.stringify(requestBody)
       });
 
       console.log('📡 구독 응답:', {
@@ -135,7 +157,9 @@ export async function POST(request) {
         console.error('❌ 구독 실패:', { 
           status: subscribeResponse.status, 
           statusText: subscribeResponse.statusText,
-          errorText
+          errorText,
+          requestBody: requestBody,
+          url: subscribeUrl
         });
         
         // 구독 제한 오류 처리
@@ -185,88 +209,28 @@ export async function POST(request) {
       });
 
     } else {
-      // 구독 해제 요청 - 먼저 사용자의 구독 목록을 조회하여 해당 카테고리의 구독 ID를 찾음
-      const mySubscriptionsUrl = `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/newsletter/subscription/my`;
-      console.log('🔄 구독 목록 조회:', {
-        url: mySubscriptionsUrl,
+      // 구독 해제 요청 - 동일한 toggle API 사용
+      const unsubscribeUrl = `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/newsletter/subscription/toggle`;
+      console.log('🔄 구독 해제 요청:', {
+        url: unsubscribeUrl,
+        category: category,
         hasToken: !!accessToken
       });
 
-      const subscriptionsResponse = await fetch(mySubscriptionsUrl, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${accessToken || 'dev-token-for-testing'}`,
-          'Content-Type': 'application/json',
-        }
-      });
-
-      if (!subscriptionsResponse.ok) {
-        const errorText = await subscriptionsResponse.text();
-        console.error('❌ 구독 목록 조회 실패:', { 
-          status: subscriptionsResponse.status, 
-          statusText: subscriptionsResponse.statusText,
-          errorText
-        });
-        
-        // 백엔드 내부 서버 오류 처리
-        if (subscriptionsResponse.status === 500) {
-          console.log('🔄 백엔드 내부 서버 오류 - 로컬 상태만 업데이트');
-          return Response.json(
-            { 
-              success: true,
-              message: `${category} 카테고리 구독 해제가 로컬에서 처리되었습니다. (서버 동기화는 나중에 시도됩니다)`,
-              fallback: true,
-              category: category,
-              isActive: false
-            },
-            { status: 200 }
-          );
-        }
-        
-        return Response.json(
-          { 
-            success: false, 
-            error: errorText || `구독 목록 조회 실패 (${subscriptionsResponse.status})`,
-            status: subscriptionsResponse.status 
-          },
-          { status: subscriptionsResponse.status }
-        );
-      }
-
-      const subscriptionsData = await subscriptionsResponse.json();
-      console.log('📋 구독 목록:', subscriptionsData);
-
-      // 해당 카테고리의 구독을 찾음
-      const targetSubscription = subscriptionsData.data?.find(sub => 
-        sub.preferredCategories?.includes(backendCategory)
-      );
-
-      if (!targetSubscription) {
-        console.log('❌ 해당 카테고리의 구독을 찾을 수 없음:', backendCategory);
-        return Response.json(
-          { 
-            success: false, 
-            error: '해당 카테고리의 구독을 찾을 수 없습니다.',
-            status: 404 
-          },
-          { status: 404 }
-        );
-      }
-
-      // 구독 해제 요청
-      const unsubscribeUrl = `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/newsletter/subscription/${targetSubscription.id}`;
-      console.log('🔄 구독 해제 요청:', {
-        url: unsubscribeUrl,
-        subscriptionId: targetSubscription.id,
-        category: backendCategory
-      });
+      const requestBody = {
+        category: category,  // 프론트엔드 카테고리명 사용
+        isActive: false
+      };
+      
+      console.log('📤 백엔드 구독 해제 요청 본문:', requestBody);
 
       const unsubscribeResponse = await fetch(unsubscribeUrl, {
-        method: 'DELETE',
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken || 'dev-token-for-testing'}`,
           'Content-Type': 'application/json',
-        }
+        },
+        body: JSON.stringify(requestBody)
       });
 
       console.log('📡 구독 해제 응답:', {
@@ -280,7 +244,9 @@ export async function POST(request) {
         console.error('❌ 구독 해제 실패:', { 
           status: unsubscribeResponse.status, 
           statusText: unsubscribeResponse.statusText,
-          errorText
+          errorText,
+          requestBody: requestBody,
+          url: unsubscribeUrl
         });
         
         // 백엔드 내부 서버 오류 처리

@@ -1,7 +1,7 @@
 "use client";
 import * as React from "react";
 import * as ToggleGroupPrimitive from "@radix-ui/react-toggle-group";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { toggleVariants } from "@/components/ui/toggle";
 
 // Context 생성, 초기값 하드코딩 (size/variant는 string)
