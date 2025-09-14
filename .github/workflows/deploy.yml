@@ -9,6 +9,9 @@ env:
   ECR_REPOSITORY: my-front
   EB_APPLICATION_NAME: my-front-eb
   EB_ENVIRONMENT_NAME: My-front-eb-env
+  # 🚨 [추가] 배포 패키지를 저장할 S3 경로 설정
+  S3_BUCKET_NAME: elasticbeanstalk-${{ env.AWS_REGION }}-${{ secrets.AWS_ACCOUNT_ID }} # 계정 ID Secret 필요
+  S3_KEY: ${{ env.EB_APPLICATION_NAME }}/${{ github.sha }}.zip
 
 jobs:
   build-and-deploy:
@@ -28,11 +31,9 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::783648732440:role/github-actions-oidc-front
+          # 🚨 [추가] AWS 계정 ID를 secrets에서 가져옵니다.
+          aws-account-id: ${{ secrets.AWS_ACCOUNT_ID }}
           aws-region: ${{ env.AWS_REGION }}
-
-      - name: WhoAmI
-        run: |
-          aws sts get-caller-identity
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -65,17 +66,25 @@ jobs:
       - name: Create deployment package
         run: zip deploy.zip Dockerrun.aws.json
 
-      # 🚨 [최종 수정] 안정적인 with 파라미터 방식으로 되돌아가고, 액션을 최신 버전으로 업그레이드합니다.
-      - name: Deploy to Elastic Beanstalk
-        uses: einaregilsson/beanstalk-deploy@v22 # 👈 버전을 v22로 업그레이드
-        with:
-          application_name: ${{ env.EB_APPLICATION_NAME }}
-          environment_name: ${{ env.EB_ENVIRONMENT_NAME }}
-          version_label: ${{ github.sha }}
-          region: ${{ env.AWS_REGION }}
-          deployment_package: deploy.zip
-          # 👈 OIDC로 발급받은 임시 자격 증명을 with 파라미터로 명확하게 전달합니다.
-          aws_access_key: ${{ steps.aws-creds.outputs.aws-access-key-id }}
-          aws_secret_key: ${{ steps.aws-creds.outputs.aws-secret-access-key }}
-          aws_session_token: ${{ steps.aws-creds.outputs.aws-session-token }}
+      # 🚨 [최종 수정] 문제가 있는 외부 액션을 제거하고, AWS 공식 CLI를 직접 사용합니다.
+      - name: Deploy to Elastic Beanstalk using AWS CLI
+        run: |
+          S3_BUCKET="elasticbeanstalk-${{ env.AWS_REGION }}-${{ steps.aws-creds.outputs.aws-account-id }}"
+          S3_KEY="${{ env.EB_APPLICATION_NAME }}/deploy-${{ github.sha }}.zip"
+          VERSION_LABEL="v-${{ github.sha }}"
+
+          echo "Uploading to s3://$S3_BUCKET/$S3_KEY"
+          aws s3 cp deploy.zip "s3://$S3_BUCKET/$S3_KEY"
+
+          echo "Creating new application version $VERSION_LABEL"
+          aws elasticbeanstalk create-application-version \
+            --application-name "${{ env.EB_APPLICATION_NAME }}" \
+            --version-label "$VERSION_LABEL" \
+            --source-bundle S3Bucket="$S3_BUCKET",S3Key="$S3_KEY" \
+            --description "Commit ${{ github.sha }}"
+
+          echo "Updating environment ${{ env.EB_ENVIRONMENT_NAME }} with version $VERSION_LABEL"
+          aws elasticbeanstalk update-environment \
+            --environment-name "${{ env.EB_ENVIRONMENT_NAME }}" \
+            --version-label "$VERSION_LABEL"
 
