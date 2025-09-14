@@ -44,12 +44,47 @@ jobs:
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      # 🔥 EB 환경을 새 ECR 이미지로 바로 갱신 (S3/zip 불필요)
-      - name: Update Elastic Beanstalk environment (no S3)
+      - name: Generate Dockerrun.aws.json (v1)
+        run: |
+          cat > Dockerrun.aws.json << 'EOF'
+          {
+            "AWSEBDockerrunVersion": "1",
+            "Image": {
+              "Name": "${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}",
+              "Update": "true"
+            },
+            "Ports": [
+              { "ContainerPort": 3000 }
+            ],
+            "Environment": [
+              {
+                "Name": "NODE_ENV",
+                "Value": "production"
+              },
+              {
+                "Name": "PORT",
+                "Value": "3000"
+              }
+            ]
+          }
+          EOF
+
+      - name: Create deployment package
+        run: zip deploy.zip Dockerrun.aws.json
+
+      - name: Create EB application version (upload zip to EB S3)
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
+          S3_BUCKET: elasticbeanstalk-ap-northeast-2-783648732440 # ✅ EB 서비스 버킷 이름 확인 필요
+          S3_KEY: eb-app-versions/${{ env.EB_APPLICATION_NAME }}/${{ github.sha }}.zip
+        run: |
+          aws s3 cp deploy.zip s3://$S3_BUCKET/$S3_KEY
+          aws elasticbeanstalk create-application-version \
+            --application-name "${{ env.EB_APPLICATION_NAME }}" \
+            --version-label "${{ github.sha }}" \
+            --source-bundle S3Bucket=$S3_BUCKET,S3Key=$S3_KEY
+
+      - name: Update EB environment to new version
         run: |
           aws elasticbeanstalk update-environment \
             --environment-name "${{ env.EB_ENVIRONMENT_NAME }}" \
-            --option-settings Namespace=aws:elasticbeanstalk:container:docker,OptionName=ImageUrl,Value="${ECR_REGISTRY}/${{ env.ECR_REPOSITORY }}:${IMAGE_TAG}"
+            --version-label "${{ github.sha }}"
