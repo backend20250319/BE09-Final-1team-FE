@@ -65,17 +65,17 @@ jobs:
       - name: Create deployment package
         run: zip deploy.zip Dockerrun.aws.json
 
-      # 🚨 [최종 수정] 배포 단계 자체에 환경 변수를 직접 설정하여 자격 증명을 명확하게 전달합니다.
+      # 🚨 [최종 수정] 안정적인 with 파라미터 방식으로 되돌아가고, 액션을 최신 버전으로 업그레이드합니다.
       - name: Deploy to Elastic Beanstalk
-        uses: einaregilsson/beanstalk-deploy@v21
-        env: # 👈 이 env 블록이 핵심입니다.
-          AWS_ACCESS_KEY_ID: ${{ steps.aws-creds.outputs.aws-access-key-id }}
-          AWS_SECRET_ACCESS_KEY: ${{ steps.aws-creds.outputs.aws-secret-access-key }}
-          AWS_SESSION_TOKEN: ${{ steps.aws-creds.outputs.aws-session-token }}
+        uses: einaregilsson/beanstalk-deploy@v22 # 👈 버전을 v22로 업그레이드
         with:
           application_name: ${{ env.EB_APPLICATION_NAME }}
           environment_name: ${{ env.EB_ENVIRONMENT_NAME }}
           version_label: ${{ github.sha }}
           region: ${{ env.AWS_REGION }}
           deployment_package: deploy.zip
+          # 👈 OIDC로 발급받은 임시 자격 증명을 with 파라미터로 명확하게 전달합니다.
+          aws_access_key: ${{ steps.aws-creds.outputs.aws-access-key-id }}
+          aws_secret_key: ${{ steps.aws-creds.outputs.aws-secret-access-key }}
+          aws_session_token: ${{ steps.aws-creds.outputs.aws-session-token }}
 
