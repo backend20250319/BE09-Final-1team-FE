@@ -8,7 +8,6 @@ env:
   AWS_REGION: ap-northeast-2
   ECR_REPOSITORY: my-front
   EB_APPLICATION_NAME: my-front-eb
-  # 🚨 [수정 완료] 실제 환경 이름과 대소문자를 정확히 일치시켰습니다.
   EB_ENVIRONMENT_NAME: My-front-eb-env
 
 jobs:
@@ -48,24 +47,19 @@ jobs:
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
+      # --- 🚀 Dockerrun.aws.json STEP REVISED ---
       - name: Generate Dockerrun.aws.json
         run: |
           echo '{
-            "AWSEBDockerunVersion": "1",
+            "AWSEBDockerrunVersion": "1",
             "Image": {
               "Name": "${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}",
               "Update": "true"
             },
             "Ports": [
               {
-                "ContainerPort": 3000,
-                "HostPort": 80
-              }
-            ],
-            "Environment": [
-              {
-                "Name": "NODE_ENV",
-                "Value": "production"
+                "ContainerPort": "3000",
+                "HostPort": "80"
               }
             ]
           }' > Dockerrun.aws.json
@@ -73,7 +67,6 @@ jobs:
       - name: Create deployment package
         run: zip deploy.zip Dockerrun.aws.json
 
-      # --- 🚀 DEPLOYMENT STEP REVISED ---
       - name: Verify EB Environment and Deploy using AWS CLI
         run: |
           # 1. Check if the environment exists before trying to deploy
