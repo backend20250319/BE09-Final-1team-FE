@@ -2,12 +2,10 @@ name: Deploy Frontend to AWS Elastic Beanstalk
 
 on:
   push:
-    # 🚨 현재 브랜치 이름으로 수정했습니다.
     branches: [feature/junseo]
 
 env:
   AWS_REGION: ap-northeast-2
-  # 🚨 현재 프로젝트의 올바른 리소스 이름으로 수정했습니다.
   ECR_REPOSITORY: my-front
   EB_APPLICATION_NAME: my-front-eb
   EB_ENVIRONMENT_NAME: My-front-eb-env
@@ -28,20 +26,17 @@ jobs:
         id: aws-creds
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          # 🚨 현재 프로젝트의 올바른 역할 ARN으로 수정했습니다.
           role-to-assume: arn:aws:iam::783648732440:role/github-actions-oidc-front
           aws-region: ${{ env.AWS_REGION }}
 
       - name: WhoAmI
-        run: |
-          aws sts get-caller-identity
+        run: aws sts get-caller-identity
 
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build, tag, and push image to Amazon ECR
-        id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
@@ -49,32 +44,12 @@ jobs:
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      - name: Generate Dockerrun.aws.json
+      # 🔥 EB 환경을 새 ECR 이미지로 바로 갱신 (S3/zip 불필요)
+      - name: Update Elastic Beanstalk environment (no S3)
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          echo '{
-            "AWSEBDockerrunVersion": "1",
-            "Image": {
-              "Name": "${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}",
-              "Update": "true"
-            },
-            "Ports": [
-              { "ContainerPort": 3000 }
-            ]
-          }' > Dockerrun.aws.json
-
-      - name: Create deployment package
-        run: |
-          zip deploy.zip Dockerrun.aws.json
-
-      - name: Deploy to Elastic Beanstalk
-        uses: einaregilsson/beanstalk-deploy@v21
-        with:
-          application_name: ${{ env.EB_APPLICATION_NAME }}
-          environment_name: ${{ env.EB_ENVIRONMENT_NAME }}
-          version_label: ${{ github.sha }}
-          region: ${{ env.AWS_REGION }}
-          deployment_package: deploy.zip
-          aws_access_key: ${{ steps.aws-creds.outputs.aws-access-key-id }}
-          aws_secret_key: ${{ steps.aws-creds.outputs.aws-secret-key }}
-          aws_session_token: ${{ steps.aws-creds.outputs.aws-session-token }}
-
+          aws elasticbeanstalk update-environment \
+            --environment-name "${{ env.EB_ENVIRONMENT_NAME }}" \
+            --option-settings Namespace=aws:elasticbeanstalk:container:docker,OptionName=ImageUrl,Value="${ECR_REGISTRY}/${{ env.ECR_REPOSITORY }}:${IMAGE_TAG}"
