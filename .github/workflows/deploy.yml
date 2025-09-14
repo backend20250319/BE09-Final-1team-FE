@@ -23,8 +23,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 🚨 [핵심] OIDC로 임시 자격 증명을 발급받고, id를 부여하여 이후 단계에서 참조할 수 있게 합니다.
       - name: Configure AWS credentials
-        id: aws-creds
+        id: aws-creds # id 부여
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::783648732440:role/github-actions-oidc-front
@@ -47,7 +48,7 @@ jobs:
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      # --- 🚀 Dockerrun.aws.json STEP REVISED ---
+      # 🚨 [수정] 이전 성공 방식과 유사하게 Dockerrun.aws.json 구조를 단순화하고 HostPort를 제거합니다.
       - name: Generate Dockerrun.aws.json
         run: |
           echo '{
@@ -58,8 +59,7 @@ jobs:
             },
             "Ports": [
               {
-                "ContainerPort": 3000,
-                "HostPort": 80
+                "ContainerPort": 3000
               }
             ]
           }' > Dockerrun.aws.json
@@ -67,25 +67,17 @@ jobs:
       - name: Create deployment package
         run: zip deploy.zip Dockerrun.aws.json
 
-      - name: Verify EB Environment and Deploy using AWS CLI
-        run: |
-          # 1. Check if the environment exists before trying to deploy
-          aws elasticbeanstalk describe-environments \
-            --application-name ${{ env.EB_APPLICATION_NAME }} \
-            --environment-names ${{ env.EB_ENVIRONMENT_NAME }} \
-            --region ${{ env.AWS_REGION }}
-          
-          # 2. Create a new application version with the zipped package
-          aws elasticbeanstalk create-application-version \
-            --application-name ${{ env.EB_APPLICATION_NAME }} \
-            --version-label ${{ github.sha }} \
-            --source-bundle fileb://deploy.zip \
-            --region ${{ env.AWS_REGION }}
-
-          # 3. Update the environment to use the new version
-          aws elasticbeanstalk update-environment \
-            --application-name ${{ env.EB_APPLICATION_NAME }} \
-            --environment-name ${{ env.EB_ENVIRONMENT_NAME }} \
-            --version-label ${{ github.sha }} \
-            --region ${{ env.AWS_REGION }}
+      # 🚨 [최종 수정] 안정적으로 동작했던 'beanstalk-deploy' 액션으로 되돌아갑니다.
+      # OIDC로 발급받은 임시 자격 증명을 with 파라미터로 명확하게 전달합니다.
+      - name: Deploy to Elastic Beanstalk
+        uses: einaregilsson/beanstalk-deploy@v21
+        with:
+          application_name: ${{ env.EB_APPLICATION_NAME }}
+          environment_name: ${{ env.EB_ENVIRONMENT_NAME }}
+          version_label: ${{ github.sha }}
+          region: ${{ env.AWS_REGION }}
+          deployment_package: deploy.zip
+          aws_access_key: ${{ steps.aws-creds.outputs.aws-access-key-id }}
+          aws_secret_key: ${{ steps.aws-creds.outputs.aws-secret-access-key }}
+          aws_session_token: ${{ steps.aws-creds.outputs.aws-session-token }}
 
