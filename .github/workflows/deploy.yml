@@ -8,6 +8,7 @@ env:
   AWS_REGION: ap-northeast-2
   ECR_REPOSITORY: my-front
   EB_APPLICATION_NAME: my-front-eb
+  # 🚨 [수정 완료] 실제 환경 이름과 대소문자를 정확히 일치시켰습니다.
   EB_ENVIRONMENT_NAME: My-front-eb-env
 
 jobs:
@@ -24,13 +25,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Configure AWS credentials
-        id: aws-creds # This step gets temporary credentials from AWS
+        id: aws-creds
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::783648732440:role/github-actions-oidc-front
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: WhoAmI # This step confirms the credentials were received
+      - name: WhoAmI
         run: |
           aws sts get-caller-identity
 
@@ -50,7 +51,7 @@ jobs:
       - name: Generate Dockerrun.aws.json
         run: |
           echo '{
-            "AWSEBDockerrunVersion": "1",
+            "AWSEBDockerunVersion": "1",
             "Image": {
               "Name": "${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}",
               "Update": "true"
@@ -72,17 +73,26 @@ jobs:
       - name: Create deployment package
         run: zip deploy.zip Dockerrun.aws.json
 
-      - name: Deploy to Elastic Beanstalk
-        uses: einaregilsson/beanstalk-deploy@v21
-        with:
-          application_name: ${{ env.EB_APPLICATION_NAME }}
-          environment_name: ${{ env.EB_ENVIRONMENT_NAME }}
-          version_label: ${{ github.sha }}
-          region: ${{ env.AWS_REGION }}
-          deployment_package: deploy.zip
-          # 🔑 Pass credentials directly to the action via 'with' parameters.
-          # This is the most explicit method and solves the "not specified" error.
-          aws_access_key: ${{ steps.aws-creds.outputs.aws-access-key-id }}
-          aws_secret_key: ${{ steps.aws-creds.outputs.aws-secret-key }}
-          aws_session_token: ${{ steps.aws-creds.outputs.aws-session-token }}
+      # --- 🚀 DEPLOYMENT STEP REVISED ---
+      - name: Verify EB Environment and Deploy using AWS CLI
+        run: |
+          # 1. Check if the environment exists before trying to deploy
+          aws elasticbeanstalk describe-environments \
+            --application-name ${{ env.EB_APPLICATION_NAME }} \
+            --environment-names ${{ env.EB_ENVIRONMENT_NAME }} \
+            --region ${{ env.AWS_REGION }}
+          
+          # 2. Create a new application version with the zipped package
+          aws elasticbeanstalk create-application-version \
+            --application-name ${{ env.EB_APPLICATION_NAME }} \
+            --version-label ${{ github.sha }} \
+            --source-bundle fileb://deploy.zip \
+            --region ${{ env.AWS_REGION }}
+
+          # 3. Update the environment to use the new version
+          aws elasticbeanstalk update-environment \
+            --application-name ${{ env.EB_APPLICATION_NAME }} \
+            --environment-name ${{ env.EB_ENVIRONMENT_NAME }} \
+            --version-label ${{ github.sha }} \
+            --region ${{ env.AWS_REGION }}
 
