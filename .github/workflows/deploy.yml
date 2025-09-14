@@ -1,4 +1,4 @@
-name: Deploy Frontend to AWS Elastic Beanstalk
+name: Deploy Frontend to AWS Elastic Beanstalk by junseo
 
 on:
   push:
