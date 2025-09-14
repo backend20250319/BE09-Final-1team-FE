@@ -2,61 +2,50 @@ name: Deploy Frontend to AWS Elastic Beanstalk
 
 on:
   push:
-    branches: [develop]
-  # pull_request:
-  #   branches:
-  #     - develop
+    branches: [feature/junseo]
 
 env:
   AWS_REGION: ap-northeast-2
-  ECR_REPOSITORY: be09-final-1team-fe
-  EB_APPLICATION_NAME: BE09-Final-1team-FE
-  EB_ENVIRONMENT_NAME: BE09-Final-1team-FE-env
+  ECR_REPOSITORY: my-front
+  EB_APPLICATION_NAME: my-front-eb
+  EB_ENVIRONMENT_NAME: My-front-eb-env
 
 jobs:
   build-and-deploy:
     name: Build and Deploy
     runs-on: ubuntu-latest
 
-    # OIDC 토큰을 발급받기 위한 권한 설정
     permissions:
       id-token: write
       contents: read
 
     steps:
-      # 1. 소스 코드 가져오기
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. IAM 역할을 사용해 AWS에 로그인 (OIDC 방식)
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::883467884806:role/BE09-Final-1team-FE-github-deploy-role
+          role-to-assume: arn:aws:iam::783648732440:role/github-actions-oidc-front
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: WhoAmI
+      - name: WhoAmI # (Optional) A good step for debugging permissions
         run: |
           aws sts get-caller-identity
 
-      # 3. Amazon ECR에 로그인
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      # 4. Docker 이미지 빌드 및 ECR에 푸시
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
         env:
-          # ECR 로그인 단계에서 얻은 레지스트리 주소
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          # 현재 커밋 해시를 이미지 태그로 사용
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      # 5. Dockerrun.aws.json 파일 동적 생성
       - name: Generate Dockerrun.aws.json
         run: |
           echo '{
@@ -67,27 +56,15 @@ jobs:
             },
             "Ports": [
               {
-                "ContainerPort": "3000"
-              }
-            ],
-            "Environment": [
-              {
-                "Name": "NODE_ENV",
-                "Value": "production"
-              },
-              {
-                "Name": "PORT",
-                "Value": "3000"
+                "ContainerPort": 3000,
+                "HostPort": 80
               }
             ]
           }' > Dockerrun.aws.json
 
-      # 6. 배포 패키지 생성 (Dockerrun.aws.json을 zip으로 압축)
       - name: Create deployment package
-        run: |
-          zip deploy.zip Dockerrun.aws.json
+        run: zip deploy.zip Dockerrun.aws.json
 
-      # 7. Elastic Beanstalk에 배포
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v21
         with:
@@ -96,6 +73,4 @@ jobs:
           version_label: ${{ github.sha }}
           region: ${{ env.AWS_REGION }}
           deployment_package: deploy.zip
-          aws_access_key: ${{ env.AWS_ACCESS_KEY_ID }}
-          aws_secret_key: ${{ env.AWS_SECRET_ACCESS_KEY }}
-          aws_session_token: ${{ env.AWS_SESSION_TOKEN }}
+          # 🚨 OIDC handles authentication, so these keys MUST be removed.
