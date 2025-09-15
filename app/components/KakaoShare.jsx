@@ -27,7 +27,7 @@ const KakaoShare = ({
         // 카카오 SDK가 이미 로드되어 있는지 확인
         if (window.Kakao && !window.Kakao.isInitialized()) {
           // 실제 사용시 본인의 JavaScript 키로 교체
-          window.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_JS_KEY || 'YOUR_JAVASCRIPT_KEY_HERE')
+          window.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_JS_KEY || '58255a3390abb537df22b14097e5265e')
           setIsKakaoInitialized(true)
           console.log('✅ 카카오 SDK 초기화 완료')
         } else if (window.Kakao && window.Kakao.isInitialized()) {

@@ -22,7 +22,7 @@ import {
   Type,
   Layout
 } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 
 export default function NewsletterSettings() {
   const [isLoaded, setIsLoaded] = useState(false)

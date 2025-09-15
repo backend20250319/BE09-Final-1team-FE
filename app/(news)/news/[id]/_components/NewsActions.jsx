@@ -3,7 +3,7 @@
 
 import React, { useState } from 'react';
 import { useScrap } from '@/contexts/ScrapContext';
-import { isAuthenticated } from '@/lib/auth';
+import { isAuthenticated } from '@/lib/auth/auth';
 import { Bookmark, Bot, Share, Siren } from 'lucide-react';
 import FontSizeButton from './FontSizeButton';
 import FontSizeSelector from './FontSizeSelector';
@@ -50,10 +50,15 @@ const NewsActions = ({ newsData, onSummaryOpen, onShareOpen, fontSize, onFontSiz
         <button
           onClick={handleScrap}
           disabled={isScrapLoading}
-          className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg transition-colors text-sm disabled:opacity-50"
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors text-sm disabled:opacity-50 ${
+            isAuthenticated() 
+              ? "bg-gray-100 hover:bg-gray-200 text-gray-700" 
+              : "bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200"
+          }`}
+          title={!isAuthenticated() ? "로그인 후 스크랩 가능" : "스크랩"}
         >
           <Bookmark size={18} />
-          <span>스크랩</span>
+          <span>{isAuthenticated() ? "스크랩" : "로그인 후 스크랩"}</span>
         </button>
         <button
           onClick={onSummaryOpen}

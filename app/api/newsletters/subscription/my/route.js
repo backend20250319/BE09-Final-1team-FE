@@ -1,9 +1,10 @@
 // 내 구독 목록 조회 API
 export async function GET(request) {
   try {
-    const authHeader = request.headers.get('authorization')
+    // HttpOnly 쿠키에서 access-token 가져오기
+    const accessToken = request.cookies.get('access-token')?.value
 
-    if (!authHeader) {
+    if (!accessToken) {
       return Response.json(
         { success: false, error: '인증이 필요합니다.' },
         { status: 401 }
@@ -14,7 +15,7 @@ export async function GET(request) {
     const response = await fetch(`${process.env.BACKEND_URL || 'http://localhost:8000'}/api/newsletter/subscription/my`, {
       method: 'GET',
       headers: {
-        'Authorization': authHeader,
+        'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       }
     })

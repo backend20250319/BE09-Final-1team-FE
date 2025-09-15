@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { getApiUrl } from "@/lib/config";
+import { getApiUrl } from "@/lib/utils/config";
 
 // /api/newsletter/share/email - 이메일 공유
 export async function POST(request) {

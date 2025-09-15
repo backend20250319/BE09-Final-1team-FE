@@ -5,7 +5,7 @@ import React from 'react';
 import { toast } from 'sonner';
 import { X } from 'lucide-react';
 
-const ShareModal = ({ isOpen, onClose }) => {
+const ShareModal = ({ isOpen, onClose, newsData }) => {
   if (!isOpen) return null;
 
   const copyUrlToClipboard = () => {
@@ -51,6 +51,13 @@ const ShareModal = ({ isOpen, onClose }) => {
           </button>
         </div>
         <div className="p-6">
+          {newsData && (
+            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+              <h3 className="font-semibold text-sm text-gray-800 mb-1">공유할 기사</h3>
+              <p className="text-sm text-gray-600 line-clamp-2">{newsData.title}</p>
+              <p className="text-xs text-gray-500 mt-1">{newsData.source} • {newsData.category}</p>
+            </div>
+          )}
           <p className="text-gray-600 mb-4">
             아래 버튼을 눌러 기사 URL을 복사할 수 있습니다.
           </p>

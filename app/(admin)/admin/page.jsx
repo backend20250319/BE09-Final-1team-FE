@@ -1,20 +1,17 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-import AdminDashboard from "./_components/AdminDashboard";
-import UsersManagement from "./_components/UsersManagement";
-import NewsletterManagement from "./_components/NewsletterManagement";
-import AdminSettings from "./_components/AdminSettings";
+import UsersManagement from './_components/UsersManagement';
+import NewsletterManagement from './_components/NewsletterManagement';
+import AdminSettings from './_components/AdminSettings';
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   return (
     <div className="min-h-screen bg-gray-50">
-      
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4">
@@ -25,9 +22,9 @@ export default function AdminPage() {
           </TabsList>
 
           {/* Dashboard Tab */}
-          <TabsContent value="dashboard">
+          {/* <TabsContent value="dashboard">
             <AdminDashboard />
-          </TabsContent>
+          </TabsContent> */}
 
           {/* Users Management Tab */}
           <TabsContent value="users">

@@ -36,7 +36,7 @@ import {
     PaginationPrevious,
   } from "@/components/ui/pagination";
 import { toast } from "sonner";
-import { authenticatedFetch } from "@/lib/auth";
+import { authenticatedFetch } from "@/lib/auth/auth";
 
 // --- Hooks ---
 const useCollections = () => {

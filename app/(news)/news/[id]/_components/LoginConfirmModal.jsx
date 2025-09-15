@@ -24,8 +24,7 @@ const LoginConfirmModal = ({ isOpen, onClose }) => {
             로그인 필요
           </DialogTitle>
           <DialogDescription>
-            이 기능을 사용하려면 로그인이 필요합니다. 로그인 페이지로
-            이동하시겠습니까?
+            스크랩 기능을 사용하려면 로그인이 필요합니다. 로그인하시면 관심있는 뉴스를 저장하고 나중에 다시 볼 수 있습니다.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Info } from 'lucide-react';
-import { renderTextWithTooltips } from '@/lib/textProcessor';
+import { renderTextWithTooltips } from '@/lib/utils/textProcessor';
 
 export default function TermTooltip({ term, definition, definitions, children, source, apiCall }) {
   console.log('🔍 TermTooltip 렌더링:', {

@@ -18,13 +18,13 @@ import {
   Share2,
   Users
 } from "lucide-react"
-import NewsletterTemplate from "@/components/NewsletterTemplate"
+import NewsletterTemplate from "@/components/newsletter/NewsletterTemplate"
 import KakaoFriendMessage from "@/components/KakaoFriendMessage"
 import SmartShareComponent from "@/components/SmartShareComponent"
-import EnhancedNewsletterPreview from "@/components/EnhancedNewsletterPreview"
-import { newsletterService } from "@/lib/newsletterService"
-import { useToast } from "@/hooks/use-toast"
-import { useKakaoShare } from "@/hooks/useKakaoShare"
+import EnhancedNewsletterPreview from "@/components/newsletter/EnhancedNewsletterPreview"
+import { newsletterService } from "@/lib/api/newsletter"
+import { useToast } from "@/components/ui/use-toast"
+import { useKakaoShare } from "@/lib/hooks/useKakaoShare"
 
 export default function NewsletterPreviewPage() {
   const params = useParams()

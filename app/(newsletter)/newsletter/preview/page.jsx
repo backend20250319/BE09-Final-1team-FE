@@ -15,10 +15,10 @@ import {
   CheckCircle,
   AlertCircle
 } from "lucide-react"
-import NewsletterTemplate from "@/components/NewsletterTemplate"
+import NewsletterTemplate from "@/components/newsletter/NewsletterTemplate"
 import SmartShareComponent from "@/components/SmartShareComponent"
-import { shareNewsletterAsKakaoFeed } from "@/lib/kakaoFeedTemplate"
-import { useToast } from "@/hooks/use-toast"
+import { shareNewsletterAsKakaoFeed } from "@/lib/utils/kakaoFeedTemplate"
+import { useToast } from "@/components/ui/use-toast"
 
 export default function NewsletterPreviewPage() {
   const [loading, setLoading] = useState(false)
