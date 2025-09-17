@@ -12,7 +12,7 @@ import CollectionPagination from "./_components/CollectionPagination";
 import ShareModal from "./_components/ShareModal";
 import AddScrapsToCollectionModal from "./_components/AddScrapsToCollectionModal";
 import AddToCollectionModal from "../../_components/AddToCollectionModal";
-import { authenticatedFetch } from "@/lib/auth";
+import { authenticatedFetch } from "@/lib/auth/auth";
 
 const CollectionDetailPage = () => {
   const router = useRouter();

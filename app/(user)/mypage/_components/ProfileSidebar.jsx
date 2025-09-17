@@ -5,9 +5,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { authenticatedFetch } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
+import { Bell, Mail, Users, RefreshCw } from "lucide-react";
+import { authenticatedFetch } from "@/lib/auth/auth";
 import { useMypageContext } from "@/contexts/MypageContext";
 import { useScrap } from "@/contexts/ScrapContext";
+import { newsletterService } from "@/lib/api/newsletterService";
 
 /**
  * 프로필 사이드바 컴포넌트
@@ -18,6 +21,8 @@ export default function ProfileSidebar() {
   const [userData, setUserData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [subscriptionInfo, setSubscriptionInfo] = useState(null);
+  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
 
   const { readArticleCount } = useMypageContext();
   const { totalScraps } = useScrap();
@@ -55,6 +60,45 @@ export default function ProfileSidebar() {
 
     fetchUserData();
   }, []);
+
+  // 구독 정보 로드
+  useEffect(() => {
+    const fetchSubscriptionInfo = async () => {
+      try {
+        setSubscriptionLoading(true);
+        const info = await newsletterService.getUserSubscriptionInfo();
+        setSubscriptionInfo(info);
+        console.log("✅ ProfileSidebar: 구독 정보 로드 완료:", info);
+      } catch (error) {
+        console.error("ProfileSidebar 구독 정보 로드 실패:", error);
+        setSubscriptionInfo({
+          subscriptions: [],
+          count: 0,
+          preferredCategories: [],
+          userId: null,
+          timestamp: new Date().toISOString()
+        });
+      } finally {
+        setSubscriptionLoading(false);
+      }
+    };
+
+    fetchSubscriptionInfo();
+  }, []);
+
+  // 구독 정보 새로고침
+  const refreshSubscriptionInfo = async () => {
+    try {
+      setSubscriptionLoading(true);
+      const info = await newsletterService.getUserSubscriptionInfo();
+      setSubscriptionInfo(info);
+      console.log("✅ ProfileSidebar: 구독 정보 새로고침 완료:", info);
+    } catch (error) {
+      console.error("ProfileSidebar 구독 정보 새로고침 실패:", error);
+    } finally {
+      setSubscriptionLoading(false);
+    }
+  };
 
   // --일반 / 소셜 회원 구분--
   const getAcccountType = (provider) => {
@@ -129,7 +173,7 @@ export default function ProfileSidebar() {
 
         <Separator className="my-6" />
 
-        {/* 사용자 통계 정보 (현재는 정적 데이터) */}
+        {/* 사용자 통계 정보 */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-600">가입일</span>
@@ -143,6 +187,85 @@ export default function ProfileSidebar() {
             <span className="text-sm text-gray-600">스크랩</span>
             <span className="text-sm font-medium">{totalScraps}개</span>
           </div>
+        </div>
+
+        <Separator className="my-6" />
+
+        {/* 구독 정보 섹션 */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Bell className="h-4 w-4 mr-2 text-blue-500" />
+              <span className="text-sm font-medium text-gray-700">내 구독</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={refreshSubscriptionInfo}
+              disabled={subscriptionLoading}
+              className="h-6 w-6 p-0"
+            >
+              <RefreshCw className={`h-3 w-3 ${subscriptionLoading ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
+          
+          {subscriptionLoading ? (
+            <div className="text-center py-2">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500 mx-auto"></div>
+              <p className="text-xs text-gray-500 mt-1">구독 정보 로딩 중...</p>
+            </div>
+          ) : subscriptionInfo ? (
+            <div className="space-y-3">
+              {/* 구독 개수 표시 */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">구독 중인 뉴스레터</span>
+                <Badge variant="outline" className="text-xs">
+                  {subscriptionInfo.count}/3개
+                </Badge>
+              </div>
+              
+              {/* 구독 중인 카테고리 목록 */}
+              {subscriptionInfo.subscriptions && subscriptionInfo.subscriptions.length > 0 ? (
+                <div className="space-y-2">
+                  <span className="text-xs text-gray-600">구독 카테고리:</span>
+                  <div className="flex flex-wrap gap-1">
+                    {subscriptionInfo.subscriptions.map((subscription, index) => (
+                      <Badge 
+                        key={index} 
+                        variant="secondary" 
+                        className="text-xs px-2 py-1"
+                      >
+                        {subscription.categoryNameKo || subscription.category}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-2">
+                  <Mail className="h-6 w-6 mx-auto text-gray-400 mb-1" />
+                  <p className="text-xs text-gray-500">구독 중인 뉴스레터가 없습니다</p>
+                </div>
+              )}
+              
+              {/* 구독자 통계 */}
+              {subscriptionInfo.subscriptions && subscriptionInfo.subscriptions.length > 0 && (
+                <div className="pt-2 border-t border-gray-100">
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <span>총 구독자 수</span>
+                    <span>
+                      {subscriptionInfo.subscriptions.reduce((total, sub) => 
+                        total + (sub.subscriberCount || 0), 0
+                      ).toLocaleString()}명
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-2">
+              <p className="text-xs text-gray-500">구독 정보를 불러올 수 없습니다</p>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

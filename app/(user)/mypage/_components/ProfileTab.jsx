@@ -15,8 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Heart, Shield, AlertCircle, Mail } from "lucide-react";
-import { authenticatedFetch } from "@/lib/auth";
-import { useInterests } from "@/hooks/useInterests";
+import { authenticatedFetch } from "@/lib/auth/auth";
+import { useInterests } from "@/lib/hooks/useInterests";
 
 export default function ProfileTab() {
   // --- 상태 관리 ---

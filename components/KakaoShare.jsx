@@ -36,7 +36,7 @@ export default function KakaoShare({
   const [isLoading, setIsLoading] = useState(false);
 
   // 환경변수에서 카카오 JavaScript 키 가져오기
-  const KAKAO_JS_KEY = process.env.NEXT_PUBLIC_KAKAO_JS_KEY;
+  const KAKAO_JS_KEY = process.env.NEXT_PUBLIC_KAKAO_JS_KEY || '58255a3390abb537df22b14097e5265e';
   const TEMPLATE_ID = process.env.NEXT_PUBLIC_KAKAO_TEMPLATE_ID || 123798;
 
   useEffect(() => {

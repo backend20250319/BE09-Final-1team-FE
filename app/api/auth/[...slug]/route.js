@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { getApiUrl } from "@/lib/config";
+import { getApiUrl } from "@/lib/utils/config";
 
 // 이 부분만 각 서비스에 맞게 변경하면 됩니다.
 const backendServicePath = "auth";
@@ -23,7 +23,7 @@ async function handler(request, { params }) {
 
   const headers = {
     "Content-Type": "application/json",
-  };ㅋ
+  };
   if (accessToken) {
     headers["Authorization"] = `Bearer ${accessToken}`;
   }

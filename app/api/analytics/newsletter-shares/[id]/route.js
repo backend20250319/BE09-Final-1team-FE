@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { getApiUrl } from "@/lib/config";
+import { getApiUrl } from "@/lib/utils/config";
 
 // /api/analytics/newsletter-shares/[id] - 공유 통계 조회
 export async function GET(request, { params }) {

@@ -31,13 +31,14 @@ import {
 
 import { TextWithTooltips } from "@/components/tooltip"
 import Link from "next/link"
-import { getUserRole, getUserInfo } from "@/lib/auth"
-import { useUserSubscriptions, useUnsubscribeNewsletter } from "@/hooks/useNewsletter"
-import { useToast } from "@/hooks/use-toast"
-import NewsletterTemplate from "@/components/NewsletterTemplate"
-import { newsletterService } from "@/lib/newsletterService"
-import { useKakaoPermission } from "@/hooks/useKakaoPermission"
+import { getUserRole, getUserInfo } from "@/lib/auth/auth"
+import { useUserSubscriptions, useUnsubscribeNewsletter } from "@/lib/hooks/useNewsletter"
+import { useToast } from "@/components/ui/use-toast"
+import NewsletterTemplate from "@/components/newsletter/NewsletterTemplate"
+import { newsletterService } from "@/lib/api/newsletter"
+import { useKakaoPermission } from "@/lib/hooks/useKakaoPermission"
 import KakaoPermissionModal from "@/components/KakaoPermissionModal"
+import SubscriptionLimitIndicator from "@/components/SubscriptionLimitIndicator"
 
 // 쿠키에서 특정 값을 가져오는 유틸리티 함수
 const getCookie = (name) => {
@@ -292,7 +293,17 @@ export default function IntegratedNewsletterDashboard() {
       })
 
       if (response.ok) {
-        const result = await response.json()
+        // Content-Type 확인 후 JSON 파싱
+        const contentType = response.headers.get('content-type')
+        let result = null
+        
+        if (contentType && contentType.includes('application/json')) {
+          result = await response.json()
+        } else {
+          const responseText = await response.text()
+          console.log('구독 성공 응답 (JSON 아님):', responseText)
+          result = { success: true, message: '구독이 완료되었습니다.' }
+        }
         
         let description = "구독이 완료되었습니다!"
         if (subscriptionForm.emailSubscription && subscriptionForm.kakaoSubscription) {
@@ -325,8 +336,25 @@ export default function IntegratedNewsletterDashboard() {
         }, 2000)
         
       } else {
-        const errorData = await response.json()
-        throw new Error(errorData.message || '구독 실패')
+        // 오류 응답 처리
+        const contentType = response.headers.get('content-type')
+        let errorMessage = '구독 실패'
+        
+        try {
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json()
+            errorMessage = errorData.message || errorMessage
+          } else {
+            const errorText = await response.text()
+            console.error('구독 API 오류 응답:', errorText)
+            errorMessage = `서버 오류: ${response.status} ${response.statusText}`
+          }
+        } catch (parseError) {
+          console.error('오류 응답 파싱 실패:', parseError)
+          errorMessage = `서버 오류: ${response.status} ${response.statusText}`
+        }
+        
+        throw new Error(errorMessage)
       }
     } catch (error) {
       console.error('구독 실패:', error)
@@ -378,7 +406,24 @@ export default function IntegratedNewsletterDashboard() {
           })
           
           if (response.ok) {
-            const userData = await response.json()
+            // Content-Type 확인 후 JSON 파싱
+            const contentType = response.headers.get('content-type')
+            let userData = null
+            
+            try {
+              if (contentType && contentType.includes('application/json')) {
+                userData = await response.json()
+              } else {
+                const responseText = await response.text()
+                console.error('사용자 인증 API JSON이 아닌 응답:', responseText)
+                setUserRole(null)
+                return
+              }
+            } catch (parseError) {
+              console.error('사용자 인증 API 응답 파싱 실패:', parseError)
+              setUserRole(null)
+              return
+            }
             
             if (userData && userData.success && userData.data) {
               const apiUserInfo = userData.data
@@ -471,6 +516,22 @@ export default function IntegratedNewsletterDashboard() {
         
         console.log('🔄 뉴스 데이터 가져오기 시작')
         const response = await fetch('/api/news?limit=5')
+        
+        // 응답 상태 확인
+        if (!response.ok) {
+          const errorText = await response.text()
+          console.error('뉴스 API 오류 응답:', errorText)
+          throw new Error(`뉴스 API 오류: ${response.status} ${response.statusText}`)
+        }
+        
+        // Content-Type 확인
+        const contentType = response.headers.get('content-type')
+        if (!contentType || !contentType.includes('application/json')) {
+          const responseText = await response.text()
+          console.error('JSON이 아닌 응답:', responseText)
+          throw new Error('서버에서 JSON이 아닌 응답을 반환했습니다.')
+        }
+        
         const data = await response.json()
         
         console.log('📡 뉴스 API 응답:', {
@@ -986,6 +1047,11 @@ export default function IntegratedNewsletterDashboard() {
               </div>
             )}
 
+            {/* 구독 제한 표시기 */}
+            <div className="mb-6">
+              <SubscriptionLimitIndicator showUpgradePrompt={true} />
+            </div>
+
             {/* My Subscriptions Section */}
             <div className="mb-8">
               <Card className="glass hover-lift animate-slide-in">
@@ -1144,8 +1210,25 @@ export default function IntegratedNewsletterDashboard() {
                                         }, 1000)
                                         
                                       } else {
-                                        const errorData = await response.json()
-                                        throw new Error(errorData.message || '구독 해제 실패')
+                                        // 오류 응답 처리
+                                        const contentType = response.headers.get('content-type')
+                                        let errorMessage = '구독 해제 실패'
+                                        
+                                        try {
+                                          if (contentType && contentType.includes('application/json')) {
+                                            const errorData = await response.json()
+                                            errorMessage = errorData.message || errorMessage
+                                          } else {
+                                            const errorText = await response.text()
+                                            console.error('구독 해제 API 오류 응답:', errorText)
+                                            errorMessage = `서버 오류: ${response.status} ${response.statusText}`
+                                          }
+                                        } catch (parseError) {
+                                          console.error('구독 해제 오류 응답 파싱 실패:', parseError)
+                                          errorMessage = `서버 오류: ${response.status} ${response.statusText}`
+                                        }
+                                        
+                                        throw new Error(errorMessage)
                                       }
                                     } catch (error) {
                                       console.error('구독 해제 실패:', error)
@@ -1384,7 +1467,23 @@ export default function IntegratedNewsletterDashboard() {
                           credentials: 'include'
                         })
                         if (response.ok) {
-                          const data = await response.json()
+                          // Content-Type 확인 후 JSON 파싱
+                          const contentType = response.headers.get('content-type')
+                          let data = null
+                          
+                          try {
+                            if (contentType && contentType.includes('application/json')) {
+                              data = await response.json()
+                            } else {
+                              const responseText = await response.text()
+                              console.error('인증 상태 확인 API JSON이 아닌 응답:', responseText)
+                              return
+                            }
+                          } catch (parseError) {
+                            console.error('인증 상태 확인 API 응답 파싱 실패:', parseError)
+                            return
+                          }
+                          
                           if (data.success && data.data) {
                             localStorage.setItem('userInfo', JSON.stringify(data.data))
                             window.dispatchEvent(new CustomEvent('authStateChanged'))

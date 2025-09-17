@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 // ✅ API 호출 및 사용자 정보 저장을 위한 함수만 import 합니다.
-import { authenticatedFetch, setUserInfo } from "@/lib/auth";
+import { authenticatedFetch, setUserInfo } from "@/lib/auth/auth";
 
 /**
  * OAuth2 로그인 성공 후 리디렉션되는 콜백 페이지입니다.

@@ -36,13 +36,13 @@ import {
 import { toast } from "sonner";
 
 import { TextWithTooltips } from "@/components/tooltip";
-import { getUserRole, isAuthenticated } from "@/lib/auth"; // isAuthenticated 임포트
+import { getUserRole, isAuthenticated } from "@/lib/auth/auth"; // isAuthenticated 임포트
 import dynamic from "next/dynamic";
 import useSWR from "swr";
 import { useScrap } from "@/contexts/ScrapContext";
 
 const RealTimeKeywordWidget = dynamic(
-  () => import("@/components/RealTimeKeywordWidget"),
+  () => import("@/components/common/RealTimeKeywordWidget"),
   {
     ssr: true,
     loading: () => (
@@ -528,9 +528,16 @@ export default function MainPage({
                           <div className="flex items-center space-x-2">
                             <button
                               onClick={(e) => handleScrapClick(e, popularNews)}
-                              className="p-2 hover:bg-gray-100/20 rounded-full transition-all duration-200"
+                              className={`p-2 rounded-full transition-all duration-200 ${
+                                isAuthenticated() 
+                                  ? "hover:bg-gray-100/20" 
+                                  : "hover:bg-blue-500/20"
+                              }`}
+                              title={!isAuthenticated() ? "로그인 후 스크랩 가능" : "스크랩"}
                             >
-                              <Bookmark className="w-4 h-4 text-white" />
+                              <Bookmark className={`w-4 h-4 ${
+                                isAuthenticated() ? "text-white" : "text-blue-200"
+                              }`} />
                             </button>
                             <button
                               onClick={(e) => handleShareClick(e, popularNews)}
@@ -609,9 +616,16 @@ export default function MainPage({
                         <div className="flex items-center space-x-1 flex-shrink-0">
                           <button
                             onClick={(e) => handleScrapClick(e, item)}
-                            className="p-2 hover:bg-gray-100 rounded-full transition-all duration-200"
+                            className={`p-2 rounded-full transition-all duration-200 ${
+                              isAuthenticated() 
+                                ? "hover:bg-gray-100" 
+                                : "hover:bg-blue-50"
+                            }`}
+                            title={!isAuthenticated() ? "로그인 후 스크랩 가능" : "스크랩"}
                           >
-                            <Bookmark className="w-4 h-4 text-gray-600" />
+                            <Bookmark className={`w-4 h-4 ${
+                              isAuthenticated() ? "text-gray-600" : "text-blue-500"
+                            }`} />
                           </button>
                           <button
                             onClick={(e) => handleShareClick(e, item)}
@@ -696,9 +710,16 @@ export default function MainPage({
                       <div className="flex items-center space-x-1 flex-shrink-0">
                         <button
                           onClick={(e) => handleScrapClick(e, news)}
-                          className="p-2 hover:bg-gray-100 rounded-full transition-all duration-200"
+                          className={`p-2 rounded-full transition-all duration-200 ${
+                            isAuthenticated() 
+                              ? "hover:bg-gray-100" 
+                              : "hover:bg-blue-50"
+                          }`}
+                          title={!isAuthenticated() ? "로그인 후 스크랩 가능" : "스크랩"}
                         >
-                          <Bookmark className="w-4 h-4 text-gray-600" />
+                          <Bookmark className={`w-4 h-4 ${
+                            isAuthenticated() ? "text-gray-600" : "text-blue-500"
+                          }`} />
                         </button>
                         <button
                           onClick={(e) => handleShareClick(e, news)}

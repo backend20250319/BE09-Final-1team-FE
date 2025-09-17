@@ -168,7 +168,22 @@ export default function ScrapsTab() {
 
   const renderContent = () => {
     if (isLoading) return <ScrapSkeleton />;
-    if (error) return <div className="text-center py-12 text-red-500"><h3 className="text-lg font-semibold">데이터를 불러오는데 실패했습니다.</h3><p className="text-sm">{error}</p></div>;
+    if (error) return (
+      <div className="text-center py-12">
+        <div className="text-red-500 mb-4">
+          <Bookmark className="h-12 w-12 mx-auto text-red-400 mb-4" />
+          <h3 className="text-lg font-semibold">스크랩 목록을 불러올 수 없습니다</h3>
+          <p className="text-sm text-gray-600 mt-2">{error}</p>
+        </div>
+        <Button 
+          onClick={() => window.location.reload()} 
+          variant="outline"
+          className="mt-4"
+        >
+          다시 시도
+        </Button>
+      </div>
+    );
     if (scraps.length === 0) return <div className="text-gray-500 text-center py-12"><Bookmark className="h-12 w-12 mx-auto text-gray-400 mb-4" /><h3 className="text-lg font-semibold">{searchQuery ? "검색 결과가 없습니다." : (selectedCategory === "전체" ? "스크랩한 기사가 없습니다." : `'${selectedCategory}' 카테고리의 스크랩이 없습니다.`)}</h3><p className="text-sm text-gray-600 mt-1">{searchQuery ? "다른 검색어로 다시 시도해보세요." : "관심 있는 기사를 스크랩하여 나중에 다시 읽어보세요."}</p></div>;
 
     return (

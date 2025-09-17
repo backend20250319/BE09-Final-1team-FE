@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/hooks/use-toast";
-import { useKakaoPermission } from "@/hooks/useKakaoPermission";
+import { useToast } from "@/components/ui/use-toast";
+import { useKakaoPermission } from "@/lib/hooks/useKakaoPermission";
 import { 
   Bell, 
   MessageCircle, 

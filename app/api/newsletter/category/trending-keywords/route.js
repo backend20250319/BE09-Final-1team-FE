@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from 'next/headers';
-import { getApiUrl } from "@/lib/config";
+import { getApiUrl } from "@/lib/utils/config";
 
 // 인증 기반 API (개인화된 트렌딩 키워드)
 export async function GET(request) {

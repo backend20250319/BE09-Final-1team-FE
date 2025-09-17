@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { authenticatedFetch } from "@/lib/auth";
+import { authenticatedFetch } from "@/lib/auth/auth";
 import { toast } from 'sonner';
 
 const reportReasons = [

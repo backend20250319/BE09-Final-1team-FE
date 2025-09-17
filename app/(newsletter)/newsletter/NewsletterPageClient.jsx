@@ -15,11 +15,21 @@ import {
   Hash, Eye, ChevronDown, ChevronUp
 } from "lucide-react"
 import { TextWithTooltips } from "@/components/tooltip"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 import Link from "next/link"
-import { getUserRole, getUserInfo, isAuthenticated } from "@/lib/auth"
+import { getUserRole, getUserInfo, isAuthenticated } from "@/lib/auth/auth"
 
-import { useNewsletters, useUserSubscriptions, useSubscribeNewsletter, useUnsubscribeNewsletter, useToggleSubscription, useCategoryArticles, useTrendingKeywords, useCategoryHeadlines, useEnhancedNewsletterData, useCategorySubscriberCounts } from "@/hooks/useNewsletter"
+import { useNewsletters, useUserSubscriptions, useSubscribeNewsletter, useUnsubscribeNewsletter, useToggleSubscription, useCategoryArticles, useTrendingKeywords, useCategoryHeadlines, useEnhancedNewsletterData, useCategorySubscriberCounts, useHybridNewsletterData, useSmartRecommendations } from "@/lib/hooks/useNewsletter"
+import { useServiceLevel, useServiceLevelContent, useServiceLevelUI } from "@/lib/hooks/useServiceLevel"
+import ServiceLevelUpgradePrompt, { ServiceLevelBadge, ServiceLevelComparison } from "@/components/ServiceLevelUpgradePrompt"
+import ServiceLevelIndicator, { SimpleServiceLevelBadge } from "@/components/ServiceLevelIndicator"
+// import ServiceLevelNewsletterView from "@/components/ServiceLevelNewsletterView"
+// import CategorySubscriptionManager from "@/components/CategorySubscriptionManager"
+// import SmartRecommendations from "@/components/SmartRecommendations"
+// import HybridNewsletter from "@/components/HybridNewsletter"
+import NewsletterErrorBoundary, { NetworkStatusIndicator } from "@/components/NewsletterErrorBoundary"
+import { useRealtimeNewsletter } from "@/lib/hooks/useRealtimeNewsletter"
+import SubscriptionLimitIndicator from "@/components/SubscriptionLimitIndicator"
 
 // 기사 클릭 추적 함수
 const trackNewsClick = async (newsId, newsletterId, category, articleTitle, articleUrl) => {
@@ -167,6 +177,23 @@ export default function NewsletterPageClient({ initialNewsletters }) {
   // 이전 userSubscriptions를 추적하기 위한 ref
   const prevUserSubscriptionsRef = useRef(null)
 
+  // 서비스 레벨 관리 훅들은 userSubscriptions 정의 후에 이동
+
+  // 실시간 업데이트 훅 (일시적으로 비활성화)
+  // const {
+  //   lastUpdate,
+  //   updateCount,
+  //   connectionStatus,
+  //   connectionIcon,
+  //   connectionMessage,
+  //   refreshData: refreshRealtimeData,
+  //   enableAutoRefresh
+  // } = useRealtimeNewsletter({
+  //   updateInterval: 5 * 60 * 1000, // 5분마다 업데이트
+  //   enableAutoRefresh: true,
+  //   enableNotifications: true
+  // })
+
   // React Query 훅들
   const { 
     data: newsletters = [], 
@@ -215,6 +242,10 @@ export default function NewsletterPageClient({ initialNewsletters }) {
     enabledCondition: !!userRole || typeof window !== 'undefined'
   });
 
+  // 서비스 레벨 관리 훅들 (userSubscriptions 정의 후)
+  const { serviceLevel, serviceLevelInfo, handleUpgrade } = useServiceLevel(userSubscriptions)
+  const { showUpgradePrompt, dismissPrompt } = useServiceLevelUI(serviceLevel)
+
   // 카테고리 목록
   const allCategories = ["정치", "경제", "사회", "생활", "세계", "IT/과학", "자동차/교통", "여행/음식", "예술"]
   const categories = ["전체", ...allCategories]
@@ -237,11 +268,14 @@ export default function NewsletterPageClient({ initialNewsletters }) {
 
   // Enhanced 뉴스레터 데이터 조회 (통합 API)
   const enhancedDataQuery = useEnhancedNewsletterData({
-    headlinesPerCategory: 5,
+    headlinesPerCategory: serviceLevelInfo.features.newsPerCategory,
     trendingKeywordsLimit: 8,
     category: selectedCategory === "전체" ? null : selectedCategory,
     enabled: true
   })
+
+  // 서비스 레벨별 콘텐츠 필터링
+  const filteredEnhancedData = useServiceLevelContent(enhancedDataQuery.data, serviceLevel)
 
   // 카테고리별 구독자 수 조회 (SWR)
   const { counts: categorySubscriberCounts, loading: categoryCountsLoading } = useCategorySubscriberCounts(allCategories)
@@ -722,7 +756,30 @@ export default function NewsletterPageClient({ initialNewsletters }) {
 
   return (
     <>
+      {/* 네트워크 상태 표시기 (일시적으로 비활성화) */}
+      {/* <NetworkStatusIndicator /> */}
       
+      {/* 서비스 레벨 표시기 */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+        <ServiceLevelIndicator 
+          serviceLevel={serviceLevel}
+          userInfo={getUserInfo()}
+          onUpgrade={handleUpgrade}
+          className="mb-4"
+        />
+      </div>
+      
+      {/* 업그레이드 프롬프트 */}
+      {showUpgradePrompt && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-4">
+          <ServiceLevelUpgradePrompt 
+            serviceLevel={serviceLevel}
+            onUpgrade={handleUpgrade}
+            onDismiss={() => dismissPrompt(serviceLevel)}
+            className="mb-4"
+          />
+        </div>
+      )}
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -731,10 +788,13 @@ export default function NewsletterPageClient({ initialNewsletters }) {
             {/* Header */}
             <div className="mb-6 animate-slide-in">
               <div className="flex items-center justify-between mb-2">
-                <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-                  <Mail className="h-8 w-8 mr-3 text-purple-500 animate-pulse-slow" />
-                  뉴스레터
-                </h1>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+                    <Mail className="h-8 w-8 mr-3 text-purple-500 animate-pulse-slow" />
+                    뉴스레터
+                  </h1>
+                  <SimpleServiceLevelBadge serviceLevel={serviceLevel} />
+                </div>
                 <Button
                   variant="outline"
                   size="sm"
@@ -748,6 +808,8 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                     mutate('/api/newsletter/enhanced-data')
                     // 구독자 통계도 새로고침
                     mutate('/api/newsletter/stats/subscribers')
+                    // 실시간 데이터 새로고침 (일시적으로 비활성화)
+                    // refreshRealtimeData()
                   }}
                   disabled={isLoading}
                   className="hover-lift"
@@ -756,7 +818,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                   새로고침
                 </Button>
               </div>
-              <p className="text-gray-600">관심 있는 주제의 뉴스레터를 구독하고 최신 정보를 받아보세요</p>
+              <p className="text-gray-600">{serviceLevelInfo.message}</p>
             </div>
 
 
@@ -816,7 +878,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
                   
                   // Enhanced API 데이터 우선 사용
                   const enhancedData = enhancedDataQuery?.data;
-                  const categoryEnhancedData = enhancedData?.[newsletter.category];
+                  const categoryEnhancedData = filteredEnhancedData?.categories?.[newsletter.category];
                   
                   // 현재 뉴스레터 카테고리의 백엔드 데이터 조회 (fallback)
                   const categoryData = selectedCategory === newsletter.category ? selectedCategoryData.data : null;
@@ -1305,6 +1367,11 @@ export default function NewsletterPageClient({ initialNewsletters }) {
           {/* Sidebar - 기존 사이드바 유지 */}
           <div className="lg:col-span-1">
             <div className="space-y-6">
+              {/* 구독 제한 표시기 */}
+              {userRole && (
+                <SubscriptionLimitIndicator showUpgradePrompt={true} />
+              )}
+
               {/* My Subscriptions */}
               {userRole && (
                 <Card className="glass hover-lift animate-slide-in" style={{ animationDelay: '0.3s' }}>
@@ -1576,7 +1643,7 @@ export default function NewsletterPageClient({ initialNewsletters }) {
             </div>
           </div>
         </div>
-      </div> 
+      </div>
     </>
   )
 }

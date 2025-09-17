@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { getNewsServiceUrl } from '@/lib/config';
+import { getNewsServiceUrl } from '@/lib/utils/config';
 
 async function handler(request, { params }) {
   // 1. 요청된 경로를 재구성
@@ -12,6 +12,15 @@ async function handler(request, { params }) {
   // 3. 쿼리 파라미터를 그대로 전달합니다.
   const { search } = new URL(request.url);
   const urlWithQuery = `${backendUrl}${search}`;
+  
+  // 디버깅을 위한 로그
+  console.log('🔍 News API Debug:', {
+    originalUrl: request.url,
+    params: params,
+    path: path,
+    backendUrl: backendUrl,
+    urlWithQuery: urlWithQuery
+  });
   
   const accessToken = cookies().get('access-token')?.value;
 
@@ -36,8 +45,21 @@ async function handler(request, { params }) {
     return backendResponse;
 
   } catch (error) {
-    console.error(`API Proxy Error (to ${urlWithQuery}):`, error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error(`❌ API Proxy Error (to ${urlWithQuery}):`, error);
+    
+    // URL 생성 에러인 경우 특별 처리
+    if (error.message.includes('Failed to construct URL')) {
+      return NextResponse.json({ 
+        error: 'Invalid URL configuration',
+        message: error.message,
+        details: { backendUrl, urlWithQuery }
+      }, { status: 500 });
+    }
+    
+    return NextResponse.json({ 
+      error: 'Internal Server Error',
+      message: error.message 
+    }, { status: 500 });
   }
 }
 

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getNewsletterServiceUrl } from '@/lib/config';
+import { getNewsletterServiceUrl } from '@/lib/utils/config';
 
 export async function POST(request) {
   try {

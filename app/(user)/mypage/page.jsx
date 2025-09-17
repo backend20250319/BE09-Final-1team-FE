@@ -3,7 +3,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
-import { isAuthenticated } from "@/lib/auth";
+import { isAuthenticated } from "@/lib/auth/auth";
 
 import ProfileSidebar from "./_components/ProfileSidebar";
 import ProfileTab from "./_components/ProfileTab";
