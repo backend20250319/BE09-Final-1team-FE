@@ -145,7 +145,7 @@ export default function TermTooltip({ term, definition, definitions, children, s
     setIsLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:8086/api/news/analysis/definition/${encodeURIComponent(term)}`,
+        `/api/tooltips/analyze/definition/${encodeURIComponent(term)}`,
       );
       if (response.ok) {
         const data = await response.json();

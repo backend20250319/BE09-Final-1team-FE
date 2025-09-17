@@ -11,8 +11,8 @@ export async function POST(request) {
     
     console.log('🔄 툴팁 분석 API 호출:', { textLength: text.length })
     
-    // 백엔드 툴팁 서비스 API 호출
-    const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:8082'}/api/tooltips/analyze`
+    // 백엔드 툴팁 서비스 API 호출 (게이트웨이를 통해)
+    const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/tooltips/analyze`
     console.log('📡 백엔드 툴팁 서비스 API 호출:', backendUrl)
     
     const response = await fetch(backendUrl, {

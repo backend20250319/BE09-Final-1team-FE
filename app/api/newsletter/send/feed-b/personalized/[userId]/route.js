@@ -7,7 +7,7 @@ export async function POST(request, { params }) {
     console.log('피드 B형 뉴스레터 전송 요청:', { userId })
     
     // 백엔드 API로 프록시 요청
-    const backendUrl = `http://localhost:8085/api/newsletter/send/feed-b/personalized/${userId}`
+    const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/newsletter/send/feed-b/personalized/${userId}`
     
     const response = await fetch(backendUrl, {
       method: 'POST',
