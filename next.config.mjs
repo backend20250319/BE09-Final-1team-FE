@@ -16,12 +16,16 @@ const nextConfig = {
     optimizePackageImports: ['lucide-react'],
   },
 
-  // API Gateway 프록시 설정
   async rewrites() {
+    // 빌드 시점에는 기본값(Localhost) 사용
+    // 실행 시점에는 EB에서 설정한 NEXT_PUBLIC_API_URL로 덮어씌워짐
+    const apiUrl =
+      process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+
     return [
       {
         source: "/api/:path*",
-        destination: `${process.env.NEXT_PUBLIC_API_URL}/api/:path*`,
+        destination: `${apiUrl}/api/:path*`,
       },
     ];
   },
