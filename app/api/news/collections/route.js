@@ -9,8 +9,17 @@ export async function GET(request) {
     });
 
     // 백엔드 서버 URL 설정
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
-    const fullBackendUrl = `${backendUrl}/api/news/collections`;
+    // BACKEND_URL 환경변수 사용 (개발/배포 모두)
+    const backendBaseUrl = process.env.BACKEND_URL;
+    if (!backendBaseUrl) {
+      console.error('❌ BACKEND_URL 환경변수가 설정되지 않았습니다.');
+      return NextResponse.json({ 
+        success: false,
+        error: '서버 설정 오류',
+        message: '백엔드 서버 URL이 설정되지 않았습니다.' 
+      }, { status: 500 });
+    }
+    const fullBackendUrl = `${backendBaseUrl}/api/news/collections`;
     
     const accessToken = cookies().get('access-token')?.value;
 
