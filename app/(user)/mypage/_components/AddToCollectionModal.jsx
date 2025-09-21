@@ -84,6 +84,13 @@ const AddToCollectionModal = ({ isOpen, onClose, newsItems, onSuccess }) => {
         )
       );
 
+      // responses가 배열인지 확인하고 안전하게 처리
+      if (!Array.isArray(responses)) {
+        console.error("Unexpected responses format:", responses);
+        toast.error("컬렉션 추가 중 예상치 못한 오류가 발생했습니다.");
+        return;
+      }
+
       const successfulItems = [];
       const duplicateItems = [];
       const failedItems = [];
@@ -191,11 +198,13 @@ const AddToCollectionModal = ({ isOpen, onClose, newsItems, onSuccess }) => {
     }
   };
 
-  const filteredCollections = collections.filter((collection) =>
-    collection.storageName
-      .toLowerCase()
-      .includes(collectionSearchQuery.toLowerCase())
-  );
+  const filteredCollections = Array.isArray(collections) 
+    ? collections.filter((collection) =>
+        collection.storageName
+          .toLowerCase()
+          .includes(collectionSearchQuery.toLowerCase())
+      )
+    : [];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
