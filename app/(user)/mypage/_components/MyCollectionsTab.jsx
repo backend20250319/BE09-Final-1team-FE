@@ -41,7 +41,10 @@ const useCollections = () => {
         throw new Error(errorText || "컬렉션 목록을 불러오는데 실패했습니다.");
       }
       const data = await response.json();
-      setCollections(data || []);
+      // API 응답에서 data 필드가 있는 경우 처리
+      const collectionsData = data.data || data;
+      // 배열인지 확인하고 안전하게 설정
+      setCollections(Array.isArray(collectionsData) ? collectionsData : []);
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -218,7 +221,7 @@ const MyCollectionsTab = () => {
       if (response.ok) {
         toast.success("컬렉션이 삭제되었습니다.");
         setCollections((prev) =>
-          prev.filter((c) => c.storageId !== collectionId)
+          Array.isArray(prev) ? prev.filter((c) => c.storageId !== collectionId) : []
         );
       } else {
         const errorText = await response.text();
@@ -229,9 +232,11 @@ const MyCollectionsTab = () => {
     }
   };
 
-  const filteredCollections = collections.filter((c) =>
-    c.storageName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredCollections = Array.isArray(collections) 
+    ? collections.filter((c) =>
+        c.storageName.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
 
   return (
     <div>

@@ -63,9 +63,14 @@ export async function GET(request) {
     console.log('✅ Backend Collections 응답:', data);
 
     // 백엔드 응답을 프론트엔드 형식으로 변환
+    const collectionsData = data.content || data.data || data || [];
+    
+    // 배열인지 확인하고 안전하게 처리
+    const safeData = Array.isArray(collectionsData) ? collectionsData : [];
+    
     const transformedData = {
       success: true,
-      data: data.content || data.data || data || []
+      data: safeData
     };
 
     return NextResponse.json(transformedData);
