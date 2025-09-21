@@ -12,8 +12,25 @@ async function handler(request, { params }) {
   const path = params.slug ? params.slug.join("/") : "";
 
   // 2. 백엔드 API URL 생성
-  // ex: http://localhost:8000/api/auth/mypage
-  const backendUrl = getApiUrl(`/api/${backendServicePath}/${path}`);
+  // BACKEND_URL 환경변수 사용, 없으면 NEXT_PUBLIC_API_URL 사용
+  const backendBaseUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL;
+  
+  console.log('🔍 Auth API 환경변수 체크:', {
+    BACKEND_URL: process.env.BACKEND_URL,
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    selectedUrl: backendBaseUrl,
+    path: path
+  });
+  
+  if (!backendBaseUrl) {
+    console.error('❌ BACKEND_URL 또는 NEXT_PUBLIC_API_URL 환경변수가 설정되지 않았습니다.');
+    return NextResponse.json({ 
+      success: false,
+      error: '서버 설정 오류',
+      message: '백엔드 서버 URL이 설정되지 않았습니다.' 
+    }, { status: 500 });
+  }
+  const backendUrl = `${backendBaseUrl}/api/${backendServicePath}/${path}`;
 
   // 3. 쿼리 파라미터가 있다면 그대로 전달
   const { search } = new URL(request.url);
@@ -29,6 +46,8 @@ async function handler(request, { params }) {
   }
 
   try {
+    console.log(`📡 Auth API 호출: ${urlWithQuery}`);
+    
     const backendResponse = await fetch(urlWithQuery, {
       method: request.method,
       headers: headers,
@@ -42,6 +61,8 @@ async function handler(request, { params }) {
       duplex: "half",
     });
 
+    console.log(`📡 Auth API 응답: ${backendResponse.status} ${backendResponse.statusText}`);
+
     // 백엔드 서버가 503을 반환하는 경우 처리
     if (backendResponse.status === 503) {
       console.error(`백엔드 서버 에러 (${backendServicePath}/${path}): 503 Service Unavailable`);
@@ -53,20 +74,23 @@ async function handler(request, { params }) {
 
     return backendResponse;
   } catch (error) {
-    console.error(`API Proxy Error (${backendServicePath}/${path}):`, error);
+    console.error(`❌ Auth API Proxy Error (${backendServicePath}/${path}):`, error);
     
-    // 네트워크 에러인 경우
-    if (error.code === 'ECONNREFUSED' || error.message.includes('fetch')) {
-      return NextResponse.json(
-        { error: "백엔드 서버에 연결할 수 없습니다. 서버 상태를 확인해주세요." },
-        { status: 503 }
-      );
+    // 네트워크 에러인 경우 503으로 처리
+    if (error.code === 'ECONNREFUSED' || error.message.includes('fetch') || error.message.includes('ENOTFOUND')) {
+      return NextResponse.json({ 
+        success: false,
+        error: '백엔드 서버에 연결할 수 없습니다.',
+        message: '서버가 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해주세요.',
+        details: `연결 실패: ${error.message}`
+      }, { status: 503 });
     }
     
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ 
+      success: false,
+      error: 'Internal Server Error',
+      message: error.message 
+    }, { status: 500 });
   }
 }
 

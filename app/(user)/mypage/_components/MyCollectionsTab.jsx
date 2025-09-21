@@ -88,12 +88,15 @@ const CreateCollectionModal = ({ isOpen, onClose, onCollectionCreated }) => {
       });
 
       if (response.ok) {
+        const result = await response.json();
+        console.log('✅ 컬렉션 생성 성공:', result);
         toast.success(`'${name}' 컬렉션이 생성되었습니다.`);
         onCollectionCreated();
         onClose();
         setName("");
       } else {
         const errorText = await response.text();
+        console.error('❌ 컬렉션 생성 실패:', errorText);
         throw new Error(errorText || "컬렉션 생성에 실패했습니다.");
       }
     } catch (err) {
