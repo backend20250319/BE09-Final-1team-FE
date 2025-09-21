@@ -113,7 +113,7 @@ class NewsService {
    * 사용자 스크랩 뉴스 목록 조회
    */
   async getScrappedNews(params?: NewsParams): Promise<NewsResponse> {
-    return apiClient.get<NewsResponse>('/api/users/mypage/scraps', params);
+    return apiClient.get<NewsResponse>('/api/news/mypage/scraps', params);
   }
 }
 
