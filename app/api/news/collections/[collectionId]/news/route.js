@@ -27,8 +27,25 @@ export async function GET(request, { params }) {
       originalUrl: request.url
     });
 
-    // 게이트웨이를 통해 컬렉션 뉴스 조회
-    let backendUrl = getApiUrl(`/api/news/collections/${collectionId}/news?page=${page}&size=${size}`);
+    // 백엔드 서버 URL 설정
+    const backendBaseUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL;
+    
+    console.log('🔍 Collection News API 환경변수 체크:', {
+      BACKEND_URL: process.env.BACKEND_URL,
+      NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+      selectedUrl: backendBaseUrl
+    });
+    
+    if (!backendBaseUrl) {
+      console.error('❌ BACKEND_URL 또는 NEXT_PUBLIC_API_URL 환경변수가 설정되지 않았습니다.');
+      return NextResponse.json({ 
+        success: false,
+        error: '서버 설정 오류',
+        message: '백엔드 서버 URL이 설정되지 않았습니다.' 
+      }, { status: 500 });
+    }
+    
+    let backendUrl = `${backendBaseUrl}/api/news/collections/${collectionId}/news?page=${page}&size=${size}`;
     if (query) backendUrl += `&query=${encodeURIComponent(query)}`;
     if (category) backendUrl += `&category=${encodeURIComponent(category)}`;
     
@@ -118,8 +135,17 @@ export async function POST(request, { params }) {
       originalUrl: request.url
     });
 
-    // 게이트웨이를 통해 컬렉션에 뉴스 추가
-    const backendUrl = getApiUrl(`/api/news/collections/${collectionId}/news`);
+    // 백엔드 서버 URL 설정
+    const backendBaseUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL;
+    if (!backendBaseUrl) {
+      console.error('❌ BACKEND_URL 또는 NEXT_PUBLIC_API_URL 환경변수가 설정되지 않았습니다.');
+      return NextResponse.json({ 
+        success: false,
+        error: '서버 설정 오류',
+        message: '백엔드 서버 URL이 설정되지 않았습니다.' 
+      }, { status: 500 });
+    }
+    const backendUrl = `${backendBaseUrl}/api/news/collections/${collectionId}/news`;
     
     const accessToken = cookies().get('access-token')?.value;
 
