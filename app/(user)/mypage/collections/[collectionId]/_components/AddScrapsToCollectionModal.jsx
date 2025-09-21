@@ -154,18 +154,59 @@ const AddScrapsToCollectionModal = ({
         )
       );
 
-      const successfulCount = responses.filter((res) => res.ok).length;
-      const failedCount = responses.length - successfulCount;
-
-      if (failedCount > 0) {
-        toast.error(`${failedCount}개 기사 추가에 실패했습니다.`);
+      // responses가 배열인지 확인하고 안전하게 처리
+      if (!Array.isArray(responses)) {
+        console.error("Unexpected responses format:", responses);
+        toast.error("기사 추가 중 예상치 못한 오류가 발생했습니다.");
+        return;
       }
+
+      const successfulItems = [];
+      const duplicateItems = [];
+      const failedItems = [];
+
+      await Promise.all(
+        responses.map(async (res, index) => {
+          const newsId = Array.from(selectedScraps)[index];
+          if (res.ok) {
+            successfulItems.push(newsId);
+          } else {
+            const errorText = await res.text();
+            const isDuplicate =
+              res.status === 409 || (errorText && errorText.includes("이미"));
+
+            if (isDuplicate) {
+              duplicateItems.push(newsId);
+            } else {
+              failedItems.push(newsId);
+              console.error(
+                `Unhandled error while adding news ${newsId} to collection:`,
+                errorText
+              );
+            }
+          }
+        })
+      );
+
+      const successfulCount = successfulItems.length;
+      const duplicateCount = duplicateItems.length;
+      const otherFailureCount = failedItems.length;
+
+      // 알림 메시지 로직
       if (successfulCount > 0) {
         toast.success(
           `${successfulCount}개의 기사를 컬렉션에 추가했습니다.`
         );
         onSuccess();
         onClose();
+      }
+      
+      if (duplicateCount > 0) {
+        toast.info(`${duplicateCount}개의 기사는 이미 컬렉션에 있습니다.`);
+      }
+      
+      if (otherFailureCount > 0) {
+        toast.error(`${otherFailureCount}개 기사 추가에 실패했습니다.`);
       }
     } catch (err) {
       console.error("Error adding scraps to collection:", err);
