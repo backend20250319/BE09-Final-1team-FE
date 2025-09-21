@@ -9,10 +9,17 @@ export async function GET(request) {
     });
 
     // 백엔드 서버 URL 설정
-    // BACKEND_URL 환경변수 사용 (개발/배포 모두)
-    const backendBaseUrl = process.env.BACKEND_URL;
+    // BACKEND_URL 환경변수 사용, 없으면 NEXT_PUBLIC_API_URL 사용
+    const backendBaseUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL;
+    
+    console.log('🔍 Collections API 환경변수 체크:', {
+      BACKEND_URL: process.env.BACKEND_URL,
+      NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+      selectedUrl: backendBaseUrl
+    });
+    
     if (!backendBaseUrl) {
-      console.error('❌ BACKEND_URL 환경변수가 설정되지 않았습니다.');
+      console.error('❌ BACKEND_URL 또는 NEXT_PUBLIC_API_URL 환경변수가 설정되지 않았습니다.');
       return NextResponse.json({ 
         success: false,
         error: '서버 설정 오류',
@@ -131,8 +138,17 @@ export async function POST(request) {
       originalUrl: request.url
     });
 
-    // 게이트웨이를 통해 컬렉션 생성
-    const backendUrl = getApiUrl('/api/news/collections');
+    // 백엔드 서버 URL 설정
+    const backendBaseUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL;
+    if (!backendBaseUrl) {
+      console.error('❌ BACKEND_URL 또는 NEXT_PUBLIC_API_URL 환경변수가 설정되지 않았습니다.');
+      return NextResponse.json({ 
+        success: false,
+        error: '서버 설정 오류',
+        message: '백엔드 서버 URL이 설정되지 않았습니다.' 
+      }, { status: 500 });
+    }
+    const backendUrl = `${backendBaseUrl}/api/news/collections`;
     
     const accessToken = cookies().get('access-token')?.value;
 

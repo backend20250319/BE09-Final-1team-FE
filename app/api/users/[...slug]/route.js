@@ -12,10 +12,18 @@ async function handler(request, { params }) {
   const path = params.slug ? params.slug.join('/') : ''; 
 
   // 2. 백엔드 API URL 생성
-  // BACKEND_URL 환경변수 사용 (개발/배포 모두)
-  const backendBaseUrl = process.env.BACKEND_URL;
+  // BACKEND_URL 환경변수 사용, 없으면 NEXT_PUBLIC_API_URL 사용
+  const backendBaseUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL;
+  
+  console.log('🔍 Users API 환경변수 체크:', {
+    BACKEND_URL: process.env.BACKEND_URL,
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    selectedUrl: backendBaseUrl,
+    path: path
+  });
+  
   if (!backendBaseUrl) {
-    console.error('❌ BACKEND_URL 환경변수가 설정되지 않았습니다.');
+    console.error('❌ BACKEND_URL 또는 NEXT_PUBLIC_API_URL 환경변수가 설정되지 않았습니다.');
     return NextResponse.json({ 
       success: false,
       error: '서버 설정 오류',
