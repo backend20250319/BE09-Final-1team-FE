@@ -8,10 +8,9 @@ export async function GET(request) {
       originalUrl: request.url
     });
 
-    // 게이트웨이를 통해 컬렉션 목록 조회 (임시로 직접 서비스 URL 테스트)
-    const backendUrl = process.env.NODE_ENV === 'production' 
-      ? getApiUrl('/api/news/collections')
-      : 'http://news-service:8082/api/news/collections'; // EKS 내부 서비스 URL
+    // 백엔드 서버 URL 설정
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
+    const fullBackendUrl = `${backendUrl}/api/news/collections`;
     
     const accessToken = cookies().get('access-token')?.value;
 
@@ -23,13 +22,13 @@ export async function GET(request) {
     }
 
     console.log('📡 Backend Collections API 호출:', {
-      url: backendUrl,
+      url: fullBackendUrl,
       hasAuth: !!accessToken,
       nodeEnv: process.env.NODE_ENV,
       backendUrl: process.env.BACKEND_URL
     });
 
-    const backendResponse = await fetch(backendUrl, {
+    const backendResponse = await fetch(fullBackendUrl, {
       method: 'GET',
       headers: headers,
     });
@@ -46,8 +45,20 @@ export async function GET(request) {
         status: backendResponse.status, 
         statusText: backendResponse.statusText,
         errorText,
-        url: backendUrl
+        url: fullBackendUrl
       });
+      
+      // 503 에러인 경우 특별 처리
+      if (backendResponse.status === 503) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: '백엔드 서버가 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해주세요.',
+            status: 503 
+          },
+          { status: 503 }
+        );
+      }
       
       return NextResponse.json(
         { 
@@ -79,12 +90,13 @@ export async function GET(request) {
     console.error('❌ Collections API 오류:', error);
     
     // 네트워크 에러인 경우
-    if (error.code === 'ECONNREFUSED' || error.message.includes('fetch')) {
+    if (error.code === 'ECONNREFUSED' || error.message.includes('fetch') || error.message.includes('ENOTFOUND')) {
       return NextResponse.json(
         { 
           success: false,
-          error: 'Backend server connection failed',
-          message: '백엔드 서버에 연결할 수 없습니다. 서버 상태를 확인해주세요.'
+          error: '백엔드 서버에 연결할 수 없습니다.',
+          message: '서버가 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해주세요.',
+          details: `연결 실패: ${error.message}`
         },
         { status: 503 }
       );
