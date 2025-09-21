@@ -44,26 +44,53 @@ const useCollections = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchCollections = useCallback(async () => {
-    console.log('🔄 fetchCollections 호출됨');
+  const fetchCollections = useCallback(async (retryCount = 0) => {
+    console.log('🔄 fetchCollections 호출됨, 재시도:', retryCount);
     setIsLoading(true);
     try {
       const response = await authenticatedFetch("/api/news/collections");
       if (!response.ok) {
+        // 503 에러인 경우 재시도
+        if (response.status === 503 && retryCount < 2) {
+          console.log('⚠️ 503 에러 발생, 3초 후 재시도');
+          setTimeout(() => {
+            fetchCollections(retryCount + 1);
+          }, 3000);
+          return;
+        }
         const errorText = await response.text();
         throw new Error(errorText || "컬렉션 목록을 불러오는데 실패했습니다.");
       }
-      const data = await response.json();
-      console.log('📋 컬렉션 목록 응답:', data);
-      // 백엔드에서 직접 배열을 반환함
-      setCollections(Array.isArray(data) ? data : []);
-      console.log('✅ 컬렉션 상태 업데이트됨, 개수:', Array.isArray(data) ? data.length : 0);
+      const result = await response.json();
+      console.log('📋 컬렉션 목록 응답 구조:', typeof result, result);
+      
+      // API 응답 구조 확인 - 래핑된 응답인지 직접 배열인지 체크
+      let collections;
+      if (result.success && result.data) {
+        // { success: true, data: [...] } 구조
+        collections = result.data;
+      } else if (Array.isArray(result)) {
+        // 직접 배열
+        collections = result;
+      } else {
+        // 기타
+        collections = [];
+      }
+      
+      console.log('📋 추출된 컬렉션 데이터:', collections);
+      setCollections(Array.isArray(collections) ? collections : []);
+      console.log('✅ 컬렉션 상태 업데이트됨, 개수:', Array.isArray(collections) ? collections.length : 0);
       setError(null);
     } catch (err) {
+      console.error('❌ fetchCollections 에러:', err);
       setError(err.message);
       setCollections([]);
       if (!err.message.includes("인증")) {
-        toast.error(err.message);
+        if (err.message.includes("503") || err.message.includes("Service Unavailable")) {
+          toast.error("서버가 일시적으로 불안정합니다. 잠시 후 다시 시도해주세요.");
+        } else {
+          toast.error(err.message);
+        }
       }
     } finally {
       setIsLoading(false);
@@ -88,7 +115,7 @@ const CreateCollectionModal = ({ isOpen, onClose, onCollectionCreated }) => {
   const [name, setName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
-  const handleCreate = async () => {
+  const handleCreate = async (retryCount = 0) => {
     if (!name.trim()) {
       toast.error("컬렉션 이름을 입력해주세요.");
       return;
@@ -104,12 +131,28 @@ const CreateCollectionModal = ({ isOpen, onClose, onCollectionCreated }) => {
       if (response.ok) {
         const result = await response.json();
         console.log('✅ 컬렉션 생성 성공:', result);
+        console.log('✅ 컬렉션 생성 응답 구조:', typeof result, result);
+        
+        // API 응답 구조에 맞게 데이터 추출
+        const actualData = result.data || result;
+        console.log('✅ 실제 컬렉션 데이터:', actualData);
+        
         toast.success(`'${name}' 컬렉션이 생성되었습니다.`);
         console.log('🔄 onCollectionCreated 호출 중...');
         onCollectionCreated();
         onClose();
         setName("");
       } else {
+        // 503 에러인 경우 재시도
+        if (response.status === 503 && retryCount < 2) {
+          console.log('⚠️ 컬렉션 생성 503 에러, 3초 후 재시도...');
+          setIsCreating(false);
+          toast.info("서버가 불안정합니다. 3초 후 다시 시도합니다...");
+          setTimeout(() => {
+            handleCreate(retryCount + 1);
+          }, 3000);
+          return;
+        }
         const errorText = await response.text();
         console.error('❌ 컬렉션 생성 실패:', errorText);
         throw new Error(errorText || "컬렉션 생성에 실패했습니다.");
@@ -117,6 +160,8 @@ const CreateCollectionModal = ({ isOpen, onClose, onCollectionCreated }) => {
     } catch (err) {
       if (err.message.includes("이미 존재하는 컬렉션 이름입니다")) {
         toast.error("이미 존재하는 컬렉션 이름입니다.");
+      } else if (err.message.includes("503") || err.message.includes("Service Unavailable")) {
+        toast.error("서버가 일시적으로 불안정합니다. 잠시 후 다시 시도해주세요.");
       } else {
         toast.error(err.message || "컬렉션 생성 중 오류가 발생했습니다.");
       }
