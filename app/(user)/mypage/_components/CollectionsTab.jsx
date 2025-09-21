@@ -45,6 +45,7 @@ const useCollections = () => {
   const [error, setError] = useState(null);
 
   const fetchCollections = useCallback(async () => {
+    console.log('🔄 fetchCollections 호출됨');
     setIsLoading(true);
     try {
       const response = await authenticatedFetch("/api/news/collections");
@@ -53,8 +54,10 @@ const useCollections = () => {
         throw new Error(errorText || "컬렉션 목록을 불러오는데 실패했습니다.");
       }
       const data = await response.json();
+      console.log('📋 컬렉션 목록 응답:', data);
       // 백엔드에서 직접 배열을 반환함
       setCollections(Array.isArray(data) ? data : []);
+      console.log('✅ 컬렉션 상태 업데이트됨, 개수:', Array.isArray(data) ? data.length : 0);
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -102,6 +105,7 @@ const CreateCollectionModal = ({ isOpen, onClose, onCollectionCreated }) => {
         const result = await response.json();
         console.log('✅ 컬렉션 생성 성공:', result);
         toast.success(`'${name}' 컬렉션이 생성되었습니다.`);
+        console.log('🔄 onCollectionCreated 호출 중...');
         onCollectionCreated();
         onClose();
         setName("");
