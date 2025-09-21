@@ -112,14 +112,40 @@ export function ScrapProvider({ children }) {
       const data = await fetchScrapsAPI(category, page, query);
       console.log("스크랩 목록 로딩 성공:", data);
       
-      const content = data.content || [];
+      // 응답 구조에 따른 안전한 데이터 추출
+      let content = [];
+      let totalPages = 0;
+      let totalElements = 0;
+      
+      if (data) {
+        // 백엔드 응답이 { success: true, data: {...} } 형태인 경우
+        if (data.success && data.data) {
+          content = data.data.content || data.data || [];
+          totalPages = data.data.totalPages || 0;
+          totalElements = data.data.totalElements || 0;
+        }
+        // 백엔드 응답이 직접 페이징 객체인 경우
+        else if (data.content) {
+          content = data.content || [];
+          totalPages = data.totalPages || 0;
+          totalElements = data.totalElements || 0;
+        }
+        // 백엔드 응답이 배열인 경우
+        else if (Array.isArray(data)) {
+          content = data;
+          totalPages = 1;
+          totalElements = data.length;
+        }
+      }
+      
       // 데이터 중복 제거 로직 추가
-      const uniqueScraps = Array.from(
-        new Map(content.map((item) => [item.newsId, item])).values()
-      );
+      const uniqueScraps = Array.isArray(content) 
+        ? Array.from(new Map(content.map((item) => [item.newsId, item])).values())
+        : [];
+        
       setScraps(uniqueScraps);
-      setTotalPages(data.totalPages || 0);
-      setTotalScraps(data.totalElements || 0);
+      setTotalPages(totalPages);
+      setTotalScraps(totalElements);
     } catch (err) {
       console.error("loadScraps 에러:", err);
       
