@@ -8,8 +8,10 @@ export async function GET(request) {
       originalUrl: request.url
     });
 
-    // 게이트웨이를 통해 컬렉션 목록 조회
-    const backendUrl = getApiUrl('/api/news/collections');
+    // 게이트웨이를 통해 컬렉션 목록 조회 (임시로 직접 서비스 URL 테스트)
+    const backendUrl = process.env.NODE_ENV === 'production' 
+      ? getApiUrl('/api/news/collections')
+      : 'http://news-service:8082/api/news/collections'; // EKS 내부 서비스 URL
     
     const accessToken = cookies().get('access-token')?.value;
 
@@ -22,7 +24,9 @@ export async function GET(request) {
 
     console.log('📡 Backend Collections API 호출:', {
       url: backendUrl,
-      hasAuth: !!accessToken
+      hasAuth: !!accessToken,
+      nodeEnv: process.env.NODE_ENV,
+      backendUrl: process.env.BACKEND_URL
     });
 
     const backendResponse = await fetch(backendUrl, {
