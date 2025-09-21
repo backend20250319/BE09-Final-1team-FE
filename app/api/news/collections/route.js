@@ -88,17 +88,21 @@ export async function GET(request) {
 
     const data = await backendResponse.json();
     console.log('✅ Backend Collections 응답:', data);
+    console.log('✅ Backend Collections 응답 타입:', typeof data, Array.isArray(data));
 
     // 백엔드 응답을 프론트엔드 형식으로 변환
     const collectionsData = data.content || data.data || data || [];
+    console.log('✅ collectionsData:', collectionsData, Array.isArray(collectionsData));
     
     // 배열인지 확인하고 안전하게 처리
     const safeData = Array.isArray(collectionsData) ? collectionsData : [];
+    console.log('✅ safeData:', safeData, Array.isArray(safeData));
     
     const transformedData = {
       success: true,
       data: safeData
     };
+    console.log('✅ 최종 응답:', transformedData);
 
     return NextResponse.json(transformedData);
 
