@@ -9,7 +9,7 @@ import React, {
 import { toast } from "sonner";
 import { authenticatedFetch, isAuthenticated } from "@/lib/auth/auth";
 
-const API_BASE_URL = "/api/users/mypage";
+const API_BASE_URL = "/api/news/mypage";  // 다시 mypage 추가
 
 const fetchScrapsAPI = async (category, page = 0, searchQuery = "") => {
   const params = new URLSearchParams({
@@ -55,7 +55,7 @@ const fetchScrapsAPI = async (category, page = 0, searchQuery = "") => {
 };
 
 const addScrapAPI = async (newsId) => {
-  const response = await authenticatedFetch(`/api/users/news/${newsId}/scrap`, {
+  const response = await authenticatedFetch(`/api/news/${newsId}/scrap`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

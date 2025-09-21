@@ -99,14 +99,14 @@ class NewsService {
    * 뉴스 스크랩
    */
   async scrapNews(id: string): Promise<{ success: boolean; message: string }> {
-    return apiClient.post<{ success: boolean; message: string }>(`/api/users/news/${id}/scrap`);
+    return apiClient.post<{ success: boolean; message: string }>(`/api/news/${id}/scrap`);
   }
 
   /**
    * 뉴스 스크랩 해제
    */
   async unscrapNews(id: string): Promise<{ success: boolean; message: string }> {
-    return apiClient.delete<{ success: boolean; message: string }>(`/api/users/news/${id}/scrap`);
+    return apiClient.delete<{ success: boolean; message: string }>(`/api/news/${id}/scrap`);
   }
 
   /**
