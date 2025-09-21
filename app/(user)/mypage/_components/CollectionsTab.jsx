@@ -53,10 +53,8 @@ const useCollections = () => {
         throw new Error(errorText || "컬렉션 목록을 불러오는데 실패했습니다.");
       }
       const data = await response.json();
-      // API 응답에서 data 필드가 있는 경우 처리
-      const collectionsData = data.data || data;
-      // 배열인지 확인하고 안전하게 설정
-      setCollections(Array.isArray(collectionsData) ? collectionsData : []);
+      // 백엔드에서 직접 배열을 반환함
+      setCollections(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
       setError(err.message);

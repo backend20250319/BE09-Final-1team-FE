@@ -53,7 +53,8 @@ const AddToCollectionModal = ({ isOpen, onClose, newsItems, onSuccess }) => {
             );
           }
           const data = await response.json();
-          setCollections(data || []);
+          // 백엔드에서 직접 배열을 반환함
+          setCollections(Array.isArray(data) ? data : []);
         } catch (err) {
           if (err.message.includes("로그인") || err.message.includes("인증")) {
             setError("로그인이 필요합니다.");
@@ -185,7 +186,7 @@ const AddToCollectionModal = ({ isOpen, onClose, newsItems, onSuccess }) => {
       }
       const newCollection = await response.json();
       toast.success(`'${newCollectionName}' 컬렉션이 생성되었습니다.`);
-      setCollections((prev) => [newCollection, ...prev]);
+      setCollections((prev) => [newCollection, ...(Array.isArray(prev) ? prev : [])]);
       setNewCollectionName("");
     } catch (err) {
       if (err.message.includes("이미 존재하는 컬렉션 이름입니다")) {
