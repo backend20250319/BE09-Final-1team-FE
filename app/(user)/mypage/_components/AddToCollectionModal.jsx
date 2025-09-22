@@ -102,7 +102,14 @@ const AddToCollectionModal = ({ isOpen, onClose, newsItems, onSuccess }) => {
           if (res.ok) {
             successfulItems.push(newsItem);
           } else {
-            const errorText = await res.text();
+            let errorText = '';
+            try {
+              errorText = await res.text();
+            } catch (textError) {
+              console.error('에러 응답 읽기 실패:', textError);
+              errorText = `HTTP ${res.status} Error`;
+            }
+            
             const isDuplicate =
               res.status === 409 || (errorText && errorText.includes("이미"));
 
@@ -112,7 +119,11 @@ const AddToCollectionModal = ({ isOpen, onClose, newsItems, onSuccess }) => {
               failedItems.push(newsItem);
               console.error(
                 `Unhandled error while adding '${newsItem.title}' to collection:`,
-                errorText
+                {
+                  status: res.status,
+                  statusText: res.statusText,
+                  errorText: errorText
+                }
               );
             }
           }

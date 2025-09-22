@@ -121,11 +121,23 @@ export async function GET(request, { params }) {
 export async function POST(request, { params }) {
   try {
     const { collectionId } = params;
-    const body = await request.json();
     
     if (!collectionId) {
       return NextResponse.json({ 
         error: 'Collection ID is required' 
+      }, { status: 400 });
+    }
+
+    // 요청 본문 파싱 시 에러 처리 개선
+    let body;
+    try {
+      body = await request.json();
+    } catch (parseError) {
+      console.error('❌ JSON 파싱 실패:', parseError);
+      return NextResponse.json({
+        success: false,
+        error: '잘못된 요청 형식입니다.',
+        message: 'JSON 파싱 실패'
       }, { status: 400 });
     }
 
@@ -158,14 +170,25 @@ export async function POST(request, { params }) {
 
     console.log('📡 Backend Add News to Collection API 호출:', {
       url: backendUrl,
-      hasAuth: !!accessToken
+      hasAuth: !!accessToken,
+      body: body
     });
 
-    const backendResponse = await fetch(backendUrl, {
-      method: 'POST',
-      headers: headers,
-      body: JSON.stringify(body),
-    });
+    let backendResponse;
+    try {
+      backendResponse = await fetch(backendUrl, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(body),
+      });
+    } catch (fetchError) {
+      console.error('❌ Backend API 호출 실패:', fetchError);
+      return NextResponse.json({
+        success: false,
+        error: '백엔드 서버 연결 실패',
+        message: fetchError.message
+      }, { status: 503 });
+    }
 
     console.log('📡 Backend Add News to Collection API 응답:', {
       status: backendResponse.status,
@@ -174,7 +197,14 @@ export async function POST(request, { params }) {
     });
 
     if (!backendResponse.ok) {
-      const errorText = await backendResponse.text();
+      let errorText;
+      try {
+        errorText = await backendResponse.text();
+      } catch (textError) {
+        console.error('❌ 에러 응답 읽기 실패:', textError);
+        errorText = `HTTP ${backendResponse.status} Error`;
+      }
+      
       console.error('❌ Backend Add News to Collection API 실패:', { 
         status: backendResponse.status, 
         statusText: backendResponse.statusText,
@@ -192,7 +222,18 @@ export async function POST(request, { params }) {
       );
     }
 
-    const data = await backendResponse.json();
+    let data;
+    try {
+      data = await backendResponse.json();
+    } catch (jsonError) {
+      console.error('❌ Backend 응답 JSON 파싱 실패:', jsonError);
+      return NextResponse.json({
+        success: false,
+        error: '백엔드 응답 파싱 실패',
+        message: 'Invalid JSON response from backend'
+      }, { status: 500 });
+    }
+    
     console.log('✅ Backend Add News to Collection 응답:', data);
 
     // 백엔드 응답을 프론트엔드 형식으로 변환
