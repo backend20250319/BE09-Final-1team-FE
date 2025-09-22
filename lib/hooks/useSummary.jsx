@@ -41,12 +41,12 @@ export default function useSummary() {
           ? { ...(type ? { type } : {}), lines, prompt, force }
           : { text: text ?? "", ...(type ? { type } : {}), lines, prompt };
 
-        const base = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/+$/,""); // 빈 값 허용하지 말기
+        // BFF 패턴: Next.js API Routes를 통해 백엔드 호출
         const url = newsId != null
-          ? `${base}/api/news/${encodeURIComponent(newsId)}/summary`
-              : `${base}/api/news/summary`;
+          ? `/api/news/${encodeURIComponent(newsId)}/summary`
+          : `/api/news/summary`;
+          
         try {
-            // useSummary.jsx 요청부만 교체
             const res = await fetch(url, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "Accept":"application/json" },
